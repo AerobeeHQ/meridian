@@ -271,22 +271,39 @@ class AdobeAnalyticsService:
             List of processing rule configurations
         """
         result = self._make_request(
-            "ReportSuite.GetProcessingRules",
+            "ReportSuite.ViewProcessingRules",
             {"rsid_list": [rsid]}
         )
 
-        # The API may return different structures - handle both cases
-        if result and len(result) > 0:
-            first_result = result[0]
-            # Try different possible keys
-            if 'processing_rules' in first_result:
-                return first_result.get('processing_rules', [])
-            elif 'rules' in first_result:
-                return first_result.get('rules', [])
-            # If it's a flat list of rules, return as-is
-            elif isinstance(first_result, dict) and 'ruleNum' in first_result:
-                return result
-        return []
+        if not isinstance(result, list):
+            logger.warning("Unexpected processing rules response for %s", rsid)
+            return []
+
+        suite_entry = next((item for item in result if item.get('rsid') == rsid), {})
+        rules = suite_entry.get('processing_rules', []) or []
+
+        formatted_rules = []
+        for idx, rule in enumerate(rules, start=1):
+            condition_text = '\n'.join(rule.get('rules') or [])
+            actions = rule.get('actions') or []
+            else_actions = rule.get('elseActions') or []
+            actions_text = '\n'.join(actions)
+            if else_actions:
+                else_text = '\n'.join(else_actions)
+                separator = '\n--- ELSE ---\n' if actions_text else '--- ELSE ---\n'
+                actions_text = f"{actions_text}{separator}{else_text}"
+
+            formatted_rules.append({
+                'ruleNum': idx,
+                'title': rule.get('title', ''),
+                'rules': condition_text,
+                'matchOn': rule.get('matchOn', ''),
+                'actions': actions_text,
+                'comment': rule.get('comment', '')
+            })
+
+        logger.debug("Fetched %s processing rules for %s", len(formatted_rules), rsid)
+        return formatted_rules
 
     def get_marketing_channels(self, rsid: str) -> list[dict]:
         """
