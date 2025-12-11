@@ -11,6 +11,7 @@ Reviewed the Flask route stack and the Adobe service implementation. Confirmed t
 2. `app/services/adobe_analytics.py:get_processing_rules` calls `ReportSuite.GetProcessingRules` and then attempts to guess response shapes (`processing_rules`, `rules`, `ruleNum`). No schema in swagger matches that response, indicating the method name is wrong.
 3. Swagger (`docs/adobe_analytics_api_1.4_swagger.json`, lines 5224-5262 & 12548-13525) documents only `ReportSuite.ViewProcessingRules`, which accepts `rsid_list` and returns `processing_rules` nested under each rsid.
 4. Because the service never receives the expected `processing_rules`, the cache stores either empty arrays or error payloads, so the Processing Rules page renders nothing.
+5. Other endpoints currently used in `adobe_analytics.py` match swagger names: `Company.GetReportSuites` (line 848), `ReportSuite.GetProps` (3269), `ReportSuite.GetEvars` (2472), `ReportSuite.GetEvents` (2514), `ReportSuite.GetListVariables` (2766), `ReportSuite.GetMarketingChannelRules` (2934), and `ReportSuite.GetMarketingChannels` (2976).
 
 ## Actions Taken
 1. Updated `app/services/adobe_analytics.py:get_processing_rules` to call `ReportSuite.ViewProcessingRules` and parse the documented `processing_rules` array.
