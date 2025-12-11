@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   codex:
+    container_name: codex
     build: .
     ports:
       - "5010:5010"
