@@ -3,12 +3,17 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
+# Install build tools for pip package compilation
+RUN apt-get update && apt-get install -y build-essential gcc && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY app/ app/
+COPY exports/ exports/
+COPY config.json config.json
 
 # Create directories
 RUN mkdir -p cache exports
@@ -16,6 +21,4 @@ RUN mkdir -p cache exports
 # Expose port
 EXPOSE 5010
 
-# Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5010", "--workers", "2", "app:create_app()"]
-
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]
