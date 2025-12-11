@@ -17,7 +17,6 @@ This Shiny app relies on [RSiteCatalyst for authentication](https://marketing.ad
 
 > Legacy (WSSE) The ‘legacy’ method of authenticating with the Adobe Analytics API requires knowing your User Name and Shared Secret, which can be obtained from the same User Management -> Users -> Access menu in the Admin panel where Web Services Access is granted.
 
-
 # Configuration
 
 config.json contains the following settings
@@ -27,10 +26,9 @@ config.json contains the following settings
 * **AW_USERNAME** Your WSSE username
 * **AW_SECRET** Your WSSE secret
 
+## [Live Demo](https://codex.maxisdev.com)
 
-## [Live Demo](https://jorisdebeer.shinyapps.io/rshiny-sdr/)
-
-![Homepage screenshot](./assets/rshiny-sdr-screenshot.png)
+![Homepage screenshot](./assets/screenshots/codex-live-demo.png)
 
 ## Project Structure
 
@@ -42,9 +40,8 @@ config.json contains the following settings
 - [Exports](./exports/): Directory where files exported from the App are stored. **If running in Docker, make sure this directory is mounted with read-write permissions (`:rw`) in your `docker-compose.yml`.**
 
 ## Tools
-- IDE: [PyCharm 2025.2.4](https://www.jetbrains.com/pycharm/)
+- IDE: [PyCharm 2025.3](https://www.jetbrains.com/pycharm/)
 - Python: 3.13+
-- [Launchpy](https://pypi.org/project/launchpy/)
 
 ## Roadmap
 
