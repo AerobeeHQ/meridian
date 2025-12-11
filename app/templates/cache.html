@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">{{ title }}</h4>
+
+{% if message %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Cache Information</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th scope="row" style="width: 200px;">Cache Name</th>
+                    <td><code>{{ cache_info.cache_name }}</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">Exists</th>
+                    <td>
+                        {% if cache_info.exists %}
+                        <span class="badge bg-success">Yes</span>
+                        {% else %}
+                        <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Created</th>
+                    <td><code>{{ cache_info.created or 'N/A' }}</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">Age</th>
+                    <td><code>{{ cache_info.age_mins or 0 }} minutes</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">Status</th>
+                    <td>
+                        {% if cache_info.expired %}
+                        <span class="badge bg-warning text-dark">Expired</span>
+                        {% else %}
+                        <span class="badge bg-success">Valid</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Size</th>
+                    <td><code>{{ cache_info.size_bytes }} bytes</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <a href="/cache/clear" class="btn btn-warning">
+                <i class="bi bi-trash"></i> Clear Cache
+            </a>
+            <small class="text-muted ms-2">This will force a fresh API call on next page load</small>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Cache Behavior</h5>
+    </div>
+    <div class="card-body">
+        <ul class="mb-0">
+            <li>Cache expires automatically after <strong>1 hour</strong></li>
+            <li>Cache is stored as JSON files in the <code>cache/</code> directory</li>
+            <li>Each report suite has its own cache file</li>
+            <li>API calls are made only when cache is empty or expired</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

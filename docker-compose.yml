@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  codex:
+    build: .
+    ports:
+      - "5010:5010"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./exports:/app/exports:rw
+      - ./cache:/app/cache:rw
+    environment:
+      - FLASK_DEBUG=false
+    restart: unless-stopped
+

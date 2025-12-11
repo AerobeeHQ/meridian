@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - {{ app_title }}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/colreorder/1.7.0/css/colReorder.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/searchhighlight/1.0.1/css/dataTables.searchHighlight.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding-top: 56px;
+        }
+        .navbar-brand {
+            font-weight: 600;
+        }
+        .table-container {
+            padding: 20px;
+        }
+        footer {
+            border-top: 1px solid #ddd;
+            padding: 10px 0;
+            margin: 15px;
+            font-size: 11px;
+            color: #888;
+        }
+        footer code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .monospace {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .dt-buttons {
+            margin-bottom: 10px;
+        }
+        .dataTables_wrapper .dt-buttons .btn {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">{{ app_title }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/props">Props</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'evars' %}active{% endif %}" href="/evars">eVars</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'events' %}active{% endif %}" href="/events">Events</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'listvars' %}active{% endif %}" href="/listvars">ListVars</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'processing-rules' %}active{% endif %}" href="/processing-rules">Proc Rules</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/marketing-channels">Marketing Channels</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_tab == 'channel-rules' %}active{% endif %}" href="/channel-rules">Channel Rules</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if active_tab in ['report-suites', 'cache'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/report-suites">Report Suites</a></li>
+                            <li><a class="dropdown-item" href="/cache">Cache</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid table-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        Report Suite: <code>{{ rsid }}</code>
+        {% if cache_info %}
+            Cached: <code>{{ cache_info.created or 'N/A' }}</code>
+            Age: <code>{{ cache_info.age_mins or 0 }} minutes</code>
+        {% endif %}
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery (required for DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Extensions -->
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.7.0/js/dataTables.colReorder.min.js"></script>
+
+    <!-- JSZip and PDFMake for Excel/PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <!-- Search Highlight -->
+    <script src="https://cdn.datatables.net/plug-ins/1.13.7/features/searchHighlight/dataTables.searchHighlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-highlight@3.5.0/jquery.highlight.min.js"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

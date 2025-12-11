@@ -162,7 +162,14 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-/private.key
-/config.json
-/certificate_pub.crt
-/exports/
+# Codex specific
+config.json
+cache/
+exports/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

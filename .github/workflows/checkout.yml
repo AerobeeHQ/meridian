@@ -14,8 +14,8 @@ jobs:
           cat > config.json << EOF
           {
             "APP_TITLE":         "${{ secrets.APP_TITLE }}",
-            "AW_REPORTSUITE_ID": "${{ secrets.AW_REPORTSUITE_ID }}"
-            "AW_USERNAME":       "${{ secrets.AW_USERNAME }}"
+            "AW_REPORTSUITE_ID": "${{ secrets.AW_REPORTSUITE_ID }}",
+            "AW_USERNAME":       "${{ secrets.AW_USERNAME }}",
             "AW_SECRET":         "${{ secrets.AW_SECRET }}"
           }
           EOF
