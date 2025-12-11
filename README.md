@@ -1,6 +1,6 @@
-# Launchpad
+# Codex
 
-#### Configuration intelligence for your Adobe Analytics report suites
+### Configuration intelligence for your Adobe Analytics report suites
 
 
 * Display configuration of eVars, Traffic Variables (props), Success Events
