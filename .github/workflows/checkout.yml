@@ -13,12 +13,10 @@ jobs:
         run: |
           cat > config.json << EOF
           {
-            "org_id":       "${{ secrets.ORG_ID }}",
-            "client_id":    "${{ secrets.CLIENT_ID }}"
-            "secret":       "${{ secrets.SECRET }}"
-            "scope":        "${{ secrets.SCOPE }}"
-            "scopes":       "${{ secrets.SCOPES }}"
-            "company_name": "${{ secrets.COMPANY_NAME }}"
+            "APP_TITLE":         "${{ secrets.APP_TITLE }}",
+            "AW_REPORTSUITE_ID": "${{ secrets.AW_REPORTSUITE_ID }}"
+            "AW_USERNAME":       "${{ secrets.AW_USERNAME }}"
+            "AW_SECRET":         "${{ secrets.AW_SECRET }}"
           }
           EOF
           echo "config.json created!"
