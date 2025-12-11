@@ -1,0 +1,27 @@
+name: Checkout
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Generate config.json from secrets
+        run: |
+          cat > config.json << EOF
+          {
+            "org_id":       "${{ secrets.ORG_ID }}",
+            "client_id":    "${{ secrets.CLIENT_ID }}"
+            "secret":       "${{ secrets.SECRET }}"
+            "scope":        "${{ secrets.SCOPE }}"
+            "scopes":       "${{ secrets.SCOPES }}"
+            "company_name": "${{ secrets.COMPANY_NAME }}"
+          }
+          EOF
+          echo "config.json created!"
+
+      - name: List files
+        run: ls -l config.json
