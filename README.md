@@ -28,9 +28,9 @@ config.json contains the following settings
 * **AW_SECRET** Your WSSE secret
 
 
-## [Live Demo](https://launchpad.maxisdev.com)
+## [Live Demo](https://jorisdebeer.shinyapps.io/rshiny-sdr/)
 
-![Homepage screenshot](./assets/Screenshot.png)
+![Homepage screenshot](./assets/rshiny-sdr-screenshot.png)
 
 ## Project Structure
 
@@ -43,7 +43,7 @@ config.json contains the following settings
 
 ## Tools
 - IDE: [PyCharm 2025.2.4](https://www.jetbrains.com/pycharm/)
-- Python: 3.11+
+- Python: 3.13+
 - [Launchpy](https://pypi.org/project/launchpy/)
 
 ## Roadmap
