@@ -21,4 +21,4 @@ RUN mkdir -p cache exports
 # Expose port
 EXPOSE 5010
 
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5010"]
