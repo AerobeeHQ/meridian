@@ -17,9 +17,25 @@
     <style>
         body {
             padding-top: 56px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #179f9b 0%, #667eea 100%);
+            border-top: 1px solid #777777;
+            /*border-top: 1px solid #1d6c69;*/
+            /*border-bottom: 1px solid #31429a;*/
         }
         .navbar-brand {
             font-weight: 600;
+        }
+        .nav-link{
+            color: #fff !important;
+            text-shadow: 1px 1px 5px rgba(25, 99, 99, 0.75);
+        }
+        .nav-link.active{
+            font-weight: bold;
+            color: #fff !important;
+            text-shadow: 1px 1px 5px rgba(25, 99, 99, 1);
         }
         .table-container {
             padding: 20px;
@@ -42,6 +58,11 @@
         }
         .dt-buttons {
             margin-bottom: 10px;
+        }
+        .btn-secondary {
+            --bs-btn-color: #444;
+            --bs-btn-bg: #ececec;
+            --bs-btn-border-color: #cacaca;
         }
         .dataTables_wrapper .dt-buttons .btn {
             margin-right: 5px;
