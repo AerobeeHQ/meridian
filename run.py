@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""Main application entry point."""
 """
 Run the Codex Flask application
 Default: http://127.0.0.1:5010
