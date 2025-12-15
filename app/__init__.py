@@ -29,7 +29,15 @@ def create_app():
 
     # Load configuration
     config = load_config()
-    app.config['APP_TITLE'] = config.get('APP_TITLE', 'Codex')
+    app_title = config.get('APP_TITLE', 'Codex')
+    
+    # Modify title for local development environment
+    # Check if running on default local development port
+    port = int(os.environ.get('PORT', 5010))
+    if port == 5010:
+        app_title = 'Dev'
+    
+    app.config['APP_TITLE'] = app_title
     app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
     app.config['AW_USERNAME'] = config.get('AW_USERNAME')
     app.config['AW_SECRET'] = config.get('AW_SECRET')
