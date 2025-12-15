@@ -35,14 +35,23 @@ def create_app():
     app_title = config.get('APP_TITLE', 'Codex')
     
     # Modify title for local development environment
-    # Check if running on default local development port
-    try:
-        port = int(os.environ.get('PORT', DEFAULT_DEV_PORT))
-        if port == DEFAULT_DEV_PORT:
-            app_title = 'Dev'
-    except (ValueError, TypeError):
-        # If PORT is invalid, assume production environment
-        pass
+    # Check if running on default local development port AND port is explicitly set to 5010
+    # or if FLASK_DEBUG is explicitly enabled
+    is_dev = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    
+    # Also check if PORT is explicitly set to the development port
+    port_str = os.environ.get('PORT')
+    if port_str is not None:
+        try:
+            port = int(port_str)
+            if port == DEFAULT_DEV_PORT:
+                is_dev = True
+        except ValueError:
+            # Invalid PORT value, ignore
+            pass
+    
+    if is_dev:
+        app_title = 'Dev'
     
     app.config['APP_TITLE'] = app_title
     app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
