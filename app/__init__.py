@@ -8,6 +8,9 @@ from flask import Flask
 
 from app.services.cache import CacheService
 
+# Default port for local development
+DEFAULT_DEV_PORT = 5010
+
 
 def load_config():
     """Load configuration from config.json"""
@@ -33,9 +36,13 @@ def create_app():
     
     # Modify title for local development environment
     # Check if running on default local development port
-    port = int(os.environ.get('PORT', 5010))
-    if port == 5010:
-        app_title = 'Dev'
+    try:
+        port = int(os.environ.get('PORT', DEFAULT_DEV_PORT))
+        if port == DEFAULT_DEV_PORT:
+            app_title = 'Dev'
+    except (ValueError, TypeError):
+        # If PORT is invalid, assume production environment
+        pass
     
     app.config['APP_TITLE'] = app_title
     app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
