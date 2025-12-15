@@ -26,6 +26,32 @@ def load_config():
         return json.load(f)
 
 
+def is_development_environment() -> bool:
+    """
+    Determine if the application is running in development environment.
+    
+    Returns True if either:
+    - FLASK_DEBUG environment variable is set to 'true'
+    - PORT environment variable is explicitly set to the dev port (5010)
+    """
+    # Check FLASK_DEBUG flag
+    if os.environ.get('FLASK_DEBUG', 'false').lower() == 'true':
+        return True
+    
+    # Check if PORT is explicitly set to development port
+    port_str = os.environ.get('PORT')
+    if port_str is not None:
+        try:
+            port = int(port_str)
+            if port == DEFAULT_DEV_PORT:
+                return True
+        except ValueError:
+            # Invalid PORT value, ignore
+            pass
+    
+    return False
+
+
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
@@ -34,23 +60,8 @@ def create_app():
     config = load_config()
     app_title = config.get('APP_TITLE', 'Codex')
     
-    # Modify title for local development environment
-    # Check if running on default local development port AND port is explicitly set to 5010
-    # or if FLASK_DEBUG is explicitly enabled
-    is_dev = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    
-    # Also check if PORT is explicitly set to the development port
-    port_str = os.environ.get('PORT')
-    if port_str is not None:
-        try:
-            port = int(port_str)
-            if port == DEFAULT_DEV_PORT:
-                is_dev = True
-        except ValueError:
-            # Invalid PORT value, ignore
-            pass
-    
-    if is_dev:
+    # Use 'Dev' title in development environment
+    if is_development_environment():
         app_title = 'Dev'
     
     app.config['APP_TITLE'] = app_title
