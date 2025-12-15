@@ -152,6 +152,15 @@
     <script src="https://cdn.datatables.net/plug-ins/1.13.7/features/searchHighlight/dataTables.searchHighlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-highlight@3.5.0/jquery.highlight.min.js"></script>
 
+    <!-- Development environment detection -->
+    <script>
+        // Check if page is accessed from localhost/127.0.0.1
+        if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+            // Replace the suffix in document.title
+            document.title = document.title.replace(/- .+$/, '- Dev');
+        }
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
