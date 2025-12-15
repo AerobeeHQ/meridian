@@ -155,11 +155,11 @@
     <!-- Development environment detection -->
     <script>
         // Check if page is accessed from localhost (various forms)
-        var hostname = window.location.hostname;
-        var isLocalhost = hostname === '127.0.0.1' || 
-                         hostname === 'localhost' || 
-                         hostname === '::1' ||
-                         hostname.endsWith('.local');
+        const hostname = window.location.hostname;
+        const isLocalhost = hostname === '127.0.0.1' || 
+                           hostname === 'localhost' || 
+                           hostname === '::1' ||
+                           hostname.endsWith('.local');
         
         if (isLocalhost) {
             // Replace the last suffix after the final dash in document.title
