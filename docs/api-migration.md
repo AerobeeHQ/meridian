@@ -1155,7 +1155,7 @@ If migration encounters blocking issues:
 ### 14.1 Open Questions
 
 1. **Q:** Do we have access to Adobe Analytics API 2.0 in our organization?
-   **A:** [TO BE DETERMINED]
+   **A:** Yes
 
 2. **Q:** What permissions does our technical account need?
    **A:** [TO BE DETERMINED]
@@ -1164,7 +1164,7 @@ If migration encounters blocking issues:
    **A:** [TO BE DETERMINED - Processing Rules]
 
 4. **Q:** Do we need backward compatibility with 1.4 API?
-   **A:** [TO BE DETERMINED - Recommend hybrid for processing rules]
+   **A:** Yes for processing rules
 
 ### 14.2 Decision Log
 
