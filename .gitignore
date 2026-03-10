@@ -167,6 +167,22 @@ config.json
 cache/
 exports/
 
+# OpenAPI generated clients - exclude build artifacts but keep source
+notebooks/**/openapi_client/
+notebooks/**/.openapi-generator/
+notebooks/**/.openapi-generator-ignore
+notebooks/**/test/
+notebooks/**/docs/
+notebooks/**/requirements.txt
+notebooks/**/test-requirements.txt
+notebooks/**/setup.py
+notebooks/**/setup.cfg
+notebooks/**/tox.ini
+notebooks/**/git_push.sh
+notebooks/**/.travis.yml
+notebooks/**/.gitlab-ci.yml
+notebooks/**/.github/
+
 # IDE
 .idea/
 .vscode/
