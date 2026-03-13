@@ -298,8 +298,9 @@ def events_export():
 
 @main_bp.route('/listvars')
 def listvars():
-    """Display list variables"""
-    api = get_api_service()
+    """Display list variables (uses API 1.4 for full config data)"""
+    # List variable config is better exposed in API 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
@@ -320,8 +321,8 @@ def listvars():
 
 @main_bp.route('/listvars/export')
 def listvars_export():
-    """Export list variables as CSV"""
-    api = get_api_service()
+    """Export list variables as CSV (uses API 1.4)"""
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
@@ -368,8 +369,9 @@ def processing_rules_export():
 
 @main_bp.route('/marketing-channels')
 def marketing_channels():
-    """Display marketing channels"""
-    api = get_api_service()
+    """Display marketing channels (uses API 1.4 for full config data)"""
+    # Marketing channel config is better exposed in API 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
@@ -390,8 +392,8 @@ def marketing_channels():
 
 @main_bp.route('/marketing-channels/export')
 def marketing_channels_export():
-    """Export marketing channels as CSV"""
-    api = get_api_service()
+    """Export marketing channels as CSV (uses API 1.4)"""
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
@@ -402,8 +404,9 @@ def marketing_channels_export():
 
 @main_bp.route('/channel-rules')
 def channel_rules():
-    """Display marketing channel rules"""
-    api = get_api_service()
+    """Display marketing channel rules (always uses API 1.4 - not available in 2.0)"""
+    # Channel rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
@@ -424,8 +427,9 @@ def channel_rules():
 
 @main_bp.route('/channel-rules/export')
 def channel_rules_export():
-    """Export channel rules as CSV"""
-    api = get_api_service()
+    """Export channel rules as CSV (always uses API 1.4)"""
+    # Channel rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
