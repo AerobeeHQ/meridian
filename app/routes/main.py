@@ -3,6 +3,7 @@ Main routes for the Codex application
 """
 import csv
 import io
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Blueprint, render_template, current_app, Response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
@@ -205,8 +206,19 @@ def props():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('props', lambda: api.get_props(rsid))
-    data = transform_data(raw_data, PROPS_COLUMNS)
+    # Cache raw dimensions for reuse by detail pages (Quick Win #1)
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    
+    # Filter props from dimensions and transform
+    raw_props = []
+    for dim in raw_dimensions:
+        if dim.get("id", "").startswith("variables/prop"):
+            raw_props.append(api._transform_dimension_to_prop(dim))
+    
+    # Sort by prop number
+    raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    
+    data = transform_data(raw_props, PROPS_COLUMNS)
 
     return render_template(
         'table.html',
@@ -227,10 +239,91 @@ def props_export():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('props', lambda: api.get_props(rsid))
-    data = transform_data(raw_data, PROPS_COLUMNS)
+    # Use cached dimensions
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_props = []
+    for dim in raw_dimensions:
+        if dim.get("id", "").startswith("variables/prop"):
+            raw_props.append(api._transform_dimension_to_prop(dim))
+    raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    
+    data = transform_data(raw_props, PROPS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_props.csv')
+
+
+@main_bp.route('/props/<prop_id>')
+def prop_detail(prop_id: str):
+    """Display detail page for a specific prop"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize prop_id to API format (e.g., 'prop1' -> 'variables/prop1')
+    dimension_id = f"variables/{prop_id}" if not prop_id.startswith("variables/") else prop_id
+    display_id = prop_id.replace("variables/", "")
+
+    # Quick Win #1: Try to get dimension from already-cached dimensions list
+    cached_dimensions = cache.get(rsid, 'dimensions')
+    
+    def fetch_dimension():
+        if cached_dimensions:
+            for dim in cached_dimensions:
+                if dim.get("id") == dimension_id:
+                    return dim
+        return api.get_dimension(rsid, dimension_id)
+
+    def fetch_top_items():
+        return api.get_top_items(rsid, dimension_id, metric="occurrences", limit=10, days=30)
+
+    def fetch_trend():
+        return api.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
+
+    # Quick Win #2: Check cache first, then parallelize needed API calls
+    dimension = cache.get(rsid, f'prop_detail_{display_id}')
+    top_items = cache.get(rsid, f'prop_top_{display_id}')
+    trend_data = cache.get(rsid, f'prop_trend_{display_id}')
+
+    tasks = {}
+    if dimension is None:
+        tasks['dimension'] = fetch_dimension
+    if top_items is None:
+        tasks['top_items'] = fetch_top_items
+    if trend_data is None:
+        tasks['trend_data'] = fetch_trend
+
+    # Execute needed fetches in parallel
+    if tasks:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(func): key for key, func in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                value = future.result()
+                if key == 'dimension':
+                    cache.set(rsid, f'prop_detail_{display_id}', value)
+                    dimension = value
+                elif key == 'top_items':
+                    cache.set(rsid, f'prop_top_{display_id}', value)
+                    top_items = value
+                elif key == 'trend_data':
+                    cache.set(rsid, f'prop_trend_{display_id}', value)
+                    trend_data = value
+
+    return render_template(
+        'detail.html',
+        title=f'{display_id}: {dimension.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        dimension=dimension,
+        dimension_id=display_id,
+        dimension_type='prop',
+        dimension_type_label='Traffic Variable (Prop)',
+        top_items=top_items,
+        trend_data=trend_data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='props',
+        back_url='/props',
+        back_label='Back to Props Listing'
+    )
 
 
 @main_bp.route('/evars')
@@ -239,8 +332,19 @@ def evars():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('evars', lambda: api.get_evars(rsid))
-    data = transform_data(raw_data, EVARS_COLUMNS)
+    # Cache raw dimensions for reuse by detail pages (Quick Win #1)
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    
+    # Filter eVars from dimensions and transform
+    raw_evars = []
+    for dim in raw_dimensions:
+        if dim.get("id", "").startswith("variables/evar"):
+            raw_evars.append(api._transform_dimension_to_evar(dim))
+    
+    # Sort by evar number
+    raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    
+    data = transform_data(raw_evars, EVARS_COLUMNS)
 
     return render_template(
         'table.html',
@@ -261,10 +365,90 @@ def evars_export():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('evars', lambda: api.get_evars(rsid))
-    data = transform_data(raw_data, EVARS_COLUMNS)
+    # Use cached dimensions
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_evars = []
+    for dim in raw_dimensions:
+        if dim.get("id", "").startswith("variables/evar"):
+            raw_evars.append(api._transform_dimension_to_evar(dim))
+    raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    
+    data = transform_data(raw_evars, EVARS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_evars.csv')
+
+
+@main_bp.route('/evars/<evar_id>')
+def evar_detail(evar_id: str):
+    """Display detail page for a specific eVar"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize evar_id to API format
+    dimension_id = f"variables/{evar_id}" if not evar_id.startswith("variables/") else evar_id
+    display_id = evar_id.replace("variables/", "")
+
+    # Quick Win #1: Try to get dimension from already-cached dimensions list
+    cached_dimensions = cache.get(rsid, 'dimensions')
+    
+    def fetch_dimension():
+        if cached_dimensions:
+            for dim in cached_dimensions:
+                if dim.get("id") == dimension_id:
+                    return dim
+        return api.get_dimension(rsid, dimension_id)
+
+    def fetch_top_items():
+        return api.get_top_items(rsid, dimension_id, metric="instances", limit=10, days=30)
+
+    def fetch_trend():
+        return api.get_dimension_trend(rsid, dimension_id, metric="instances", days=30)
+
+    # Quick Win #2: Check cache first, then parallelize needed API calls
+    dimension = cache.get(rsid, f'evar_detail_{display_id}')
+    top_items = cache.get(rsid, f'evar_top_{display_id}')
+    trend_data = cache.get(rsid, f'evar_trend_{display_id}')
+
+    tasks = {}
+    if dimension is None:
+        tasks['dimension'] = fetch_dimension
+    if top_items is None:
+        tasks['top_items'] = fetch_top_items
+    if trend_data is None:
+        tasks['trend_data'] = fetch_trend
+
+    if tasks:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(func): key for key, func in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                value = future.result()
+                if key == 'dimension':
+                    cache.set(rsid, f'evar_detail_{display_id}', value)
+                    dimension = value
+                elif key == 'top_items':
+                    cache.set(rsid, f'evar_top_{display_id}', value)
+                    top_items = value
+                elif key == 'trend_data':
+                    cache.set(rsid, f'evar_trend_{display_id}', value)
+                    trend_data = value
+
+    return render_template(
+        'detail.html',
+        title=f'{display_id}: {dimension.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        dimension=dimension,
+        dimension_id=display_id,
+        dimension_type='evar',
+        dimension_type_label='Conversion Variable (eVar)',
+        top_items=top_items,
+        trend_data=trend_data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='evars',
+        back_url='/evars',
+        back_label='Back to eVars Listing'
+    )
 
 
 @main_bp.route('/events')

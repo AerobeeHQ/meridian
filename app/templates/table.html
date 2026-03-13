@@ -15,7 +15,16 @@
         {% for row in data %}
         <tr>
             {% for col in columns %}
-            <td {% if col in monospace_columns %}class="monospace"{% endif %}>{{ row[col] if row[col] is not none else '' }}</td>
+            <td {% if col in monospace_columns %}class="monospace"{% endif %}>
+                {# Make Prop and eVar IDs clickable links to detail pages #}
+                {% if col == 'Prop' and row[col] %}
+                    <a href="/props/{{ row[col] }}">{{ row[col] }}</a>
+                {% elif col == 'eVar' and row[col] %}
+                    <a href="/evars/{{ row[col] }}">{{ row[col] }}</a>
+                {% else %}
+                    {{ row[col] if row[col] is not none else '' }}
+                {% endif %}
+            </td>
             {% endfor %}
         </tr>
         {% endfor %}

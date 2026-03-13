@@ -4,6 +4,7 @@ Uses OAuth2 authentication via adobe_auth module
 """
 import logging
 import re
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import requests
@@ -359,6 +360,169 @@ class AdobeAnalyticsV2Service:
             "serialization": metric.get("serialization", ""),
             "description": metric.get("description", "")
         }
+
+    # -------------------------------------------------------------------------
+    # Dimension Detail Methods
+    # -------------------------------------------------------------------------
+
+    def get_dimension(self, rsid: str, dimension_id: str) -> dict:
+        """
+        Get details for a single dimension
+
+        Args:
+            rsid: Report suite ID
+            dimension_id: Dimension ID (e.g., 'variables/prop1' or 'prop1')
+
+        Returns:
+            Dimension configuration details
+        """
+        # Ensure dimension_id has 'variables/' prefix for matching
+        if not dimension_id.startswith("variables/"):
+            dimension_id = f"variables/{dimension_id}"
+
+        # Get all dimensions and filter for the specific one
+        # This is more reliable than the single dimension endpoint
+        dimensions = self.get_dimensions(rsid)
+
+        for dim in dimensions:
+            if dim.get("id") == dimension_id:
+                return dim
+
+        # Not found
+        return {}
+
+    def get_top_items(
+        self,
+        rsid: str,
+        dimension: str,
+        metric: str = "occurrences",
+        limit: int = 10,
+        days: int = 30
+    ) -> list[dict]:
+        """
+        Get top items for a dimension
+
+        Args:
+            rsid: Report suite ID
+            dimension: Dimension ID (e.g., 'variables/prop1')
+            metric: Metric to rank by ('occurrences' or 'instances')
+            limit: Number of items to return
+            days: Number of days to look back
+
+        Returns:
+            List of top items with value, count, and percentage
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Use POST /reports endpoint (more reliable permissions than GET /topItems)
+        request_body = {
+            "rsid": rsid,
+            "globalFilters": [
+                {
+                    "type": "dateRange",
+                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                }
+            ],
+            "metricContainer": {
+                "metrics": [{"id": f"metrics/{metric}"}]
+            },
+            "dimension": dimension,
+            "settings": {
+                "limit": limit,
+                "page": 0
+            }
+        }
+
+        result = self._make_request("reports", method="POST", json_data=request_body)
+
+        # Transform response to simpler format with percentages
+        items = []
+        rows = result.get("rows", [])
+        total = sum(row.get("data", [0])[0] for row in rows if row.get("data"))
+
+        for row in rows:
+            value = row.get("value", "")
+            count = row.get("data", [0])[0] if row.get("data") else 0
+            percentage = (count / total * 100) if total > 0 else 0
+            items.append({
+                "value": value,
+                "count": count,
+                "percentage": round(percentage, 1)
+            })
+
+        return items
+
+    def get_dimension_trend(
+        self,
+        rsid: str,
+        dimension: str,
+        metric: str = "occurrences",
+        days: int = 30
+    ) -> dict:
+        """
+        Get daily trend data for a dimension (total occurrences per day)
+
+        Args:
+            rsid: Report suite ID
+            dimension: Dimension ID (e.g., 'variables/prop1')
+            metric: Metric to use ('occurrences' or 'instances')
+            days: Number of days to look back
+
+        Returns:
+            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build report request for time-series data
+        request_body = {
+            "rsid": rsid,
+            "globalFilters": [
+                {
+                    "type": "dateRange",
+                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                }
+            ],
+            "metricContainer": {
+                "metrics": [{"id": f"metrics/{metric}"}]
+            },
+            "dimension": "variables/daterangeday",
+            "settings": {
+                "dimensionSort": "asc",
+                "limit": days + 1
+            }
+        }
+
+        result = self._make_request("reports", method="POST", json_data=request_body)
+
+        # Extract dates and values from response
+        dates = []
+        values = []
+
+        for row in result.get("rows", []):
+            # daterangeday returns dates like "Jan 1, 2024"
+            date_str = row.get("value", "")
+            dates.append(date_str)
+
+            # Get the metric value (first metric in our request)
+            row_data = row.get("data", [0])
+            value = row_data[0] if row_data else 0
+            values.append(value)
+
+        # Calculate statistics
+        stats = {}
+        if values:
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                stats = {
+                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
+                    "median": round(sorted(numeric_values)[len(numeric_values) // 2], 1),
+                    "max": max(numeric_values),
+                    "min": min(numeric_values)
+                }
+
+        return {"dates": dates, "values": values, "stats": stats}
 
     @staticmethod
     def _extract_number(s: str) -> int:
