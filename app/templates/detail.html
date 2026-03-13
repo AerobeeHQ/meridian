@@ -69,7 +69,7 @@
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Top 10 Recorded Values (Last 30 Days)</h5>
+                <h5 class="card-title">Top 10 Recorded Values</h5>
                 {% if top_items %}
                 <table class="table table-sm">
                     <thead>
@@ -82,7 +82,7 @@
                     <tbody>
                         {% for item in top_items %}
                         <tr>
-                            <td class="monospace">{{ item.value }}</td>
+                            <td class="">{{ item.value }}</td>
                             <td class="text-end">{{ item.percentage }}%</td>
                             <td class="text-end">{{ "{:,}".format(item.count|int) }}</td>
                         </tr>
@@ -104,9 +104,9 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="card-title mb-0">
-                        {{ dimension.name or dimension_id }} - Last 30 Days
+                        {{ dimension.name or dimension_id }}
                     </h5>
-                    <span class="badge bg-secondary">Last 30 Days (Sampled: 100%)</span>
+                    <span class="badge bg-secondary">Last 30 Days</span>
                 </div>
 
                 {% if trend_data and trend_data['values'] %}
@@ -164,10 +164,30 @@
 <script>
 {% if trend_data and trend_data['values'] %}
 const ctx = document.getElementById('trendChart').getContext('2d');
+
+// Parse dates and create formatted labels (Tufte-style minimal labeling)
+const rawDates = {{ trend_data['dates'] | tojson }};
+const formattedLabels = rawDates.map(dateStr => {
+    // Parse date strings like "Feb 11, 2026" or "Mar 1, 2026"
+    const parts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
+    if (!parts) return '';
+
+    const month = parts[1];  // "Feb", "Mar", etc.
+    const day = parseInt(parts[2], 10);
+
+    // Show day + month name (stacked) on 1st of month, day number on 8th, 15th, 22nd, 29th
+    if (day === 1) {
+        return ['1', month];  // Multi-line: "1" on top, "Mar" below
+    } else if (day === 8 || day === 15 || day === 22 || day === 29) {
+        return day.toString();  // "8", "15", "22", "29"
+    }
+    return '';  // Empty for other days
+});
+
 new Chart(ctx, {
     type: 'line',
     data: {
-        labels: {{ trend_data['dates'] | tojson }},
+        labels: formattedLabels,
         datasets: [{
             label: '{{ "Occurrences" if dimension_type == "prop" else "Instances" }}',
             data: {{ trend_data['values'] | tojson }},
@@ -175,7 +195,7 @@ new Chart(ctx, {
             backgroundColor: 'rgba(74, 144, 217, 0.1)',
             fill: true,
             tension: 0.4,
-            pointRadius: 3,
+            pointRadius: 0,
             pointHoverRadius: 6
         }]
     },
@@ -188,6 +208,10 @@ new Chart(ctx, {
             },
             tooltip: {
                 callbacks: {
+                    title: function(context) {
+                        // Show full date in tooltip
+                        return rawDates[context[0].dataIndex];
+                    },
                     label: function(context) {
                         return context.parsed.y.toLocaleString();
                     }
@@ -195,8 +219,20 @@ new Chart(ctx, {
             }
         },
         scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    maxRotation: 0,
+                    autoSkip: false
+                }
+            },
             y: {
-                beginAtZero: true,
+                beginAtZero: false,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
                 ticks: {
                     callback: function(value) {
                         return value.toLocaleString();
