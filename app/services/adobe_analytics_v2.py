@@ -3,6 +3,7 @@ Adobe Analytics API 2.0 Service
 Uses OAuth2 authentication via adobe_auth module
 """
 import logging
+import re
 from typing import Any, Optional
 
 import requests
@@ -33,6 +34,7 @@ class AdobeAnalyticsV2Service:
         self.client_id = client_id
         self.org_id = org_id
         self._global_company_id: Optional[str] = None
+        self._discovery_data: Optional[dict] = None
 
     def _get_headers(self) -> dict:
         """Get headers required for API requests"""
@@ -44,18 +46,18 @@ class AdobeAnalyticsV2Service:
             "Accept": "application/json"
         }
 
-    def _get_global_company_id(self) -> str:
+    def _get_discovery_data(self) -> dict:
         """
-        Get the global company ID via discovery endpoint
+        Fetch and cache the discovery endpoint response.
 
-        The globalCompanyId is required for all API 2.0 requests.
-        This is cached after first retrieval.
+        Result is stored in ``_discovery_data`` so subsequent calls
+        (including ``_get_global_company_id`` and ``get_report_suites``)
+        share the same in-memory copy without making duplicate HTTP requests.
         """
-        if self._global_company_id:
-            return self._global_company_id
+        if self._discovery_data is not None:
+            return self._discovery_data
 
-        logger.info("Fetching global company ID from discovery endpoint")
-
+        logger.info("Fetching discovery data from %s", self.DISCOVERY_URL)
         response = requests.get(
             self.DISCOVERY_URL,
             headers=self._get_headers()
@@ -70,7 +72,20 @@ class AdobeAnalyticsV2Service:
             )
             response.raise_for_status()
 
-        data = response.json()
+        self._discovery_data = response.json()
+        return self._discovery_data
+
+    def _get_global_company_id(self) -> str:
+        """
+        Get the global company ID via discovery endpoint
+
+        The globalCompanyId is required for all API 2.0 requests.
+        This is cached after first retrieval.
+        """
+        if self._global_company_id:
+            return self._global_company_id
+
+        data = self._get_discovery_data()
         # Response contains imsOrgs array, each with companies array
         # Find the company matching our org_id
         for ims_org in data.get("imsOrgs", []):
@@ -153,18 +168,14 @@ class AdobeAnalyticsV2Service:
         """
         Get list of report suites (via discovery endpoint)
 
+        Uses the cached discovery response — no extra HTTP call is made
+        once ``_get_discovery_data`` has been called at least once.
+
         Returns:
             List of report suite dictionaries with rsid and name
         """
         global_company_id = self._get_global_company_id()
-
-        # The discovery endpoint already provides report suites
-        response = requests.get(
-            self.DISCOVERY_URL,
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        data = response.json()
+        data = self._get_discovery_data()  # returns cached data; safe to call again
 
         report_suites = []
         for ims_org in data.get("imsOrgs", []):
@@ -301,82 +312,6 @@ class AdobeAnalyticsV2Service:
         logger.debug("Found %s success events for %s", len(events), rsid)
         return events
 
-    def get_list_variables(self, rsid: str) -> list[dict]:
-        """
-        Get list variables for a report suite
-
-        List variables in the 2.0 API are dimensions with id containing "listvar"
-
-        Args:
-            rsid: Report suite ID
-
-        Returns:
-            List of list variable configurations
-        """
-        dimensions = self.get_dimensions(rsid)
-
-        listvars = []
-        for dim in dimensions:
-            dim_id = dim.get("id", "")
-            # List vars have IDs like "variables/listvar1", etc.
-            if "listvar" in dim_id.lower() or dim_id.startswith("variables/list"):
-                listvars.append(self._transform_dimension_to_listvar(dim))
-
-        logger.debug("Found %s list variables for %s", len(listvars), rsid)
-        return listvars
-
-    def get_marketing_channels(self, rsid: str) -> list[dict]:
-        """
-        Get marketing channels for a report suite
-
-        Note: Marketing channel configuration may have limited availability
-        in the 2.0 API. This attempts to retrieve what's available.
-
-        Args:
-            rsid: Report suite ID
-
-        Returns:
-            List of marketing channel configurations
-        """
-        # Marketing channels in 2.0 API are accessed via dimensions
-        # Look for marketing channel related dimensions
-        dimensions = self.get_dimensions(rsid)
-
-        channels = []
-        for dim in dimensions:
-            dim_id = dim.get("id", "")
-            if "marketingchannel" in dim_id.lower() or "channel" in dim.get("name", "").lower():
-                channels.append({
-                    "name": dim.get("name", ""),
-                    "channel_id": dim_id,
-                    "enabled": True,  # Assumption: if visible, it's enabled
-                    "override_last_touch_channel": ""  # Not available in 2.0
-                })
-
-        logger.debug("Found %s marketing channels for %s", len(channels), rsid)
-        return channels
-
-    def get_marketing_channel_rules(self, rsid: str) -> list[dict]:
-        """
-        Get marketing channel rules for a report suite
-
-        Note: Marketing channel RULES are NOT available in the 2.0 API.
-        This method returns an empty list with a warning.
-        Use the 1.4 API for marketing channel rules.
-
-        Args:
-            rsid: Report suite ID
-
-        Returns:
-            Empty list (rules not available in 2.0 API)
-        """
-        logger.warning(
-            "Marketing channel rules are not available in API 2.0. "
-            "Use API 1.4 for this endpoint. RSID: %s",
-            rsid
-        )
-        return []
-
     # -------------------------------------------------------------------------
     # Transform methods to convert 2.0 API responses to 1.4 format
     # -------------------------------------------------------------------------
@@ -425,27 +360,9 @@ class AdobeAnalyticsV2Service:
             "description": metric.get("description", "")
         }
 
-    def _transform_dimension_to_listvar(self, dim: dict) -> dict:
-        """Transform a 2.0 dimension to 1.4 list variable format"""
-        dim_id = dim.get("id", "")
-        listvar_id = dim_id.replace("variables/", "")
-
-        return {
-            "name": listvar_id,
-            "allocation_type": dim.get("allocationModel", {}).get("name", ""),
-            "enabled": True,  # If it's returned, it's enabled
-            "value_delimiter": dim.get("delimiter", ""),
-            "max_values": dim.get("maxValues", ""),
-            "id": listvar_id,
-            "expiration_custom_days": "",
-            "expiration_type": dim.get("expirationType", ""),
-            "description": dim.get("description", "")
-        }
-
     @staticmethod
     def _extract_number(s: str) -> int:
         """Extract numeric suffix from a string like 'prop1' -> 1"""
-        import re
         match = re.search(r'(\d+)$', s)
         return int(match.group(1)) if match else 0
 

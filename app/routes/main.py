@@ -16,10 +16,6 @@ main_bp = Blueprint('main', __name__)
 # Initialize cache service
 cache = CacheService()
 
-# Cache for API service instances (per-request initialization is expensive)
-_api_service_v2 = None
-_api_service_v14 = None
-
 
 def get_api_version() -> str:
     """Get configured API version (default: 2.0)"""
@@ -28,53 +24,53 @@ def get_api_version() -> str:
 
 def get_api_service():
     """
-    Get configured Adobe Analytics service based on API_VERSION config
+    Get configured Adobe Analytics service based on API_VERSION config.
+
+    Service instances are stored on the Flask app object so each
+    ``create_app()`` call gets its own instance (avoids stale state
+    when the factory is called multiple times, e.g. in tests).
 
     Returns:
         AdobeAnalyticsV2Service for API 2.0, or AdobeAnalyticsService for 1.4
     """
-    global _api_service_v2, _api_service_v14
-
+    app = current_app._get_current_object()
     api_version = get_api_version()
 
     if api_version == '2.0':
-        if _api_service_v2 is None:
+        if not hasattr(app, 'codex_api_service_v2'):
             auth = OAuth2Auth(
                 client_id=current_app.config['CLIENT_ID'],
                 client_secret=current_app.config['CLIENT_SECRET'],
                 scopes=current_app.config.get('SCOPES')
             )
-            _api_service_v2 = AdobeAnalyticsV2Service(
+            app.codex_api_service_v2 = AdobeAnalyticsV2Service(
                 auth_service=auth,
                 client_id=current_app.config['CLIENT_ID'],
                 org_id=current_app.config['ORGANIZATION_ID']
             )
-        return _api_service_v2
+        return app.codex_api_service_v2
     else:
         # API 1.4 (legacy)
-        if _api_service_v14 is None:
-            _api_service_v14 = AdobeAnalyticsService(
-                username=current_app.config['AW_USERNAME'],
-                secret=current_app.config['AW_SECRET']
-            )
-        return _api_service_v14
+        return get_api_service_v14()
 
 
 def get_api_service_v14() -> AdobeAnalyticsService:
     """
-    Get API 1.4 service (used for processing rules which aren't in 2.0)
+    Get API 1.4 service (used for processing rules which aren't in 2.0).
+
+    Stored on the app instance for the same reason as ``get_api_service``.
 
     Returns:
         AdobeAnalyticsService configured for API 1.4
     """
-    global _api_service_v14
+    app = current_app._get_current_object()
 
-    if _api_service_v14 is None:
-        _api_service_v14 = AdobeAnalyticsService(
+    if not hasattr(app, 'codex_api_service_v14'):
+        app.codex_api_service_v14 = AdobeAnalyticsService(
             username=current_app.config['AW_USERNAME'],
             secret=current_app.config['AW_SECRET']
         )
-    return _api_service_v14
+    return app.codex_api_service_v14
 
 
 def get_rsid() -> str:
