@@ -17,6 +17,15 @@ main_bp = Blueprint('main', __name__)
 cache = CacheService()
 
 
+@main_bp.app_context_processor
+def inject_git_info():
+    """Inject git info into all templates"""
+    return {
+        'git_branch': current_app.config.get('GIT_BRANCH'),
+        'git_commit': current_app.config.get('GIT_COMMIT')
+    }
+
+
 def get_api_version() -> str:
     """Get configured API version (default: 2.0)"""
     return current_app.config.get('API_VERSION', '2.0')

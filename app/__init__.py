@@ -7,6 +7,7 @@ import os
 from flask import Flask
 
 from app.services.cache import CacheService
+from app.services.git_info import get_git_info
 
 
 def load_config():
@@ -44,6 +45,11 @@ def create_app():
     # WSSE credentials (API 1.4 - also used for processing rules)
     app.config['AW_USERNAME'] = config.get('AW_USERNAME')
     app.config['AW_SECRET'] = config.get('AW_SECRET')
+
+    # Git info for footer display
+    git_info = get_git_info()
+    app.config['GIT_BRANCH'] = git_info.get('branch')
+    app.config['GIT_COMMIT'] = git_info.get('commit')
 
     # Clear cached API responses so each restart fetches fresh data
     try:

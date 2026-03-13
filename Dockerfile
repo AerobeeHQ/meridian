@@ -1,6 +1,10 @@
 # Codex - Adobe Analytics Configuration Viewer
 FROM python:3.13-slim
 
+# Build arguments for git info (passed from docker-compose or CI)
+ARG GIT_BRANCH=unknown
+ARG GIT_COMMIT=unknown
+
 WORKDIR /app
 
 # Install build tools for pip package compilation
@@ -14,6 +18,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ app/
 COPY exports/ exports/
 COPY config.json config.json
+COPY run.py run.py
+
+# Generate git info file for runtime
+RUN echo "branch=${GIT_BRANCH}" > git_info.txt && \
+    echo "commit=${GIT_COMMIT}" >> git_info.txt
 
 # Create directories
 RUN mkdir -p cache exports

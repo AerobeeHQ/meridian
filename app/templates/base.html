@@ -129,6 +129,9 @@
             Cached: <code>{{ cache_info.created or 'N/A' }}</code>
             Age: <code>{{ cache_info.age_mins or 0 }} minutes</code>
         {% endif %}
+        {% if git_branch or git_commit %}
+            Build: <code>{{ git_branch or 'unknown' }}{% if git_commit %}@{{ git_commit }}{% endif %}</code>
+        {% endif %}
     </footer>
 
     <!-- Bootstrap 5 JS -->

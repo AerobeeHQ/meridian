@@ -3,7 +3,11 @@ version: '3.8'
 services:
   codex:
     container_name: codex
-    build: .
+    build:
+      context: .
+      args:
+        - GIT_BRANCH=${GIT_BRANCH:-unknown}
+        - GIT_COMMIT=${GIT_COMMIT:-unknown}
     ports:
       - "5010:5010"
     volumes:
