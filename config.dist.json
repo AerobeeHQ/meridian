@@ -1,6 +1,17 @@
 {
-    "APP_TITLE":         "<COMPANY NAME>",
-    "AW_REPORTSUITE_ID": "<RSID>",
-    "AW_USERNAME":       "<WSSE USERNAME:ORG NAME",
-    "AW_SECRET":         "<WWSE SECRET>"
+    "APP_TITLE":               "<COMPANY NAME>",
+    "AW_REPORTSUITE_ID":       "<RSID>",
+
+    "_comment_api_version":    "Set API_VERSION to '2.0' for OAuth2, or '1.4' for WSSE (legacy)",
+    "API_VERSION":             "2.0",
+
+    "_comment_oauth2":         "OAuth2 credentials from Adobe I/O Console (API 2.0)",
+    "CLIENT_ID":               "<YOUR_CLIENT_ID>",
+    "CLIENT_SECRET":           "<YOUR_CLIENT_SECRET>",
+    "SCOPES":                  "openid, AdobeID, additional_info.projectedProductContext",
+    "ORGANIZATION_ID":         "<YOUR_ORG_ID>@AdobeOrg",
+
+    "_comment_wsse":           "WSSE credentials for API 1.4 (legacy, also used for processing rules)",
+    "AW_USERNAME":             "<WSSE USERNAME:ORG NAME>",
+    "AW_SECRET":               "<WSSE SECRET>"
 }

@@ -31,6 +31,17 @@ def create_app():
     config = load_config()
     app.config['APP_TITLE'] = config.get('APP_TITLE', 'Codex')
     app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
+
+    # API version selection (default: 2.0)
+    app.config['API_VERSION'] = config.get('API_VERSION', '2.0')
+
+    # OAuth2 credentials (API 2.0)
+    app.config['CLIENT_ID'] = config.get('CLIENT_ID')
+    app.config['CLIENT_SECRET'] = config.get('CLIENT_SECRET')
+    app.config['SCOPES'] = config.get('SCOPES')
+    app.config['ORGANIZATION_ID'] = config.get('ORGANIZATION_ID')
+
+    # WSSE credentials (API 1.4 - also used for processing rules)
     app.config['AW_USERNAME'] = config.get('AW_USERNAME')
     app.config['AW_SECRET'] = config.get('AW_SECRET')
 

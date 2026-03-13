@@ -1,0 +1,451 @@
+"""
+Adobe Analytics API 2.0 Service
+Uses OAuth2 authentication via adobe_auth module
+"""
+import logging
+from typing import Any, Optional
+
+import requests
+
+from app.services.adobe_auth import OAuth2Auth
+
+logger = logging.getLogger(__name__)
+
+
+class AdobeAnalyticsV2Service:
+    """Service for interacting with Adobe Analytics API 2.0"""
+
+    API_BASE = "https://analytics.adobe.io/api"
+
+    # Discovery endpoint to get company ID (globalCompanyId)
+    DISCOVERY_URL = "https://analytics.adobe.io/discovery/me"
+
+    def __init__(self, auth_service: OAuth2Auth, client_id: str, org_id: str):
+        """
+        Initialize the Adobe Analytics 2.0 service
+
+        Args:
+            auth_service: OAuth2Auth instance for token management
+            client_id: API client ID (x-api-key header)
+            org_id: Organization ID (format: XXXXX@AdobeOrg)
+        """
+        self.auth_service = auth_service
+        self.client_id = client_id
+        self.org_id = org_id
+        self._global_company_id: Optional[str] = None
+
+    def _get_headers(self) -> dict:
+        """Get headers required for API requests"""
+        return {
+            "Authorization": f"Bearer {self.auth_service.get_access_token()}",
+            "x-api-key": self.client_id,
+            "x-gw-ims-org-id": self.org_id,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+    def _get_global_company_id(self) -> str:
+        """
+        Get the global company ID via discovery endpoint
+
+        The globalCompanyId is required for all API 2.0 requests.
+        This is cached after first retrieval.
+        """
+        if self._global_company_id:
+            return self._global_company_id
+
+        logger.info("Fetching global company ID from discovery endpoint")
+
+        response = requests.get(
+            self.DISCOVERY_URL,
+            headers=self._get_headers()
+        )
+
+        if not response.ok:
+            logger.error(
+                "Discovery failed: %s %s - %s",
+                response.status_code,
+                response.reason,
+                response.text
+            )
+            response.raise_for_status()
+
+        data = response.json()
+        # Response contains imsOrgs array, each with companies array
+        # Find the company matching our org_id
+        for ims_org in data.get("imsOrgs", []):
+            if ims_org.get("imsOrgId") == self.org_id:
+                companies = ims_org.get("companies", [])
+                if companies:
+                    self._global_company_id = companies[0].get("globalCompanyId")
+                    logger.info("Global company ID: %s", self._global_company_id)
+                    return self._global_company_id
+
+        # Fallback: try first company from first org
+        if data.get("imsOrgs"):
+            companies = data["imsOrgs"][0].get("companies", [])
+            if companies:
+                self._global_company_id = companies[0].get("globalCompanyId")
+                logger.warning(
+                    "Using fallback global company ID: %s",
+                    self._global_company_id
+                )
+                return self._global_company_id
+
+        raise ValueError("Could not determine globalCompanyId from discovery endpoint")
+
+    def _make_request(
+        self,
+        endpoint: str,
+        method: str = "GET",
+        params: dict = None,
+        json_data: dict = None
+    ) -> Any:
+        """
+        Make a request to the Adobe Analytics 2.0 API
+
+        Args:
+            endpoint: API endpoint path (without base URL)
+            method: HTTP method (GET, POST, etc.)
+            params: Query parameters
+            json_data: JSON body for POST requests
+
+        Returns:
+            JSON response from the API
+        """
+        global_company_id = self._get_global_company_id()
+        url = f"{self.API_BASE}/{global_company_id}/{endpoint.lstrip('/')}"
+
+        logger.debug(
+            "Adobe API 2.0 request %s %s params=%s",
+            method,
+            endpoint,
+            list(params.keys()) if params else []
+        )
+
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=self._get_headers(),
+            params=params,
+            json=json_data
+        )
+
+        if not response.ok:
+            logger.error(
+                "Adobe API 2.0 error: %s %s - %s",
+                response.status_code,
+                response.reason,
+                response.text
+            )
+            response.raise_for_status()
+
+        logger.debug(
+            "Adobe API 2.0 response %s status=%s length=%s",
+            endpoint,
+            response.status_code,
+            response.headers.get('Content-Length', 'unknown')
+        )
+
+        return response.json()
+
+    def get_report_suites(self) -> list[dict]:
+        """
+        Get list of report suites (via discovery endpoint)
+
+        Returns:
+            List of report suite dictionaries with rsid and name
+        """
+        global_company_id = self._get_global_company_id()
+
+        # The discovery endpoint already provides report suites
+        response = requests.get(
+            self.DISCOVERY_URL,
+            headers=self._get_headers()
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        report_suites = []
+        for ims_org in data.get("imsOrgs", []):
+            for company in ims_org.get("companies", []):
+                if company.get("globalCompanyId") == global_company_id:
+                    # Note: Discovery doesn't list all RSIDs, we might need
+                    # to use a different approach or the reportSuites endpoint
+                    # For now, return company info
+                    report_suites.append({
+                        "rsid": company.get("companyName", ""),
+                        "company_name": company.get("companyName", ""),
+                        "global_company_id": company.get("globalCompanyId", "")
+                    })
+
+        return report_suites
+
+    def get_dimensions(self, rsid: str) -> list[dict]:
+        """
+        Get all dimensions for a report suite
+
+        This returns both props (traffic variables) and eVars (conversion variables)
+        mixed together. Use filter methods to separate them.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of dimension objects
+        """
+        result = self._make_request(
+            "dimensions",
+            params={"rsid": rsid}
+        )
+
+        # API returns array directly
+        if isinstance(result, list):
+            return result
+        return []
+
+    def get_props(self, rsid: str) -> list[dict]:
+        """
+        Get traffic variables (props) for a report suite
+
+        Props in the 2.0 API are dimensions with id starting with "variables/prop"
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of prop configurations transformed to match 1.4 API format
+        """
+        dimensions = self.get_dimensions(rsid)
+
+        props = []
+        for dim in dimensions:
+            dim_id = dim.get("id", "")
+            # Props have IDs like "variables/prop1", "variables/prop2", etc.
+            if dim_id.startswith("variables/prop"):
+                props.append(self._transform_dimension_to_prop(dim))
+
+        # Sort by prop number
+        props.sort(key=lambda x: self._extract_number(x.get("id", "")))
+        logger.debug("Found %s props for %s", len(props), rsid)
+        return props
+
+    def get_evars(self, rsid: str) -> list[dict]:
+        """
+        Get conversion variables (eVars) for a report suite
+
+        eVars in the 2.0 API are dimensions with id starting with "variables/evar"
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of eVar configurations transformed to match 1.4 API format
+        """
+        dimensions = self.get_dimensions(rsid)
+
+        evars = []
+        for dim in dimensions:
+            dim_id = dim.get("id", "")
+            # eVars have IDs like "variables/evar1", "variables/evar2", etc.
+            if dim_id.startswith("variables/evar"):
+                evars.append(self._transform_dimension_to_evar(dim))
+
+        # Sort by evar number
+        evars.sort(key=lambda x: self._extract_number(x.get("id", "")))
+        logger.debug("Found %s eVars for %s", len(evars), rsid)
+        return evars
+
+    def get_metrics(self, rsid: str) -> list[dict]:
+        """
+        Get all metrics for a report suite
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of metric objects
+        """
+        result = self._make_request(
+            "metrics",
+            params={"rsid": rsid}
+        )
+
+        if isinstance(result, list):
+            return result
+        return []
+
+    def get_success_events(self, rsid: str) -> list[dict]:
+        """
+        Get success events for a report suite
+
+        Events in the 2.0 API are metrics with id starting with "metrics/event"
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of event configurations transformed to match 1.4 API format
+        """
+        metrics = self.get_metrics(rsid)
+
+        events = []
+        for metric in metrics:
+            metric_id = metric.get("id", "")
+            # Events have IDs like "metrics/event1", "metrics/event2", etc.
+            if metric_id.startswith("metrics/event"):
+                events.append(self._transform_metric_to_event(metric))
+
+        # Sort by event number
+        events.sort(key=lambda x: self._extract_number(x.get("id", "")))
+        logger.debug("Found %s success events for %s", len(events), rsid)
+        return events
+
+    def get_list_variables(self, rsid: str) -> list[dict]:
+        """
+        Get list variables for a report suite
+
+        List variables in the 2.0 API are dimensions with id containing "listvar"
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of list variable configurations
+        """
+        dimensions = self.get_dimensions(rsid)
+
+        listvars = []
+        for dim in dimensions:
+            dim_id = dim.get("id", "")
+            # List vars have IDs like "variables/listvar1", etc.
+            if "listvar" in dim_id.lower() or dim_id.startswith("variables/list"):
+                listvars.append(self._transform_dimension_to_listvar(dim))
+
+        logger.debug("Found %s list variables for %s", len(listvars), rsid)
+        return listvars
+
+    def get_marketing_channels(self, rsid: str) -> list[dict]:
+        """
+        Get marketing channels for a report suite
+
+        Note: Marketing channel configuration may have limited availability
+        in the 2.0 API. This attempts to retrieve what's available.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of marketing channel configurations
+        """
+        # Marketing channels in 2.0 API are accessed via dimensions
+        # Look for marketing channel related dimensions
+        dimensions = self.get_dimensions(rsid)
+
+        channels = []
+        for dim in dimensions:
+            dim_id = dim.get("id", "")
+            if "marketingchannel" in dim_id.lower() or "channel" in dim.get("name", "").lower():
+                channels.append({
+                    "name": dim.get("name", ""),
+                    "channel_id": dim_id,
+                    "enabled": True,  # Assumption: if visible, it's enabled
+                    "override_last_touch_channel": ""  # Not available in 2.0
+                })
+
+        logger.debug("Found %s marketing channels for %s", len(channels), rsid)
+        return channels
+
+    def get_marketing_channel_rules(self, rsid: str) -> list[dict]:
+        """
+        Get marketing channel rules for a report suite
+
+        Note: Marketing channel RULES are NOT available in the 2.0 API.
+        This method returns an empty list with a warning.
+        Use the 1.4 API for marketing channel rules.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            Empty list (rules not available in 2.0 API)
+        """
+        logger.warning(
+            "Marketing channel rules are not available in API 2.0. "
+            "Use API 1.4 for this endpoint. RSID: %s",
+            rsid
+        )
+        return []
+
+    # -------------------------------------------------------------------------
+    # Transform methods to convert 2.0 API responses to 1.4 format
+    # -------------------------------------------------------------------------
+
+    def _transform_dimension_to_prop(self, dim: dict) -> dict:
+        """Transform a 2.0 dimension to 1.4 prop format"""
+        dim_id = dim.get("id", "")
+        # Extract prop number from "variables/prop1" -> "prop1"
+        prop_id = dim_id.replace("variables/", "")
+
+        return {
+            "id": prop_id,
+            "name": dim.get("name", ""),
+            "pathing_enabled": dim.get("pathingEnabled", False),
+            "list_enabled": dim.get("listEnabled", False),
+            "list_delimiter": dim.get("listDelimiter", ""),
+            "description": dim.get("description", "")
+        }
+
+    def _transform_dimension_to_evar(self, dim: dict) -> dict:
+        """Transform a 2.0 dimension to 1.4 eVar format"""
+        dim_id = dim.get("id", "")
+        # Extract evar number from "variables/evar1" -> "evar1"
+        evar_id = dim_id.replace("variables/", "")
+
+        return {
+            "id": evar_id,
+            "name": dim.get("name", ""),
+            "type": dim.get("type", "text string"),
+            "expiration_type": dim.get("expirationType", ""),
+            "allocation_type": dim.get("allocationModel", {}).get("name", ""),
+            "description": dim.get("description", "")
+        }
+
+    def _transform_metric_to_event(self, metric: dict) -> dict:
+        """Transform a 2.0 metric to 1.4 event format"""
+        metric_id = metric.get("id", "")
+        # Extract event number from "metrics/event1" -> "event1"
+        event_id = metric_id.replace("metrics/", "")
+
+        return {
+            "id": event_id,
+            "name": metric.get("name", ""),
+            "type": metric.get("type", ""),
+            "serialization": metric.get("serialization", ""),
+            "description": metric.get("description", "")
+        }
+
+    def _transform_dimension_to_listvar(self, dim: dict) -> dict:
+        """Transform a 2.0 dimension to 1.4 list variable format"""
+        dim_id = dim.get("id", "")
+        listvar_id = dim_id.replace("variables/", "")
+
+        return {
+            "name": listvar_id,
+            "allocation_type": dim.get("allocationModel", {}).get("name", ""),
+            "enabled": True,  # If it's returned, it's enabled
+            "value_delimiter": dim.get("delimiter", ""),
+            "max_values": dim.get("maxValues", ""),
+            "id": listvar_id,
+            "expiration_custom_days": "",
+            "expiration_type": dim.get("expirationType", ""),
+            "description": dim.get("description", "")
+        }
+
+    @staticmethod
+    def _extract_number(s: str) -> int:
+        """Extract numeric suffix from a string like 'prop1' -> 1"""
+        import re
+        match = re.search(r'(\d+)$', s)
+        return int(match.group(1)) if match else 0
+

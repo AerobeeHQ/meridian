@@ -6,6 +6,8 @@ import io
 from flask import Blueprint, render_template, current_app, Response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
+from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
+from app.services.adobe_auth import OAuth2Auth
 from app.services.cache import CacheService
 
 
@@ -14,13 +16,65 @@ main_bp = Blueprint('main', __name__)
 # Initialize cache service
 cache = CacheService()
 
+# Cache for API service instances (per-request initialization is expensive)
+_api_service_v2 = None
+_api_service_v14 = None
 
-def get_api_service() -> AdobeAnalyticsService:
-    """Get configured Adobe Analytics service"""
-    return AdobeAnalyticsService(
-        username=current_app.config['AW_USERNAME'],
-        secret=current_app.config['AW_SECRET']
-    )
+
+def get_api_version() -> str:
+    """Get configured API version (default: 2.0)"""
+    return current_app.config.get('API_VERSION', '2.0')
+
+
+def get_api_service():
+    """
+    Get configured Adobe Analytics service based on API_VERSION config
+
+    Returns:
+        AdobeAnalyticsV2Service for API 2.0, or AdobeAnalyticsService for 1.4
+    """
+    global _api_service_v2, _api_service_v14
+
+    api_version = get_api_version()
+
+    if api_version == '2.0':
+        if _api_service_v2 is None:
+            auth = OAuth2Auth(
+                client_id=current_app.config['CLIENT_ID'],
+                client_secret=current_app.config['CLIENT_SECRET'],
+                scopes=current_app.config.get('SCOPES')
+            )
+            _api_service_v2 = AdobeAnalyticsV2Service(
+                auth_service=auth,
+                client_id=current_app.config['CLIENT_ID'],
+                org_id=current_app.config['ORGANIZATION_ID']
+            )
+        return _api_service_v2
+    else:
+        # API 1.4 (legacy)
+        if _api_service_v14 is None:
+            _api_service_v14 = AdobeAnalyticsService(
+                username=current_app.config['AW_USERNAME'],
+                secret=current_app.config['AW_SECRET']
+            )
+        return _api_service_v14
+
+
+def get_api_service_v14() -> AdobeAnalyticsService:
+    """
+    Get API 1.4 service (used for processing rules which aren't in 2.0)
+
+    Returns:
+        AdobeAnalyticsService configured for API 1.4
+    """
+    global _api_service_v14
+
+    if _api_service_v14 is None:
+        _api_service_v14 = AdobeAnalyticsService(
+            username=current_app.config['AW_USERNAME'],
+            secret=current_app.config['AW_SECRET']
+        )
+    return _api_service_v14
 
 
 def get_rsid() -> str:
@@ -278,8 +332,9 @@ def listvars_export():
 
 @main_bp.route('/processing-rules')
 def processing_rules():
-    """Display processing rules"""
-    api = get_api_service()
+    """Display processing rules (always uses API 1.4 - not available in 2.0)"""
+    # Processing rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
@@ -300,8 +355,9 @@ def processing_rules():
 
 @main_bp.route('/processing-rules/export')
 def processing_rules_export():
-    """Export processing rules as CSV"""
-    api = get_api_service()
+    """Export processing rules as CSV (always uses API 1.4)"""
+    # Processing rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
