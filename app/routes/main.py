@@ -233,6 +233,52 @@ def props_export():
     return generate_csv(data, f'{rsid}_props.csv')
 
 
+@main_bp.route('/props/<prop_id>')
+def prop_detail(prop_id: str):
+    """Display detail page for a specific prop"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize prop_id to API format (e.g., 'prop1' -> 'variables/prop1')
+    dimension_id = f"variables/{prop_id}" if not prop_id.startswith("variables/") else prop_id
+    display_id = prop_id.replace("variables/", "")
+
+    # Get dimension configuration (cached)
+    dimension = get_cached_data(
+        f'prop_detail_{display_id}',
+        lambda: api.get_dimension(rsid, dimension_id)
+    )
+
+    # Get top 10 values using occurrences (cached)
+    top_items = get_cached_data(
+        f'prop_top_{display_id}',
+        lambda: api.get_top_items(rsid, dimension_id, metric="occurrences", limit=10, days=30)
+    )
+
+    # Get trend data (cached)
+    trend_data = get_cached_data(
+        f'prop_trend_{display_id}',
+        lambda: api.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
+    )
+
+    return render_template(
+        'detail.html',
+        title=f'{display_id}: {dimension.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        dimension=dimension,
+        dimension_id=display_id,
+        dimension_type='prop',
+        dimension_type_label='Traffic Variable (Prop)',
+        top_items=top_items,
+        trend_data=trend_data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='props',
+        back_url='/props',
+        back_label='Back to Props Listing'
+    )
+
+
 @main_bp.route('/evars')
 def evars():
     """Display conversion variables (eVars)"""
@@ -265,6 +311,52 @@ def evars_export():
     data = transform_data(raw_data, EVARS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_evars.csv')
+
+
+@main_bp.route('/evars/<evar_id>')
+def evar_detail(evar_id: str):
+    """Display detail page for a specific eVar"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize evar_id to API format (e.g., 'evar1' -> 'variables/evar1')
+    dimension_id = f"variables/{evar_id}" if not evar_id.startswith("variables/") else evar_id
+    display_id = evar_id.replace("variables/", "")
+
+    # Get dimension configuration (cached)
+    dimension = get_cached_data(
+        f'evar_detail_{display_id}',
+        lambda: api.get_dimension(rsid, dimension_id)
+    )
+
+    # Get top 10 values using instances (cached)
+    top_items = get_cached_data(
+        f'evar_top_{display_id}',
+        lambda: api.get_top_items(rsid, dimension_id, metric="instances", limit=10, days=30)
+    )
+
+    # Get trend data (cached)
+    trend_data = get_cached_data(
+        f'evar_trend_{display_id}',
+        lambda: api.get_dimension_trend(rsid, dimension_id, metric="instances", days=30)
+    )
+
+    return render_template(
+        'detail.html',
+        title=f'{display_id}: {dimension.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        dimension=dimension,
+        dimension_id=display_id,
+        dimension_type='evar',
+        dimension_type_label='Conversion Variable (eVar)',
+        top_items=top_items,
+        trend_data=trend_data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='evars',
+        back_url='/evars',
+        back_label='Back to eVars Listing'
+    )
 
 
 @main_bp.route('/events')
