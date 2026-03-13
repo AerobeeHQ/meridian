@@ -399,10 +399,10 @@ def evar_detail(evar_id: str):
         return api.get_dimension(rsid, dimension_id)
 
     def fetch_top_items():
-        return api.get_top_items(rsid, dimension_id, metric="instances", limit=10, days=30)
+        return api.get_top_items(rsid, dimension_id, metric="occurrences", limit=10, days=30)
 
     def fetch_trend():
-        return api.get_dimension_trend(rsid, dimension_id, metric="instances", days=30)
+        return api.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
 
     # Quick Win #2: Check cache first, then parallelize needed API calls
     dimension = cache.get(rsid, f'evar_detail_{display_id}')

@@ -30,7 +30,7 @@
                         </tr>
                         <tr>
                             <th>Status</th>
-                            <td>{{ 'Active (Collecting Data)' if dimension.reportable else 'Inactive' }}</td>
+                            <td>{{ 'Active (Collecting Data)' if (top_items and top_items|length > 0) or (trend_data and trend_data['values'] and trend_data['values']|sum > 0) else 'No Data (Last 30 Days)' }}</td>
                         </tr>
                         {% if dimension_type == 'prop' %}
                         <tr>
