@@ -189,3 +189,4 @@ notebooks/**/.github/
 *.swp
 *.swo
 .DS_Store
+config_*.json

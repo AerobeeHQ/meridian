@@ -35,14 +35,29 @@ def check_config():
         print(f"FAIL - Invalid JSON: {e}")
         return False
 
-    required_keys = ['APP_TITLE', 'AW_REPORTSUITE_ID', 'AW_USERNAME', 'AW_SECRET']
+    # Check API version and validate appropriate credentials
+    api_version = config.get('API_VERSION', '2.0')
+
+    # Always required
+    base_required = ['APP_TITLE', 'AW_REPORTSUITE_ID']
+
+    if api_version == '2.0':
+        # OAuth2 credentials required for API 2.0
+        oauth_required = ['CLIENT_ID', 'CLIENT_SECRET', 'ORGANIZATION_ID']
+        # WSSE credentials still needed for processing rules (not in 2.0 API)
+        wsse_required = ['AW_USERNAME', 'AW_SECRET']
+        required_keys = base_required + oauth_required + wsse_required
+    else:
+        # API 1.4 only needs WSSE
+        required_keys = base_required + ['AW_USERNAME', 'AW_SECRET']
+
     missing = [k for k in required_keys if not config.get(k)]
 
     if missing:
         print(f"FAIL - Missing keys: {', '.join(missing)}")
         return False
 
-    print("OK")
+    print(f"OK (API {api_version})")
     return True
 
 
@@ -50,7 +65,8 @@ def check_imports():
     """Check required packages can be imported"""
     print("Checking imports...", end=" ")
 
-    packages = ['flask', 'requests', 'pandas']
+    # Core dependencies only (flask, requests)
+    packages = ['flask', 'requests']
     missing = []
 
     for pkg in packages:
@@ -61,7 +77,7 @@ def check_imports():
 
     if missing:
         print(f"FAIL - Missing packages: {', '.join(missing)}")
-        print("  Run: pip install -r requirements.txt")
+        print("  Run: uv sync")
         return False
 
     print("OK")

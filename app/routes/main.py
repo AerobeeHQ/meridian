@@ -6,6 +6,8 @@ import io
 from flask import Blueprint, render_template, current_app, Response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
+from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
+from app.services.adobe_auth import OAuth2Auth
 from app.services.cache import CacheService
 
 
@@ -15,12 +17,60 @@ main_bp = Blueprint('main', __name__)
 cache = CacheService()
 
 
-def get_api_service() -> AdobeAnalyticsService:
-    """Get configured Adobe Analytics service"""
-    return AdobeAnalyticsService(
-        username=current_app.config['AW_USERNAME'],
-        secret=current_app.config['AW_SECRET']
-    )
+def get_api_version() -> str:
+    """Get configured API version (default: 2.0)"""
+    return current_app.config.get('API_VERSION', '2.0')
+
+
+def get_api_service():
+    """
+    Get configured Adobe Analytics service based on API_VERSION config.
+
+    Service instances are stored on the Flask app object so each
+    ``create_app()`` call gets its own instance (avoids stale state
+    when the factory is called multiple times, e.g. in tests).
+
+    Returns:
+        AdobeAnalyticsV2Service for API 2.0, or AdobeAnalyticsService for 1.4
+    """
+    app = current_app._get_current_object()
+    api_version = get_api_version()
+
+    if api_version == '2.0':
+        if not hasattr(app, 'codex_api_service_v2'):
+            auth = OAuth2Auth(
+                client_id=current_app.config['CLIENT_ID'],
+                client_secret=current_app.config['CLIENT_SECRET'],
+                scopes=current_app.config.get('SCOPES')
+            )
+            app.codex_api_service_v2 = AdobeAnalyticsV2Service(
+                auth_service=auth,
+                client_id=current_app.config['CLIENT_ID'],
+                org_id=current_app.config['ORGANIZATION_ID']
+            )
+        return app.codex_api_service_v2
+    else:
+        # API 1.4 (legacy)
+        return get_api_service_v14()
+
+
+def get_api_service_v14() -> AdobeAnalyticsService:
+    """
+    Get API 1.4 service (used for processing rules which aren't in 2.0).
+
+    Stored on the app instance for the same reason as ``get_api_service``.
+
+    Returns:
+        AdobeAnalyticsService configured for API 1.4
+    """
+    app = current_app._get_current_object()
+
+    if not hasattr(app, 'codex_api_service_v14'):
+        app.codex_api_service_v14 = AdobeAnalyticsService(
+            username=current_app.config['AW_USERNAME'],
+            secret=current_app.config['AW_SECRET']
+        )
+    return app.codex_api_service_v14
 
 
 def get_rsid() -> str:
@@ -244,8 +294,9 @@ def events_export():
 
 @main_bp.route('/listvars')
 def listvars():
-    """Display list variables"""
-    api = get_api_service()
+    """Display list variables (uses API 1.4 for full config data)"""
+    # List variable config is better exposed in API 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
@@ -266,8 +317,8 @@ def listvars():
 
 @main_bp.route('/listvars/export')
 def listvars_export():
-    """Export list variables as CSV"""
-    api = get_api_service()
+    """Export list variables as CSV (uses API 1.4)"""
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
@@ -278,8 +329,9 @@ def listvars_export():
 
 @main_bp.route('/processing-rules')
 def processing_rules():
-    """Display processing rules"""
-    api = get_api_service()
+    """Display processing rules (always uses API 1.4 - not available in 2.0)"""
+    # Processing rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
@@ -300,8 +352,9 @@ def processing_rules():
 
 @main_bp.route('/processing-rules/export')
 def processing_rules_export():
-    """Export processing rules as CSV"""
-    api = get_api_service()
+    """Export processing rules as CSV (always uses API 1.4)"""
+    # Processing rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
@@ -312,8 +365,9 @@ def processing_rules_export():
 
 @main_bp.route('/marketing-channels')
 def marketing_channels():
-    """Display marketing channels"""
-    api = get_api_service()
+    """Display marketing channels (uses API 1.4 for full config data)"""
+    # Marketing channel config is better exposed in API 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
@@ -334,8 +388,8 @@ def marketing_channels():
 
 @main_bp.route('/marketing-channels/export')
 def marketing_channels_export():
-    """Export marketing channels as CSV"""
-    api = get_api_service()
+    """Export marketing channels as CSV (uses API 1.4)"""
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
@@ -346,8 +400,9 @@ def marketing_channels_export():
 
 @main_bp.route('/channel-rules')
 def channel_rules():
-    """Display marketing channel rules"""
-    api = get_api_service()
+    """Display marketing channel rules (always uses API 1.4 - not available in 2.0)"""
+    # Channel rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
@@ -368,8 +423,9 @@ def channel_rules():
 
 @main_bp.route('/channel-rules/export')
 def channel_rules_export():
-    """Export channel rules as CSV"""
-    api = get_api_service()
+    """Export channel rules as CSV (always uses API 1.4)"""
+    # Channel rules are NOT available in API 2.0, so we always use 1.4
+    api = get_api_service_v14()
     rsid = get_rsid()
 
     raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
