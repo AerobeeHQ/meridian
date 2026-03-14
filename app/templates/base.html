@@ -67,6 +67,13 @@
         .dataTables_wrapper .dt-buttons .btn {
             margin-right: 5px;
         }
+        .table-hover tbody tr:hover {
+            --bs-table-bg: #EFF4FA !important;
+        }
+        /* Selected row styling (click to toggle) */
+        .table tbody tr.selected {
+            --bs-table-bg: #d4e5f7 !important;
+        }
     </style>
 </head>
 <body>
@@ -178,6 +185,31 @@
                 document.title = document.title + ' - Dev';
             }
         }
+    </script>
+
+    <!-- Row click-to-highlight -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('dataTable');
+            if (!table) return;
+
+            table.addEventListener('click', function(e) {
+                const row = e.target.closest('tbody tr');
+                if (!row) return;
+
+                // If clicking a link, don't toggle selection
+                if (e.target.tagName === 'A') return;
+
+                // Toggle: if already selected, deselect; otherwise select this row only
+                if (row.classList.contains('selected')) {
+                    row.classList.remove('selected');
+                } else {
+                    // Remove selection from any other row
+                    table.querySelectorAll('tbody tr.selected').forEach(r => r.classList.remove('selected'));
+                    row.classList.add('selected');
+                }
+            });
+        });
     </script>
 
     {% block scripts %}{% endblock %}
