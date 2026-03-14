@@ -628,6 +628,92 @@ def listvars_export():
     return generate_csv(data, f'{rsid}_listvars.csv')
 
 
+@main_bp.route('/listvars/<listvar_name>')
+def listvar_detail(listvar_name: str):
+    """Display detail page for a specific list variable"""
+    api_v14 = get_api_service_v14()
+    api_v2 = get_api_service()
+    rsid = get_rsid()
+
+    # ListVar names are like "List Var 1", "List Var 2", etc.
+    # The API 2.0 dimension ID is like "variables/listvar1"
+    # Extract number from name to build dimension ID
+    import re
+    listvar_match = re.search(r'(\d+)$', listvar_name.replace(' ', ''))
+    listvar_num = listvar_match.group(1) if listvar_match else '1'
+    dimension_id = f"variables/listvar{listvar_num}"
+
+    # Get listvar config from cached API 1.4 data
+    cached_listvars = cache.get(rsid, 'listvars')
+
+    def fetch_listvar():
+        if cached_listvars:
+            for lv in cached_listvars:
+                if lv.get("name") == listvar_name:
+                    return lv
+        # Fetch fresh if not cached
+        listvars = api_v14.get_list_variables(rsid)
+        for lv in listvars:
+            if lv.get("name") == listvar_name:
+                return lv
+        return {}
+
+    def fetch_top_items():
+        return api_v2.get_top_items(rsid, dimension_id, metric="occurrences", limit=10, days=30)
+
+    def fetch_trend():
+        return api_v2.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
+
+    # Check cache first, then parallelize needed API calls
+    listvar = cache.get(rsid, f'listvar_detail_{listvar_num}')
+    top_items = cache.get(rsid, f'listvar_top_{listvar_num}')
+    trend_data = cache.get(rsid, f'listvar_trend_{listvar_num}')
+
+    tasks = {}
+    if listvar is None:
+        tasks['listvar'] = fetch_listvar
+    if top_items is None:
+        tasks['top_items'] = fetch_top_items
+    if trend_data is None:
+        tasks['trend_data'] = fetch_trend
+
+    # Execute needed fetches in parallel
+    if tasks:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(func): key for key, func in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                try:
+                    value = future.result()
+                except Exception:
+                    value = {} if key == 'listvar' else []
+                if key == 'listvar':
+                    cache.set(rsid, f'listvar_detail_{listvar_num}', value)
+                    listvar = value
+                elif key == 'top_items':
+                    cache.set(rsid, f'listvar_top_{listvar_num}', value)
+                    top_items = value
+                elif key == 'trend_data':
+                    cache.set(rsid, f'listvar_trend_{listvar_num}', value)
+                    trend_data = value
+
+    return render_template(
+        'listvar_detail.html',
+        title=f'{listvar_name}',
+        app_title=current_app.config['APP_TITLE'],
+        listvar=listvar or {},
+        listvar_name=listvar_name,
+        listvar_num=listvar_num,
+        top_items=top_items or [],
+        trend_data=trend_data or {},
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='listvars',
+        back_url='/listvars',
+        back_label='Back to ListVars Listing'
+    )
+
+
 @main_bp.route('/processing-rules')
 def processing_rules():
     """Display processing rules (always uses API 1.4 - not available in 2.0)"""

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">{{ listvar_name }}</h4>
+</div>
+
+<div class="row">
+    <!-- ListVar Configuration -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">ListVar Configuration</h5>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th style="width: 40%;">Name</th>
+                            <td>{{ listvar.name or listvar_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>ID</th>
+                            <td>{{ listvar.id or ('listvar' + listvar_num) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Enabled</th>
+                            <td>
+                                {% if listvar.enabled %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Allocation</th>
+                            <td>{{ listvar.allocation_type or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Expiration</th>
+                            <td>
+                                {{ listvar.expiration_type or 'N/A' }}
+                                {% if listvar.expiration_custom_days %}
+                                    ({{ listvar.expiration_custom_days }} days)
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Value Delimiter</th>
+                            <td><code>{{ listvar.value_delimiter or 'N/A' }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Max Values</th>
+                            <td>{{ listvar.max_values or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ listvar.description or 'N/A' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 10 Values -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Top 10 Values (Last 30 Days)</h5>
+                {% if top_items %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th class="text-end">Count</th>
+                            <th class="text-end">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in top_items %}
+                        <tr>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ item.value }}">{{ item.value }}</td>
+                            <td class="text-end">{{ "{:,.0f}".format(item.count) }}</td>
+                            <td class="text-end">{{ item.percentage }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">No data available for the last 30 days.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trend Chart -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        {{ listvar_name }} - Occurrences
+                    </h5>
+                    <span class="badge bg-secondary">Last 30 Days</span>
+                </div>
+
+                {% if trend_data and trend_data['values'] %}
+                <canvas id="trendChart" height="100"></canvas>
+                {% else %}
+                <p class="text-muted">No trend data available for the last 30 days.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics Cards -->
+{% if trend_data and trend_data['stats'] %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Average (Last 30 Days)</h6>
+                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['avg']|default(0)) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Median (Last 30 Days)</h6>
+                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['median']|default(0)) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Peak (Last 30 Days)</h6>
+                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['max']|default(0)) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Min (Last 30 Days)</h6>
+                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['min']|default(0)) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+{% if trend_data and trend_data['values'] %}
+const ctx = document.getElementById('trendChart').getContext('2d');
+
+// Parse dates and create formatted labels (Tufte-style minimal labeling)
+const rawDates = {{ trend_data['dates'] | tojson }};
+const formattedLabels = rawDates.map(dateStr => {
+    // Parse date strings like "Feb 11, 2026" or "Mar 1, 2026"
+    const parts = dateStr.match(/(\w+)\s+(\d+),\s+(\d+)/);
+    if (!parts) return '';
+
+    const month = parts[1];  // "Feb", "Mar", etc.
+    const day = parseInt(parts[2], 10);
+
+    // Show day + month name (stacked) on 1st of month, day number on 8th, 15th, 22nd, 29th
+    if (day === 1) {
+        return ['1', month];  // Multi-line: "1" on top, "Mar" below
+    } else if (day === 8 || day === 15 || day === 22 || day === 29) {
+        return day.toString();  // "8", "15", "22", "29"
+    }
+    return '';  // Empty for other days
+});
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: formattedLabels,
+        datasets: [{
+            label: 'Occurrences',
+            data: {{ trend_data['values'] | tojson }},
+            borderColor: '#4a90d9',
+            backgroundColor: 'rgba(74, 144, 217, 0.1)',
+            fill: true,
+            tension: 0.0,
+            pointRadius: 0,
+            pointHoverRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    title: function(context) {
+                        // Show full date in tooltip
+                        return rawDates[context[0].dataIndex];
+                    },
+                    label: function(context) {
+                        return context.parsed.y.toLocaleString() + ' occurrences';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    maxRotation: 0,
+                    autoSkip: false
+                }
+            },
+            y: {
+                beginAtZero: false,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                },
+                ticks: {
+                    callback: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
+
