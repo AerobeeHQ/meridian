@@ -401,6 +401,104 @@ class AdobeAnalyticsV2Service:
         # Not found
         return {}
 
+    def get_metric(self, rsid: str, metric_id: str) -> dict:
+        """
+        Get details for a single metric/event
+
+        Args:
+            rsid: Report suite ID
+            metric_id: Metric ID (e.g., 'metrics/event1' or 'event1')
+
+        Returns:
+            Metric configuration details
+        """
+        # Ensure metric_id has 'metrics/' prefix for matching
+        if not metric_id.startswith("metrics/"):
+            metric_id = f"metrics/{metric_id}"
+
+        # Get all metrics and filter for the specific one
+        metrics = self.get_metrics(rsid)
+
+        for metric in metrics:
+            if metric.get("id") == metric_id:
+                return metric
+
+        # Not found
+        return {}
+
+    def get_event_trend(
+        self,
+        rsid: str,
+        event_id: str,
+        days: int = 30
+    ) -> dict:
+        """
+        Get daily trend data for an event (total occurrences per day)
+
+        Args:
+            rsid: Report suite ID
+            event_id: Event ID (e.g., 'metrics/event1' or 'event1')
+            days: Number of days to look back
+
+        Returns:
+            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+        """
+        # Ensure event_id has 'metrics/' prefix
+        if not event_id.startswith("metrics/"):
+            event_id = f"metrics/{event_id}"
+
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Build report request for time-series data using the event as the metric
+        request_body = {
+            "rsid": rsid,
+            "globalFilters": [
+                {
+                    "type": "dateRange",
+                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                }
+            ],
+            "metricContainer": {
+                "metrics": [{"id": event_id}]
+            },
+            "dimension": "variables/daterangeday",
+            "settings": {
+                "dimensionSort": "asc",
+                "limit": days + 1
+            }
+        }
+
+        result = self._make_request("reports", method="POST", json_data=request_body)
+
+        # Extract dates and values from response
+        dates = []
+        values = []
+
+        for row in result.get("rows", []):
+            # daterangeday returns dates like "Jan 1, 2024"
+            date_str = row.get("value", "")
+            dates.append(date_str)
+
+            # Get the metric value (first metric in our request)
+            row_data = row.get("data", [0])
+            value = row_data[0] if row_data else 0
+            values.append(value)
+
+        # Calculate statistics
+        stats = {}
+        if values:
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                stats = {
+                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
+                    "median": round(sorted(numeric_values)[len(numeric_values) // 2], 1),
+                    "max": max(numeric_values),
+                    "min": min(numeric_values)
+                }
+
+        return {"dates": dates, "values": values, "stats": stats}
+
     def get_top_items(
         self,
         rsid: str,

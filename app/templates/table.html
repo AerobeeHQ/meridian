@@ -16,11 +16,13 @@
         <tr>
             {% for col in columns %}
             <td {% if col in monospace_columns %}class="monospace"{% endif %}>
-                {# Make Prop and eVar IDs clickable links to detail pages #}
+                {# Make Prop, eVar, and Event IDs clickable links to detail pages #}
                 {% if col == 'Prop' and row[col] %}
                     <a href="/props/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'eVar' and row[col] %}
                     <a href="/evars/{{ row[col] }}">{{ row[col] }}</a>
+                {% elif col == 'Event' and row[col] %}
+                    <a href="/events/{{ row[col] }}">{{ row[col] }}</a>
                 {% else %}
                     {{ row[col] if row[col] is not none else '' }}
                 {% endif %}
