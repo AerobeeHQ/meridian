@@ -210,10 +210,15 @@ def props():
     raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
     
     # Filter props from dimensions and transform
+    # Exclude classifications (IDs containing a dot after the prop number, e.g., prop12.screen-height)
     raw_props = []
     for dim in raw_dimensions:
-        if dim.get("id", "").startswith("variables/prop"):
-            raw_props.append(api._transform_dimension_to_prop(dim))
+        dim_id = dim.get("id", "")
+        if dim_id.startswith("variables/prop"):
+            # Check if this is a classification (has a dot after prop number)
+            prop_part = dim_id.replace("variables/", "")
+            if "." not in prop_part:
+                raw_props.append(api._transform_dimension_to_prop(dim))
     
     # Sort by prop number
     raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
@@ -243,8 +248,12 @@ def props_export():
     raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
     raw_props = []
     for dim in raw_dimensions:
-        if dim.get("id", "").startswith("variables/prop"):
-            raw_props.append(api._transform_dimension_to_prop(dim))
+        dim_id = dim.get("id", "")
+        if dim_id.startswith("variables/prop"):
+            # Exclude classifications (IDs containing a dot after prop number)
+            prop_part = dim_id.replace("variables/", "")
+            if "." not in prop_part:
+                raw_props.append(api._transform_dimension_to_prop(dim))
     raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
     
     data = transform_data(raw_props, PROPS_COLUMNS)
@@ -308,6 +317,19 @@ def prop_detail(prop_id: str):
                     cache.set(rsid, f'prop_trend_{display_id}', value)
                     trend_data = value
 
+    # Find classifications for this prop (dimensions with parent = this dimension's ID)
+    classifications = []
+    if cached_dimensions:
+        for dim in cached_dimensions:
+            if dim.get("parent") == dimension_id:
+                classifications.append({
+                    'id': dim.get("id", "").replace("variables/", ""),
+                    'name': dim.get("name") or dim.get("title", ""),
+                    'description': dim.get("description", "")
+                })
+        # Sort classifications alphabetically by name
+        classifications.sort(key=lambda x: x.get("name", "").lower())
+
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -318,6 +340,7 @@ def prop_detail(prop_id: str):
         dimension_type_label='Traffic Variable (Prop)',
         top_items=top_items,
         trend_data=trend_data,
+        classifications=classifications,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
@@ -336,10 +359,15 @@ def evars():
     raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
     
     # Filter eVars from dimensions and transform
+    # Exclude classifications (IDs containing a dot after the evar number, e.g., evar101.catalogue-name)
     raw_evars = []
     for dim in raw_dimensions:
-        if dim.get("id", "").startswith("variables/evar"):
-            raw_evars.append(api._transform_dimension_to_evar(dim))
+        dim_id = dim.get("id", "")
+        if dim_id.startswith("variables/evar"):
+            # Check if this is a classification (has a dot after evar number)
+            evar_part = dim_id.replace("variables/", "")
+            if "." not in evar_part:
+                raw_evars.append(api._transform_dimension_to_evar(dim))
     
     # Sort by evar number
     raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
@@ -369,8 +397,12 @@ def evars_export():
     raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
     raw_evars = []
     for dim in raw_dimensions:
-        if dim.get("id", "").startswith("variables/evar"):
-            raw_evars.append(api._transform_dimension_to_evar(dim))
+        dim_id = dim.get("id", "")
+        if dim_id.startswith("variables/evar"):
+            # Exclude classifications (IDs containing a dot after evar number)
+            evar_part = dim_id.replace("variables/", "")
+            if "." not in evar_part:
+                raw_evars.append(api._transform_dimension_to_evar(dim))
     raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
     
     data = transform_data(raw_evars, EVARS_COLUMNS)
@@ -433,6 +465,19 @@ def evar_detail(evar_id: str):
                     cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
+    # Find classifications for this eVar (dimensions with parent = this dimension's ID)
+    classifications = []
+    if cached_dimensions:
+        for dim in cached_dimensions:
+            if dim.get("parent") == dimension_id:
+                classifications.append({
+                    'id': dim.get("id", "").replace("variables/", ""),
+                    'name': dim.get("name") or dim.get("title", ""),
+                    'description': dim.get("description", "")
+                })
+        # Sort classifications alphabetically by name
+        classifications.sort(key=lambda x: x.get("name", "").lower())
+
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -443,6 +488,7 @@ def evar_detail(evar_id: str):
         dimension_type_label='Conversion Variable (eVar)',
         top_items=top_items,
         trend_data=trend_data,
+        classifications=classifications,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
