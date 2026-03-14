@@ -531,6 +531,68 @@ def events_export():
     return generate_csv(data, f'{rsid}_events.csv')
 
 
+@main_bp.route('/events/<event_id>')
+def event_detail(event_id: str):
+    """Display detail page for a specific event"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize event_id to API format (e.g., 'event1' -> 'metrics/event1')
+    metric_id = f"metrics/{event_id}" if not event_id.startswith("metrics/") else event_id
+    display_id = event_id.replace("metrics/", "")
+
+    # Try to get metric from already-cached metrics list
+    cached_metrics = cache.get(rsid, 'metrics')
+
+    def fetch_metric():
+        if cached_metrics:
+            for metric in cached_metrics:
+                if metric.get("id") == metric_id:
+                    return metric
+        return api.get_metric(rsid, metric_id)
+
+    def fetch_trend():
+        return api.get_event_trend(rsid, metric_id, days=30)
+
+    # Check cache first, then parallelize needed API calls
+    metric = cache.get(rsid, f'event_detail_{display_id}')
+    trend_data = cache.get(rsid, f'event_trend_{display_id}')
+
+    tasks = {}
+    if metric is None:
+        tasks['metric'] = fetch_metric
+    if trend_data is None:
+        tasks['trend_data'] = fetch_trend
+
+    # Execute needed fetches in parallel
+    if tasks:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = {executor.submit(func): key for key, func in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                value = future.result()
+                if key == 'metric':
+                    cache.set(rsid, f'event_detail_{display_id}', value)
+                    metric = value
+                elif key == 'trend_data':
+                    cache.set(rsid, f'event_trend_{display_id}', value)
+                    trend_data = value
+
+    return render_template(
+        'event_detail.html',
+        title=f'{display_id}: {metric.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        metric=metric,
+        event_id=display_id,
+        trend_data=trend_data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='events',
+        back_url='/events',
+        back_label='Back to Events Listing'
+    )
+
+
 @main_bp.route('/listvars')
 def listvars():
     """Display list variables (uses API 1.4 for full config data)"""
