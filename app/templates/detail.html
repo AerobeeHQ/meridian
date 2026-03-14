@@ -30,7 +30,7 @@
                         </tr>
                         <tr>
                             <th>Status</th>
-                            <td>{{ 'Active (Collecting Data)' if dimension.reportable else 'Inactive' }}</td>
+                            <td>{{ 'Active (Collecting Data)' if (top_items and top_items|length > 0) or (trend_data and trend_data['values'] and trend_data['values']|sum > 0) else 'No Data (Last 30 Days)' }}</td>
                         </tr>
                         {% if dimension_type == 'prop' %}
                         <tr>
@@ -61,6 +61,21 @@
                         </tr>
                     </tbody>
                 </table>
+
+                {% if classifications and classifications|length > 0 %}
+                <hr class="my-3">
+                <h6 class="mb-3">Classifications ({{ classifications|length }})</h6>
+                <ul class="list-unstyled mb-0">
+                    {% for classification in classifications %}
+                    <li class="mb-2">
+                        <a href="/{{ dimension_type }}s/{{ classification.id }}">{{ classification.name }}</a>
+                        {% if classification.description %}
+                        <br><small class="text-muted">{{ classification.description }}</small>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
             </div>
         </div>
     </div>

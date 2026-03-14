@@ -322,10 +322,15 @@ class AdobeAnalyticsV2Service:
         dim_id = dim.get("id", "")
         # Extract prop number from "variables/prop1" -> "prop1"
         prop_id = dim_id.replace("variables/", "")
+        
+        # Extract status from reportable list (e.g., ['oberon'] -> 'oberon')
+        reportable = dim.get("reportable", [])
+        status = ", ".join(reportable) if reportable else ""
 
         return {
             "id": prop_id,
             "name": dim.get("name", ""),
+            "status": status,
             "pathing_enabled": dim.get("pathingEnabled", False),
             "list_enabled": dim.get("listEnabled", False),
             "list_delimiter": dim.get("listDelimiter", ""),
@@ -337,10 +342,15 @@ class AdobeAnalyticsV2Service:
         dim_id = dim.get("id", "")
         # Extract evar number from "variables/evar1" -> "evar1"
         evar_id = dim_id.replace("variables/", "")
+        
+        # Extract status from reportable list (e.g., ['oberon'] -> 'oberon')
+        reportable = dim.get("reportable", [])
+        status = ", ".join(reportable) if reportable else ""
 
         return {
             "id": evar_id,
             "name": dim.get("name", ""),
+            "status": status,
             "type": dim.get("type", "text string"),
             "expiration_type": dim.get("expirationType", ""),
             "allocation_type": dim.get("allocationModel", {}).get("name", ""),
