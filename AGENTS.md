@@ -1,16 +1,21 @@
 # AI Agent & Copilot Guide for Codex
 
 ## 1. Project Context
-**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr), aiming for **MVP velocity**.
+**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr), aiming for **MVP velocity**.
 
 ## 2. Architecture & Tech Stack
 - **Framework**: Flask (`app/routes/`, `app/templates/`).
-- **Data Source**: Adobe Analytics API 1.4 via **WSSE Authentication**.
+- **Data Source**: Hybrid Adobe Analytics APIs.
+  - **API 2.0 (default)** via OAuth2 (`adobe_auth.py`, `adobe_analytics_v2.py`)
+  - **API 1.4 (legacy)** via WSSE (`adobe_analytics.py`) for endpoints still unavailable in 2.0 (for example processing rules).
 - **Service Layer**:
-  - `app/services/adobe_analytics.py`: Custom raw HTTP client. **Manually constructs X-WSSE header**.
+  - `app/services/adobe_analytics_v2.py`: OAuth2-backed Analytics 2.0 client.
+  - `app/services/adobe_analytics.py`: Legacy 1.4 client. **Manually constructs X-WSSE header**.
+  - `app/services/adobe_auth.py`: OAuth2 token acquisition and caching.
   - `app/services/cache.py`: JSON file-based caching (hourly expiry).
 - **Frontend**: Server-side rendered Jinja2 templates.
-- **Dependencies**: `pandas`, `ipyleaflet`. Python 3.13+.
+- **Package/Env Management**: `uv` (`pyproject.toml`, `uv.lock`).
+- **Runtime/Dependencies**: Python 3.13+, `flask`, `requests`.
 
 ## 3. User & Developer Context (Crucial)
 - **User Profile**: Strong JavaScript background, **Beginner in Python**.
@@ -19,18 +24,23 @@
   - *Testing*: **Manual testing only**. No unit tests. Reliant on `verify_setup.py`.
 
 ## 4. Critical Workflows
-- **Startup**: `python run.py` (Default: http://127.0.0.1:5010).
-- **Health Check**: `python verify_setup.py` (Checks config, directories, imports).
+- **Install/Sync**: `uv sync`.
+- **Startup**: `uv run run.py` (Default: http://127.0.0.1:5010).
+- **Health Check**: `uv run verify_setup.py` (checks config, directories, imports).
 - **Docker**: `docker compose up -d --build`.
 - **Config**: `config.json` (git-ignored). Template: `config.dist.json`.
-  - Required: `AW_USERNAME`, `AW_SECRET`, `AW_REPORTSUITE_ID`.
+  - Always required: `APP_TITLE`, `AW_REPORTSUITE_ID`.
+  - API 2.0 required: `API_VERSION=2.0`, `CLIENT_ID`, `CLIENT_SECRET`, `ORGANIZATION_ID` (and optional `SCOPES`).
+  - API 1.4 required: `AW_USERNAME`, `AW_SECRET`.
+  - Note: Even with `API_VERSION=2.0`, WSSE credentials are still needed for legacy 1.4-only routes.
 
 ## 5. Coding & Implementation Guidelines
 - **API Requests**:
   - **Always** wrap calls with cache: `cache.get_or_set(rsid, key, fetch_function)`.
-  - Use `AdobeAnalyticsService` for all 1.4 API calls.
+  - Use `AdobeAnalyticsV2Service` by default for 2.0-supported resources.
+  - Use `AdobeAnalyticsService` (`get_api_service_v14`) for 1.4-only resources.
 - **New Features**:
-  1. Add Service method (`app/services/adobe_analytics.py`).
+  1. Add Service method in the correct service (`adobe_analytics_v2.py` or `adobe_analytics.py`).
   2. Add Route (`app/routes/main.py`) with Caching.
   3. Add Template (`app/templates/`).
 - **Jupyter Notebooks**:
@@ -41,6 +51,8 @@
 
 ## 6. Key Files
 - `app/routes/main.py`: Core application logic.
-- `app/services/adobe_analytics.py`: API Wrapper & Authentication.
+- `app/services/adobe_analytics_v2.py`: API 2.0 wrapper.
+- `app/services/adobe_analytics.py`: API 1.4 wrapper.
+- `app/services/adobe_auth.py`: OAuth2 auth/token management.
+- `verify_setup.py`: Local setup and configuration checks.
 - `notebooks/`: Exploratory scripts.
-

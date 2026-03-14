@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-**Codex** is a Python-based project for displaying the configuration of Adobe Analytics eVars, Traffic Variables, Success Events, ListVars, Processing Rules, and Marketing Channels.
-
-It is based on [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) using the [RSiteCatalyst](https://randyzwitch.com/rsitecatalyst/) package that calls the [Adobe Analytics API 1.4](https://developer.adobe.com/analytics-apis/docs/1.4/) using WSSE authentication.
+**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr), aiming for **MVP velocity**.
 
 **Key Objectives:**
 - Display configuration of Conversion Variables (eVars), Traffic Variables (props), Success Events, ListVars
@@ -13,64 +11,77 @@ It is based on [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) using the
 - Top values for eVars/props to validate naming, cardinality, and usage
 - Quick configuration snapshots for documentation and audits
 
-## Technical Context
+## Architecture & Tech Stack
 
-### Project Dependencies
-- **Python 3.13+** (user has JavaScript background, beginner in Python)
-- **TO BE DETERMINED** - Adobe Analytics API 1.4 wrapper
-- **pandas** (>2.0.0) - Data manipulation and analysis
-- **ipywidgets** - Interactive Jupyter notebook widgets
-- **ipyleaflet** (>=0.17.0, <1.0.0) - Mapping visualization
-- **Flask>=2.0.0**
-- **Werkzeug>=3.0.0**
+- **Framework**: Flask (`app/routes/`, `app/templates/`)
+- **Frontend**: Server-side rendered Jinja2 templates
+- **Data Source**: Hybrid Adobe Analytics APIs
+  - **API 2.0 (default)** via OAuth2 (`adobe_auth.py`, `adobe_analytics_v2.py`)
+  - **API 1.4 (legacy)** via WSSE (`adobe_analytics.py`) for endpoints still unavailable in 2.0 (e.g., processing rules)
+- **Service Layer**:
+  - `app/services/adobe_analytics_v2.py`: OAuth2-backed Analytics 2.0 client
+  - `app/services/adobe_analytics.py`: Legacy 1.4 client (manually constructs X-WSSE header)
+  - `app/services/adobe_auth.py`: OAuth2 token acquisition and caching
+  - `app/services/cache.py`: JSON file-based caching (hourly expiry)
+- **Package/Env Management**: `uv` (`pyproject.toml`, `uv.lock`)
+- **Runtime/Dependencies**: Python 3.13+, `flask`, `requests`
 
-### Build, Test, and Verification Procedures
+## User & Developer Context (Crucial)
 
-#### Setup and Installation
+- **User Profile**: Strong JavaScript background, **Beginner in Python**
+  - *Action*: Explain Python concepts clearly. Avoid overly "pythonic" code if a JS-style approach is readable.
+- **Philosophy**: **MVP Velocity**. Speed over perfection. Code is disposable.
+  - *Testing*: **Manual testing only**. No unit tests. Reliant on `verify_setup.py`.
+
+## Build, Test, and Verification Procedures
+
+### Setup and Installation
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Verify setup (checks imports, config, app structure)
-python verify_setup.py
+# Install/sync dependencies
+uv sync
 ```
 
-#### Running the Application
+### Running the Application
 ```bash
 # Start Flask development server
-python run.py
+uv run run.py
 
 # Default: http://127.0.0.1:5010
-# Custom port: PORT=5011 python run.py
+# Custom port: PORT=5011 uv run run.py
 ```
 
-#### Testing Strategy
+### Health Check
+```bash
+# Verify setup (checks config, directories, imports)
+uv run verify_setup.py
+```
+
+### Testing Strategy
 **Important**: This project intentionally has **no formal test suite** to maintain MVP velocity.
 
 **Manual Testing Workflow:**
-1. Run `python verify_setup.py` to check basic health
-2. Start the application with `python run.py`
+1. Run `uv run verify_setup.py` to check basic health
+2. Start the application with `uv run run.py`
 3. Test changes by navigating through the web interface
 4. Verify exports work by checking the `exports/` directory
-5. For data exploration features, test in Jupyter notebooks
 
 **When Making Changes:**
 - Always test by running the application manually
 - Verify all Flask routes still load without errors
-- Check that Adobe Analytics API 1.4 service methods return expected data
+- Check that Adobe Analytics API service methods return expected data
 - Ensure exports directory is writable and exports complete
 
-#### Jupyter Notebook Workflow
+### Jupyter Notebook Workflow
 ```bash
 # Start Jupyter
-jupyter notebook
+uv run jupyter notebook
 
 # Navigate to notebooks/ directory
 # Each notebook is designed to be self-contained
 # Test notebook changes by running all cells
 ```
 
-#### Docker Build and Deployment
+### Docker Build and Deployment
 ```bash
 # Build and run locally
 docker compose up -d --build
@@ -82,11 +93,29 @@ docker compose logs -f
 # Ensure: ./exports:/app/exports:rw in docker-compose.yml
 ```
 
-#### Common Build/Runtime Issues
-1. **Missing config.json**: Verify file exists and has required keys (org_id, client_id, secret, scope)
-2. **Port already in use**: Try `PORT=5001 python run.py`
-3. **Import errors**: Run `pip install -r requirements.txt`
-4. **Docker export errors**: Check volume mount permissions (needs :rw flag)
+### Configuration
+
+Config file: `config.json` (git-ignored). Template: `config.dist.json`.
+
+| Key | Required | Description |
+|-----|----------|-------------|
+| `APP_TITLE` | Always | Application title |
+| `AW_REPORTSUITE_ID` | Always | Report suite ID |
+| `API_VERSION` | For 2.0 | Set to `"2.0"` |
+| `CLIENT_ID` | For 2.0 | OAuth2 client ID |
+| `CLIENT_SECRET` | For 2.0 | OAuth2 client secret |
+| `ORGANIZATION_ID` | For 2.0 | Adobe org ID |
+| `SCOPES` | Optional | OAuth2 scopes |
+| `AW_USERNAME` | For 1.4 | WSSE username |
+| `AW_SECRET` | For 1.4 | WSSE secret |
+
+**Note**: Even with `API_VERSION=2.0`, WSSE credentials are still needed for legacy 1.4-only routes.
+
+### Common Build/Runtime Issues
+1. **Missing config.json**: Verify file exists and has required keys
+2. **Port already in use**: Try `PORT=5011 uv run run.py`
+3. **Import errors**: Run `uv sync`
+4. **Docker export errors**: Check volume mount permissions (needs `:rw` flag)
 
 ### Security Guidelines
 
@@ -114,23 +143,28 @@ docker compose logs -f
 - **Temporary Files**: Use `/tmp` for any temporary files during development
 - Never write to or modify system directories
 
-### Adobe Analytics API (Library)
+## Coding & Implementation Guidelines
 
-At this stage, a python library to work with the Adobe Analytics API 1.4 has not been selected. The [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) project relies on [RSiteCatalyst](https://randyzwitch.com/rsitecatalyst/).
+### API Requests
+- **Always** wrap calls with cache: `cache.get_or_set(rsid, key, fetch_function)`
+- Use `AdobeAnalyticsV2Service` by default for 2.0-supported resources
+- Use `AdobeAnalyticsService` (`get_api_service_v14`) for 1.4-only resources
 
-Options are:
+### Adding New Features
+1. Add Service method in the correct service (`adobe_analytics_v2.py` or `adobe_analytics.py`)
+2. Add Route (`app/routes/main.py`) with Caching
+3. Add Template (`app/templates/`)
 
-1. Use an equivalent python library
-2. Use raw HTTP requests to the [Adobe Analytics API 1.4](https://developer.adobe.com/analytics-apis/docs/1.4/)
-
-#### 1. Configuration & Authentication
-
-**To be filled out**
-
-
-#### 5. Typical Workflow
-
-**To be filled out**
+### Key Files
+| File | Purpose |
+|------|---------|
+| `app/routes/main.py` | Core application logic and routes |
+| `app/services/adobe_analytics_v2.py` | API 2.0 wrapper |
+| `app/services/adobe_analytics.py` | API 1.4 wrapper |
+| `app/services/adobe_auth.py` | OAuth2 auth/token management |
+| `app/services/cache.py` | JSON file-based caching |
+| `verify_setup.py` | Local setup and configuration checks |
+| `notebooks/` | Exploratory scripts |
 
 ## Development Guidelines
 
@@ -216,21 +250,18 @@ admin = lp.Admin()
 
 ### Error Handling & Debugging
 
-#### When Issues Arise
-1. **To be filled out**
-
-#### Common Pitfalls
-1. **To be filled out**
-
-### Troubleshooting Guide
-
 #### Authentication Issues
 **Symptom**: "Authentication failed" or 401 errors from API
-**Possible Causes:**
-- Missing or invalid `config.json` file
-
 **Resolution Steps:**
 1. Verify `config.json` exists in project root
+2. Check API credentials are valid
+3. For API 2.0: Verify OAuth2 credentials (`CLIENT_ID`, `CLIENT_SECRET`, `ORGANIZATION_ID`)
+4. For API 1.4: Verify WSSE credentials (`AW_USERNAME`, `AW_SECRET`)
+
+#### Common Pitfalls
+1. **Missing cache wrapper**: Always use `cache.get_or_set()` for API calls
+2. **Wrong API version**: Check if endpoint is available in 2.0 before using 1.4
+3. **Stale cache**: Clear `cache/` directory if seeing outdated data
 
 ### Code Quality Checklist
 
@@ -241,36 +272,7 @@ For every code suggestion, confirm:
 - [ ] Has minimal inline comments explaining non-obvious logic
 - [ ] Follows simple, direct naming conventions
 - [ ] Prioritizes functionality over perfection
-- [ ] Suitable for Jupyter notebook workflow (if applicable)
-
-### Documentation References
-
-When providing guidance, reference these documentation files:
-- **Getting Started:** [docs/getstarted.md](../docs/getstarted.md) - Authentication and initial setup
-- **Main API Documentation:** [docs/main.md](../docs/main.md) - Core methods and workflows
-- **Admin Class:** [docs/admin.md](../docs/admin.md) - Company and property management
-- **Property Class:** [docs/property.md](../docs/property.md) - Property operations
-- **Library Class:** [docs/library.md](../docs/library.md) - Publishing workflows
-- **Translator Class:** [docs/translator.md](../docs/translator.md) - Cross-property element translation
-- **Project Plan:** [docs/project_plan.md](../docs/project_plan.md) - Desktop application roadmap
-
-### Operating Procedure
-
-For every user request:
-1. **Acknowledge the constraint** - Confirm adherence to MVP velocity and project constraints
-2. **Generate code** - Provide the most direct, least complex code necessary
-3. **Identify next step** - Explicitly state the most logical next functional step toward MVP
-4. **Provide context** - Link to relevant documentation when appropriate
-
-### Examples of Good Responses
-
-TO BE FILLED OUT
-
----
-
-## Quick Reference
-
-TO BE FILLED OUT
+- [ ] API calls wrapped with caching
 
 ---
 
@@ -278,13 +280,9 @@ TO BE FILLED OUT
 
 For high-level project context and AI agent guidelines, see **[AGENTS.md](../AGENTS.md)** in the repository root.
 
-For deployment procedures and production setup, see **[docs/deployment.md](../docs/deployment.md)**.
-
-For getting started with authentication and API setup, see **[docs/getstarted.md](../docs/getstarted.md)**.
-
 For post-mortem analysis of completed issues, see **[docs/autopsies/](../docs/autopsies/)**.
 
 ---
 
-*Last updated: December 11, 2025*
+*Last updated: March 14, 2026*
 
