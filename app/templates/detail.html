@@ -3,9 +3,11 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ dimension_id }}: {{ dimension.name or dimension.title or 'Unknown' }}</h4>
+    <!--
     <a href="{{ back_url }}" class="btn btn-primary">
         ← {{ back_label }}
     </a>
+    -->
 </div>
 
 <div class="row">
@@ -209,7 +211,7 @@ new Chart(ctx, {
             borderColor: '#4a90d9',
             backgroundColor: 'rgba(74, 144, 217, 0.1)',
             fill: true,
-            tension: 0.4,
+            tension: 0.0,
             pointRadius: 0,
             pointHoverRadius: 6
         }]
