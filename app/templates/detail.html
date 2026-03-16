@@ -80,9 +80,9 @@
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
-                <div class="notes-editor" contenteditable="true" data-placeholder="Customer written descriptions here" style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
+                <div class="notes-editor" contenteditable="true" data-placeholder="Click to add notes..." style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
                 </div>
-                <small class="text-muted mt-2 d-block">Click to add notes (local only, not saved)</small>
+                <small class="text-muted mt-2 d-block notes-status">Loading...</small>
             </div>
         </div>
     </div>
@@ -179,10 +179,11 @@
 {% endblock %}
 
 {% block scripts %}
-{% from '_macros.html' import trend_chart_js, contenteditable_js %}
+{% from '_macros.html' import trend_chart_js, contenteditable_js, notes_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 {{ trend_chart_js(trend_data, "Occurrences" if dimension_type == "prop" else "Instances") }}
 {{ contenteditable_js() }}
+{{ notes_js(dimension_type, dimension_id) }}
 </script>
 {% endblock %}

@@ -109,3 +109,77 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     });
 });
 {% endmacro %}
+
+{% macro notes_js(dimension_type, dimension_id) %}
+// Notes saving functionality
+(function() {
+    const notesEditor = document.querySelector('.notes-editor');
+    const statusEl = document.querySelector('.notes-status');
+    const dimensionType = '{{ dimension_type }}';
+    const dimensionId = '{{ dimension_id }}';
+    let saveTimeout = null;
+    let lastSavedContent = '';
+
+    // Load existing note on page load
+    fetch(`/api/notes/${dimensionType}/${dimensionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.content) {
+                notesEditor.textContent = data.content;
+                notesEditor.classList.remove('empty');
+                lastSavedContent = data.content;
+                if (statusEl) {
+                    const date = new Date(data.updated_at);
+                    statusEl.textContent = `Last saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                }
+            }
+        })
+        .catch(err => console.error('Failed to load note:', err));
+
+    // Save note on blur (with debounce for typing)
+    function saveNote() {
+        const content = notesEditor.classList.contains('empty') ? '' : notesEditor.textContent.trim();
+
+        // Don't save if content hasn't changed
+        if (content === lastSavedContent) return;
+
+        if (statusEl) statusEl.textContent = 'Saving...';
+
+        fetch(`/api/notes/${dimensionType}/${dimensionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            lastSavedContent = content;
+            if (statusEl) {
+                if (data.updated_at) {
+                    const date = new Date(data.updated_at);
+                    statusEl.textContent = `Saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                } else {
+                    statusEl.textContent = 'Note cleared';
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Failed to save note:', err);
+            if (statusEl) statusEl.textContent = 'Failed to save';
+        });
+    }
+
+    // Save on blur
+    notesEditor.addEventListener('blur', function() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveNote();
+    });
+
+    // Auto-save after 2 seconds of no typing
+    notesEditor.addEventListener('input', function() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveNote, 2000);
+        if (statusEl) statusEl.textContent = 'Unsaved changes...';
+    });
+})();
+{% endmacro %}
+

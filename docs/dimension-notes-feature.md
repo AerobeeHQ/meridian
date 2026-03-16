@@ -83,9 +83,9 @@ Keep previous versions when a note is updated?
 
 | Step | Status | Notes |
 |------|--------|-------|
-| 1. Create `NotesService` | ❌ Pending | `app/services/notes.py` |
-| 2. Add API routes | ❌ Pending | GET/POST in `main.py` |
+| 1. Create `NotesService` | ✅ Complete | `app/services/notes.py` |
+| 2. Add API routes | ✅ Complete | GET/POST/DELETE in `main.py` |
 | 3. Update detail templates | ✅ Complete | UI added to all 3 templates |
-| 4. Add JavaScript handler | ⚠️ Partial | Placeholder behavior done, save logic pending |
-| 5. Create `notes/` directory | ❌ Pending | Init + `.gitignore` |
+| 4. Add JavaScript handler | ✅ Complete | `notes_js` macro in `_macros.html` |
+| 5. Create `notes/` directory | ✅ Complete | Auto-created on first save, added to `.gitignore` |
 

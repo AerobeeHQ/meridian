@@ -4,12 +4,13 @@ Main routes for the Codex application
 import csv
 import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Blueprint, render_template, current_app, Response
+from flask import Blueprint, render_template, current_app, Response, request, jsonify
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
 from app.services.adobe_auth import OAuth2Auth
 from app.services.cache import CacheService
+from app.services import notes as notes_service
 
 
 main_bp = Blueprint('main', __name__)
@@ -890,4 +891,78 @@ def cache_clear():
         active_tab='cache',
         message='Cache cleared successfully'
     )
+
+
+# =============================================================================
+# Notes API Routes
+# =============================================================================
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['GET'])
+def get_note(dimension_type: str, dimension_id: str):
+    """
+    Get a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Returns:
+        JSON with note content and updated_at, or empty object if no note exists
+    """
+    rsid = get_rsid()
+    note = notes_service.get(rsid, dimension_type, dimension_id)
+    
+    if note:
+        return jsonify(note)
+    return jsonify({})
+
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['POST'])
+def save_note(dimension_type: str, dimension_id: str):
+    """
+    Save a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Request body:
+        JSON with 'content' field
+    
+    Returns:
+        JSON with saved note content and updated_at
+    """
+    rsid = get_rsid()
+    data = request.get_json()
+    
+    if not data or 'content' not in data:
+        return jsonify({'error': 'Missing content field'}), 400
+    
+    content = data['content'].strip()
+    
+    # If content is empty, delete the note
+    if not content:
+        notes_service.delete(rsid, dimension_type, dimension_id)
+        return jsonify({})
+    
+    note = notes_service.set(rsid, dimension_type, dimension_id, content)
+    return jsonify(note)
+
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['DELETE'])
+def delete_note(dimension_type: str, dimension_id: str):
+    """
+    Delete a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Returns:
+        JSON with success status
+    """
+    rsid = get_rsid()
+    deleted = notes_service.delete(rsid, dimension_type, dimension_id)
+    return jsonify({'deleted': deleted})
+
 
