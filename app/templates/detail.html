@@ -3,17 +3,13 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ dimension_id }}: {{ dimension.name or dimension.title or 'Unknown' }}</h4>
-    <!--
-    <a href="{{ back_url }}" class="btn btn-primary">
-        ← {{ back_label }}
-    </a>
-    -->
 </div>
 
 <div class="row">
-    <!-- Dimension Configuration -->
+    <!-- Left Column: Dimension Configuration + Notes -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100">
+        <!-- Dimension Configuration -->
+        <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Dimension Configuration</h5>
                 <table class="table table-sm">
@@ -80,11 +76,77 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Editable Notes Section -->
+        <div class="card">
+            <div class="card-body">
+                <div class="notes-editor" contenteditable="true" data-placeholder="Customer written descriptions here" style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
+                </div>
+                <small class="text-muted mt-2 d-block">Click to add notes (local only, not saved)</small>
+            </div>
+        </div>
     </div>
 
-    <!-- Top 10 Recorded Values -->
+    <!-- Right Column: Trend Chart + Stats + Top Values -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100">
+        <!-- Trend Chart -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        {{ dimension.name or dimension_id }}
+                    </h5>
+                    <span class="badge bg-secondary">Last 30 Days</span>
+                </div>
+
+                {% if trend_data and trend_data['values'] %}
+                <canvas id="trendChart" height="120"></canvas>
+                {% else %}
+                <p class="text-muted">No trend data available for the last 30 days.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Summary Statistics Row -->
+        {% if trend_data and trend_data['stats'] %}
+        <div class="row mb-4">
+            <div class="col-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2 px-1">
+                        <small class="text-muted d-block">Average</small>
+                        <strong>{{ "{:,.0f}".format(trend_data['stats']['avg']|default(0)) }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2 px-1">
+                        <small class="text-muted d-block">Median</small>
+                        <strong>{{ "{:,.0f}".format(trend_data['stats']['median']|default(0)) }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2 px-1">
+                        <small class="text-muted d-block">Min</small>
+                        <strong>{{ "{:,.0f}".format(trend_data['stats']['min']|default(0)) }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-2 px-1">
+                        <small class="text-muted d-block">Peak</small>
+                        <strong>{{ "{:,.0f}".format(trend_data['stats']['max']|default(0)) }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Top 10 Recorded Values -->
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Top 10 Recorded Values</h5>
                 {% if top_items %}
@@ -113,66 +175,6 @@
         </div>
     </div>
 </div>
-
-<!-- Trend Chart -->
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="card-title mb-0">
-                        {{ dimension.name or dimension_id }}
-                    </h5>
-                    <span class="badge bg-secondary">Last 30 Days</span>
-                </div>
-
-                {% if trend_data and trend_data['values'] %}
-                <canvas id="trendChart" height="100"></canvas>
-                {% else %}
-                <p class="text-muted">No trend data available for the last 30 days.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Summary Statistics -->
-{% if trend_data and trend_data['stats'] %}
-<div class="row">
-    <div class="col-md-3 mb-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Average (Last 30 Days)</h6>
-                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['avg']|default(0)) }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Median (Last 30 Days)</h6>
-                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['median']|default(0)) }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Peak (Last 30 Days)</h6>
-                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['max']|default(0)) }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Min (Last 30 Days)</h6>
-                <h3 class="card-title mb-0">{{ "{:,.0f}".format(trend_data['stats']['min']|default(0)) }}</h3>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 {% endblock %}
 
@@ -260,6 +262,29 @@ new Chart(ctx, {
     }
 });
 {% endif %}
+
+// Placeholder behavior for contenteditable
+document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
+    const placeholder = el.dataset.placeholder;
+
+    if (!el.textContent.trim()) {
+        el.classList.add('empty');
+        el.innerHTML = '<span class="placeholder-text" style="color: #6c757d;">' + placeholder + '</span>';
+    }
+
+    el.addEventListener('focus', function() {
+        if (this.classList.contains('empty')) {
+            this.innerHTML = '';
+            this.classList.remove('empty');
+        }
+    });
+
+    el.addEventListener('blur', function() {
+        if (!this.textContent.trim()) {
+            this.classList.add('empty');
+            this.innerHTML = '<span class="placeholder-text" style="color: #6c757d;">' + placeholder + '</span>';
+        }
+    });
+});
 </script>
 {% endblock %}
-
