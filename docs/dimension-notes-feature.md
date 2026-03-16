@@ -1,6 +1,7 @@
 # Dimension Notes Feature Plan
 
-**Created:** March 14, 2026
+**Created:** March 14, 2026  
+**Updated:** March 16, 2026
 
 ## Overview
 
@@ -63,3 +64,28 @@ Keep previous versions when a note is updated?
 | SQLite | ACID compliance, query capability | Adds dependency, overkill for simple key-value notes |
 | Parse/BaaS | Managed service, real-time sync | External dependency, cost, network latency |
 | Database (Postgres/MySQL) | Robust, scalable | Significant setup overhead, not MVP-friendly |
+
+## Search Compatibility
+
+**Context:** A keyword search feature is planned to help users find dimensions/metrics.
+
+**Decision:** JSON storage remains appropriate because:
+
+1. **Primary search scope** — Search will target Adobe Analytics config data (eVars, props, events names/IDs/descriptions), which is already cached in `cache/{rsid}.json`
+2. **Notes search deferred** — If users need to search inside notes later, an in-memory index can be built on app startup
+3. **Scale is tiny** — Even worst-case (500 notes × 1KB each = 500KB), loading all files is fast
+
+**Future upgrade path:** If notes search becomes essential, options include:
+- Build in-memory index on startup (load all `notes/*.json` into a dict)
+- Migrate to SQLite for SQL `LIKE` queries
+
+## Implementation Status
+
+| Step | Status | Notes |
+|------|--------|-------|
+| 1. Create `NotesService` | ❌ Pending | `app/services/notes.py` |
+| 2. Add API routes | ❌ Pending | GET/POST in `main.py` |
+| 3. Update detail templates | ✅ Complete | UI added to all 3 templates |
+| 4. Add JavaScript handler | ⚠️ Partial | Placeholder behavior done, save logic pending |
+| 5. Create `notes/` directory | ❌ Pending | Init + `.gitignore` |
+
