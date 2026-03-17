@@ -125,7 +125,8 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         .then(response => response.json())
         .then(data => {
             if (data.content) {
-                notesEditor.textContent = data.content;
+                // Convert newlines to <br> for display in contenteditable
+                notesEditor.innerHTML = data.content.replace(/\n/g, '<br>');
                 notesEditor.classList.remove('empty');
                 lastSavedContent = data.content;
                 if (statusEl) {
@@ -138,7 +139,8 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Save note on blur (with debounce for typing)
     function saveNote() {
-        const content = notesEditor.classList.contains('empty') ? '' : notesEditor.textContent.trim();
+        // Use innerText to preserve line breaks as \n
+        const content = notesEditor.classList.contains('empty') ? '' : notesEditor.innerText.trim();
 
         // Don't save if content hasn't changed
         if (content === lastSavedContent) return;
