@@ -110,78 +110,307 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 });
 {% endmacro %}
 
-{% macro notes_js(dimension_type, dimension_id) %}
-// Notes saving functionality
+{% macro notes_form(dimension_type, dimension_id, default_expiry_notes='') %}
+{# Structured notes form for dimension documentation #}
+<div class="notes-form" data-dimension-type="{{ dimension_type }}" data-dimension-id="{{ dimension_id }}" data-default-expiry="{{ default_expiry_notes }}">
+
+    <!-- Plain English Description -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Plain English Description</label>
+        <textarea class="form-control form-control-sm" name="plain_description" rows="3" maxlength="1000"
+                  placeholder="Business user-friendly description of what this dimension captures..."></textarea>
+        <div class="form-text">Business-friendly description (max 1000 characters)</div>
+    </div>
+
+    <!-- Technical Definition -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Technical Definition</label>
+        <textarea class="form-control form-control-sm" name="technical_definition" rows="3" maxlength="1000"
+                  placeholder="Technical implementation details, data layer variable names, etc..."></textarea>
+        <div class="form-text">Technical details for developers (max 1000 characters)</div>
+    </div>
+
+    <!-- Expiry Notes -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Expiry Notes</label>
+        <textarea class="form-control form-control-sm" name="expiry_notes" rows="2" maxlength="500"
+                  placeholder="Notes on expiration policy..."></textarea>
+        <div class="form-text">Auto-generated from config, can be overridden (max 500 characters)</div>
+    </div>
+
+    <hr class="my-3">
+
+    <!-- Platform Section -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Platform Availability</label>
+            <select class="form-select form-select-sm" name="platform_availability">
+                <option value="">Not Set</option>
+                <option value="web_only">Web Only</option>
+                <option value="app_only">App Only</option>
+                <option value="both">Both Web and App</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Platform Notes</label>
+            <textarea class="form-control form-control-sm" name="platform_notes" rows="2" maxlength="500"
+                      placeholder="Platform-specific implementation notes..."></textarea>
+        </div>
+    </div>
+
+    <!-- Web/App Equivalents -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Web Equivalent</label>
+            <select class="form-select form-select-sm" name="web_equivalent">
+                <option value="">Not Set</option>
+                <option value="none">None</option>
+            </select>
+            <div class="form-text">Corresponding dimension on web platform</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">App Equivalent</label>
+            <select class="form-select form-select-sm" name="app_equivalent">
+                <option value="">Not Set</option>
+                <option value="none">None</option>
+            </select>
+            <div class="form-text">Corresponding dimension on app platform</div>
+        </div>
+    </div>
+
+    <hr class="my-3">
+
+    <!-- Use Cases -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Use Cases</label>
+        <textarea class="form-control form-control-sm" name="use_cases" rows="3" maxlength="1000"
+                  placeholder="Common use cases and analysis scenarios..."></textarea>
+        <div class="form-text">How this dimension is typically used (max 1000 characters)</div>
+    </div>
+
+    <!-- Typical Questions -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Typical Questions</label>
+        <textarea class="form-control form-control-sm" name="typical_questions" rows="3" maxlength="1000"
+                  placeholder="Questions this dimension helps answer..."></textarea>
+        <div class="form-text">Business questions this dimension helps answer (max 1000 characters)</div>
+    </div>
+
+    <hr class="my-3">
+
+    <!-- Journey Squad Owner -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Journey Squad Owner</label>
+        <div class="squad-chips">
+            {% for squad in ['Shop', 'Inspire', 'Checkout', 'Trolley', 'Loyalty', 'Perso', 'Finance', 'Search', 'Instore', 'Platform', 'All Squads'] %}
+            <span class="badge bg-secondary squad-chip me-1 mb-1" data-squad="{{ squad }}" style="cursor: pointer;">{{ squad }}</span>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="squad_owners" value="">
+        <div class="form-text">Click to select owning squad(s)</div>
+    </div>
+
+    <!-- Last Verified -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Last Verified</label>
+        <input type="date" class="form-control form-control-sm" name="last_verified" style="max-width: 200px;">
+        <div class="form-text">Date when this documentation was last verified</div>
+    </div>
+
+    <!-- Status -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <small class="notes-status text-muted">Loading...</small>
+        <button type="button" class="btn btn-sm btn-outline-primary save-notes-btn">Save Notes</button>
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro notes_form_js(dimension_type, dimension_id) %}
+// Structured notes form functionality
 (function() {
-    const notesEditor = document.querySelector('.notes-editor');
-    const statusEl = document.querySelector('.notes-status');
+    const form = document.querySelector('.notes-form');
+    if (!form) return;
+
     const dimensionType = '{{ dimension_type }}';
     const dimensionId = '{{ dimension_id }}';
+    const statusEl = form.querySelector('.notes-status');
+    const saveBtn = form.querySelector('.save-notes-btn');
+    const defaultExpiry = form.dataset.defaultExpiry || '';
+
+    let lastSavedData = {};
     let saveTimeout = null;
-    let lastSavedContent = '';
+    let hasUnsavedChanges = false;
 
-    // Load existing note on page load
-    fetch(`/api/notes/${dimensionType}/${dimensionId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.content) {
-                // Convert newlines to <br> for display in contenteditable
-                notesEditor.innerHTML = data.content.replace(/\n/g, '<br>');
-                notesEditor.classList.remove('empty');
-                lastSavedContent = data.content;
-                if (statusEl) {
-                    const date = new Date(data.updated_at);
-                    statusEl.textContent = `Last saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-                }
+    // Squad chip selection
+    const squadChips = form.querySelectorAll('.squad-chip');
+    const squadInput = form.querySelector('[name="squad_owners"]');
+    let selectedSquads = [];
+
+    squadChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            const squad = this.dataset.squad;
+            if (selectedSquads.includes(squad)) {
+                selectedSquads = selectedSquads.filter(s => s !== squad);
+                this.classList.remove('bg-primary');
+                this.classList.add('bg-secondary');
+            } else {
+                selectedSquads.push(squad);
+                this.classList.remove('bg-secondary');
+                this.classList.add('bg-primary');
             }
-        })
-        .catch(err => console.error('Failed to load note:', err));
+            squadInput.value = JSON.stringify(selectedSquads);
+            markUnsaved();
+        });
+    });
 
-    // Save note on blur (with debounce for typing)
-    function saveNote() {
-        // Use innerText to preserve line breaks as \n
-        const content = notesEditor.classList.contains('empty') ? '' : notesEditor.innerText.trim();
+    // Load dimension options for Web/App Equivalent dropdowns
+    function loadDimensionOptions() {
+        fetch(`/api/notes/options/${dimensionType}`)
+            .then(response => response.json())
+            .then(options => {
+                const webSelect = form.querySelector('[name="web_equivalent"]');
+                const appSelect = form.querySelector('[name="app_equivalent"]');
 
-        // Don't save if content hasn't changed
-        if (content === lastSavedContent) return;
+                // Clear existing options (except first two)
+                [webSelect, appSelect].forEach(select => {
+                    while (select.options.length > 2) {
+                        select.remove(2);
+                    }
+                    options.slice(2).forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.id;
+                        option.textContent = opt.name;
+                        select.appendChild(option);
+                    });
+                });
+            })
+            .catch(err => console.error('Failed to load dimension options:', err));
+    }
+
+    // Collect form data
+    function getFormData() {
+        return {
+            plain_description: form.querySelector('[name="plain_description"]').value,
+            technical_definition: form.querySelector('[name="technical_definition"]').value,
+            expiry_notes: form.querySelector('[name="expiry_notes"]').value,
+            platform_availability: form.querySelector('[name="platform_availability"]').value,
+            platform_notes: form.querySelector('[name="platform_notes"]').value,
+            web_equivalent: form.querySelector('[name="web_equivalent"]').value,
+            app_equivalent: form.querySelector('[name="app_equivalent"]').value,
+            use_cases: form.querySelector('[name="use_cases"]').value,
+            typical_questions: form.querySelector('[name="typical_questions"]').value,
+            squad_owners: selectedSquads,
+            last_verified: form.querySelector('[name="last_verified"]').value
+        };
+    }
+
+    // Populate form with data
+    function setFormData(data) {
+        form.querySelector('[name="plain_description"]').value = data.plain_description || '';
+        form.querySelector('[name="technical_definition"]').value = data.technical_definition || '';
+        form.querySelector('[name="expiry_notes"]').value = data.expiry_notes || defaultExpiry;
+        form.querySelector('[name="platform_availability"]').value = data.platform_availability || '';
+        form.querySelector('[name="platform_notes"]').value = data.platform_notes || '';
+        form.querySelector('[name="web_equivalent"]').value = data.web_equivalent || '';
+        form.querySelector('[name="app_equivalent"]').value = data.app_equivalent || '';
+        form.querySelector('[name="use_cases"]').value = data.use_cases || '';
+        form.querySelector('[name="typical_questions"]').value = data.typical_questions || '';
+        form.querySelector('[name="last_verified"]').value = data.last_verified || '';
+
+        // Set squad chips
+        selectedSquads = data.squad_owners || [];
+        squadChips.forEach(chip => {
+            if (selectedSquads.includes(chip.dataset.squad)) {
+                chip.classList.remove('bg-secondary');
+                chip.classList.add('bg-primary');
+            } else {
+                chip.classList.remove('bg-primary');
+                chip.classList.add('bg-secondary');
+            }
+        });
+        squadInput.value = JSON.stringify(selectedSquads);
+    }
+
+    // Mark form as having unsaved changes
+    function markUnsaved() {
+        hasUnsavedChanges = true;
+        if (statusEl) statusEl.textContent = 'Unsaved changes...';
+
+        // Auto-save after 3 seconds of no changes
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(saveNotes, 3000);
+    }
+
+    // Save notes to server
+    function saveNotes() {
+        const data = getFormData();
 
         if (statusEl) statusEl.textContent = 'Saving...';
+        if (saveBtn) saveBtn.disabled = true;
 
         fetch(`/api/notes/${dimensionType}/${dimensionId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: content })
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
-        .then(data => {
-            lastSavedContent = content;
+        .then(savedData => {
+            lastSavedData = savedData;
+            hasUnsavedChanges = false;
             if (statusEl) {
-                if (data.updated_at) {
-                    const date = new Date(data.updated_at);
-                    statusEl.textContent = `Saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-                } else {
-                    statusEl.textContent = 'Note cleared';
-                }
+                const date = new Date(savedData.updated_at);
+                statusEl.textContent = `Saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
             }
         })
         .catch(err => {
-            console.error('Failed to save note:', err);
+            console.error('Failed to save notes:', err);
             if (statusEl) statusEl.textContent = 'Failed to save';
+        })
+        .finally(() => {
+            if (saveBtn) saveBtn.disabled = false;
         });
     }
 
-    // Save on blur
-    notesEditor.addEventListener('blur', function() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveNote();
+    // Load existing notes
+    function loadNotes() {
+        fetch(`/api/notes/${dimensionType}/${dimensionId}`)
+            .then(response => response.json())
+            .then(data => {
+                lastSavedData = data;
+                setFormData(data);
+                if (data.updated_at) {
+                    const date = new Date(data.updated_at);
+                    if (statusEl) statusEl.textContent = `Last saved: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                } else {
+                    if (statusEl) statusEl.textContent = 'No saved notes';
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load notes:', err);
+                if (statusEl) statusEl.textContent = 'Failed to load';
+                // Set default expiry notes if no saved data
+                form.querySelector('[name="expiry_notes"]').value = defaultExpiry;
+            });
+    }
+
+    // Attach change listeners to form inputs
+    form.querySelectorAll('input, textarea, select').forEach(input => {
+        input.addEventListener('input', markUnsaved);
+        input.addEventListener('change', markUnsaved);
     });
 
-    // Auto-save after 2 seconds of no typing
-    notesEditor.addEventListener('input', function() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveNote, 2000);
-        if (statusEl) statusEl.textContent = 'Unsaved changes...';
-    });
+    // Save button click
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveNotes();
+        });
+    }
+
+    // Initialize
+    loadDimensionOptions();
+    loadNotes();
 })();
 {% endmacro %}
 

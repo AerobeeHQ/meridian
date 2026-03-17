@@ -56,9 +56,10 @@
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
-                <div class="notes-editor" contenteditable="true" data-placeholder="Click to add notes..." style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
-                </div>
-                <small class="text-muted mt-2 d-block notes-status">Loading...</small>
+                <h5 class="card-title">Documentation Notes</h5>
+                {% from '_macros.html' import notes_form %}
+                {% set default_expiry = 'Events are recorded at the time of the hit and do not expire.' %}
+                {{ notes_form('event', event_id, default_expiry) }}
             </div>
         </div>
     </div>
@@ -161,11 +162,10 @@
 {% endblock %}
 
 {% block scripts %}
-{% from '_macros.html' import trend_chart_js, contenteditable_js, notes_js %}
+{% from '_macros.html' import trend_chart_js, notes_form_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 {{ trend_chart_js(trend_data, 'Events') }}
-{{ contenteditable_js() }}
-{{ notes_js('event', event_id) }}
+{{ notes_form_js('event', event_id) }}
 </script>
 {% endblock %}

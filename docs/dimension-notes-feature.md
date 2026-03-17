@@ -89,21 +89,48 @@ Keep previous versions when a note is updated?
 | 4. Add JavaScript handler | ✅ Complete | `notes_js` macro in `_macros.html` |
 | 5. Create `notes/` directory | ✅ Complete | Auto-created on first save, added to `.gitignore` |
 
-## Custom Notes
+## Custom Notes (v2 - Structured Fields)
 
-New feature to allow users to add custom notes to each dimension.
+**Status:** ✅ Implemented (March 17, 2026)
 
-* **Plain English Description** 3 line (1000 char max) business user-friendly description of the dimension.
-* **Technical Definition** 3 line (1000 char max) technical definition of the dimension.
-* **Expiry Notes** 2 line (500 char max) notes on the dimension's expiry policy, auto generated from the API, but can be manually overridden.
-* **Platform Availability** Dropdown menu with the following options:
-  - Web Only
-  - App Only
-  - Both Web and App
-* **Platform Notes** 2 line (500 char max) user entered notes on the dimension's availability on each platform.
-* **Web Equivalent** Dropdown menu with the options: "None", "Not Set" or any named prop/eVar/event/listVar depending on the dimension type. Should default to "Not Set".
-* **App Equivalent** Dropdown menu with the options: "None", "Not Set" or any named prop/eVar/event/listVar depending on the dimension type. Should default to "Not Set".
-* **Use Cases** 3 line (1000 char max) notes on common use cases for the dimension.
-* **Typical Questions** 3 line (1000 char max) notes on typical questions users might ask about the dimension.
-* **Journey Squad Owner** Tag chips for the Squad Leads who own the journey that uses the dimension. The chips labels are: "Shop", "Inspire", "Checkout", "Trolley", "Loyalty", "Perso", "Finance", "Search", "Instore", "Platform", "All Squads"
-* **Last Verified** Date field for when the dimension was last verified by the user. 
+Expanded the simple freeform notes to a structured form with multiple fields:
+
+| Field | Type | Max Length | Description |
+|-------|------|------------|-------------|
+| Plain English Description | textarea (3 rows) | 1000 chars | Business user-friendly description |
+| Technical Definition | textarea (3 rows) | 1000 chars | Technical implementation details |
+| Expiry Notes | textarea (2 rows) | 500 chars | Auto-generated from API, user can override |
+| Platform Availability | dropdown | - | Web Only, App Only, Both Web and App |
+| Platform Notes | textarea (2 rows) | 500 chars | Platform-specific implementation notes |
+| Web Equivalent | dropdown | - | Link to corresponding web dimension |
+| App Equivalent | dropdown | - | Link to corresponding app dimension |
+| Use Cases | textarea (3 rows) | 1000 chars | Common analysis scenarios |
+| Typical Questions | textarea (3 rows) | 1000 chars | Business questions this helps answer |
+| Journey Squad Owner | tag chips | - | Multi-select: Shop, Inspire, Checkout, etc. |
+| Last Verified | date input | - | When documentation was last verified |
+
+### JSON Storage Schema
+
+```json
+{
+  "plain_description": "...",
+  "technical_definition": "...",
+  "expiry_notes": "...",
+  "platform_availability": "web_only|app_only|both|",
+  "platform_notes": "...",
+  "web_equivalent": "evar5|none|",
+  "app_equivalent": "evar10|none|",
+  "use_cases": "...",
+  "typical_questions": "...",
+  "squad_owners": ["Shop", "Checkout"],
+  "last_verified": "2026-03-17",
+  "updated_at": "2026-03-17T10:30:00+00:00"
+}
+```
+
+### Files Modified
+
+- `app/services/notes.py` — Updated to handle structured data, added `SQUAD_OPTIONS`, `PLATFORM_OPTIONS`, `get_empty_note()`, `generate_expiry_notes()`
+- `app/routes/main.py` — Updated API routes for structured data, added `/api/notes/options/<dimension_type>` endpoint
+- `app/templates/_macros.html` — Added `notes_form` macro (HTML) and `notes_form_js` macro (JavaScript)
+- `app/templates/detail.html`, `event_detail.html`, `listvar_detail.html` — Updated to use new structured form 

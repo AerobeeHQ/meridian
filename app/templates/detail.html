@@ -80,9 +80,20 @@
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
-                <div class="notes-editor" contenteditable="true" data-placeholder="Click to add notes..." style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
-                </div>
-                <small class="text-muted mt-2 d-block notes-status">Loading...</small>
+                <h5 class="card-title">Documentation Notes</h5>
+                {% from '_macros.html' import notes_form %}
+                {% set default_expiry = '' %}
+                {% if dimension_type == 'prop' %}
+                    {% set default_expiry = 'Props do not have expiration - values are associated with the hit in which they are set.' %}
+                {% elif dimension_type == 'evar' %}
+                    {% set expiry_type = dimension.get('expirationType', '') %}
+                    {% if expiry_type %}
+                        {% set default_expiry = 'Expiration type: ' ~ expiry_type ~ '.' %}
+                    {% else %}
+                        {% set default_expiry = 'Expiration not configured.' %}
+                    {% endif %}
+                {% endif %}
+                {{ notes_form(dimension_type, dimension_id, default_expiry) }}
             </div>
         </div>
     </div>
@@ -179,11 +190,10 @@
 {% endblock %}
 
 {% block scripts %}
-{% from '_macros.html' import trend_chart_js, contenteditable_js, notes_js %}
+{% from '_macros.html' import trend_chart_js, notes_form_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 {{ trend_chart_js(trend_data, "Occurrences" if dimension_type == "prop" else "Instances") }}
-{{ contenteditable_js() }}
-{{ notes_js(dimension_type, dimension_id) }}
+{{ notes_form_js(dimension_type, dimension_id) }}
 </script>
 {% endblock %}

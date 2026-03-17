@@ -907,14 +907,11 @@ def get_note(dimension_type: str, dimension_id: str):
         dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
     
     Returns:
-        JSON with note content and updated_at, or empty object if no note exists
+        JSON with all note fields
     """
     rsid = get_rsid()
     note = notes_service.get(rsid, dimension_type, dimension_id)
-    
-    if note:
-        return jsonify(note)
-    return jsonify({})
+    return jsonify(note)
 
 
 @main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['POST'])
@@ -927,25 +924,18 @@ def save_note(dimension_type: str, dimension_id: str):
         dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
     
     Request body:
-        JSON with 'content' field
+        JSON with note fields
     
     Returns:
-        JSON with saved note content and updated_at
+        JSON with saved note data including updated_at
     """
     rsid = get_rsid()
     data = request.get_json()
     
-    if not data or 'content' not in data:
-        return jsonify({'error': 'Missing content field'}), 400
+    if not data:
+        return jsonify({'error': 'Missing request body'}), 400
     
-    content = data['content'].strip()
-    
-    # If content is empty, delete the note
-    if not content:
-        notes_service.delete(rsid, dimension_type, dimension_id)
-        return jsonify({})
-    
-    note = notes_service.set(rsid, dimension_type, dimension_id, content)
+    note = notes_service.set(rsid, dimension_type, dimension_id, data)
     return jsonify(note)
 
 
@@ -964,5 +954,77 @@ def delete_note(dimension_type: str, dimension_id: str):
     rsid = get_rsid()
     deleted = notes_service.delete(rsid, dimension_type, dimension_id)
     return jsonify({'deleted': deleted})
+
+
+@main_bp.route('/api/notes/options/<dimension_type>')
+def get_dimension_options(dimension_type: str):
+    """
+    Get list of dimensions for Web/App Equivalent dropdowns.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+    
+    Returns:
+        JSON array of {id, name} objects for the specified dimension type
+    """
+    rsid = get_rsid()
+    api = get_api_service()
+    
+    # Get cached dimensions (used for props, evars, listvars)
+    cached_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    
+    options = [
+        {"id": "", "name": "Not Set"},
+        {"id": "none", "name": "None"}
+    ]
+    
+    if dimension_type == 'prop' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            # Match variables/prop1, variables/prop2, etc. (exclude classifications with dots)
+            if dim_id.startswith('variables/prop') and '.' not in dim_id.replace('variables/', ''):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:  # Only include named dimensions
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by prop number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('prop', '') or 0))
+    
+    elif dimension_type == 'evar' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            # Match variables/evar1, variables/evar2, etc. (exclude classifications with dots)
+            if dim_id.startswith('variables/evar') and '.' not in dim_id.replace('variables/', ''):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:  # Only include named dimensions
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by evar number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('evar', '') or 0))
+    
+    elif dimension_type == 'event':
+        # Events are fetched via get_success_events, cached under 'events' key
+        cached_events = get_cached_data('events', lambda: api.get_success_events(rsid))
+        if cached_events:
+            for event in cached_events:
+                event_id = event.get('id', '')
+                name = event.get('name') or ''
+                if name and name != event_id:  # Only include named events
+                    options.append({"id": event_id, "name": f"{event_id}: {name}"})
+            # Sort by event number
+            options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('event', '') or 0))
+    
+    elif dimension_type == 'listvar' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            if dim_id.startswith('variables/listvar'):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by listvar number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('listvar', '') or 0))
+    
+    return jsonify(options)
 
 
