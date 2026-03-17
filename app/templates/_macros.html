@@ -158,55 +158,17 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         </div>
     </div>
 
-    <!-- Cross-Platform Mapping with Radio Toggle -->
-    <div class="mb-3">
-        <label class="form-label fw-semibold">Cross-Platform Mapping</label>
-
-        <div class="platform-mapping-radios mb-2">
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_none" value="none" checked>
-                <label class="form-check-label" for="mapping_none">
-                    No equivalent (standalone dimension)
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_web" value="web">
-                <label class="form-check-label" for="mapping_web">
-                    Has Web equivalent
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_app" value="app">
-                <label class="form-check-label" for="mapping_app">
-                    Has App equivalent
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_both" value="both">
-                <label class="form-check-label" for="mapping_both">
-                    Available on both platforms
-                </label>
-            </div>
+    <!-- Equivalent Dimension (conditional based on Platform Availability) -->
+    <div class="mb-3" id="equivalent_dimension_section">
+        <label class="form-label fw-semibold" id="equivalent_dimension_label">Equivalent Dimension</label>
+        <div class="searchable-select-wrapper">
+            <select class="form-select form-select-sm searchable-select" name="equivalent_dimension" data-search-placeholder="Type to search...">
+                <option value="">Not Set</option>
+                <option value="none">No equivalent needed</option>
+                <option value="both">Available on both platforms</option>
+            </select>
         </div>
-
-        <!-- Conditional dropdowns -->
-        <div class="conditional-dropdown" id="web_equivalent_section" style="display: none;">
-            <label class="form-label fw-semibold small">Web Equivalent Dimension</label>
-            <div class="searchable-select-wrapper">
-                <select class="form-select form-select-sm searchable-select" name="web_equivalent" data-search-placeholder="Type to search...">
-                    <option value="">Select dimension...</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="conditional-dropdown" id="app_equivalent_section" style="display: none;">
-            <label class="form-label fw-semibold small">App Equivalent Dimension</label>
-            <div class="searchable-select-wrapper">
-                <select class="form-select form-select-sm searchable-select" name="app_equivalent" data-search-placeholder="Type to search...">
-                    <option value="">Select dimension...</option>
-                </select>
-            </div>
-        </div>
+        <div class="form-text" id="equivalent_dimension_help">Cross-platform mapping for this dimension</div>
     </div>
 
     <hr class="my-3">
@@ -295,59 +257,71 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         });
     });
 
-    // Load dimension options for Web/App Equivalent dropdowns
+    // Load dimension options for Equivalent Dimension dropdown
     function loadDimensionOptions() {
         fetch(`/api/notes/options/${dimensionType}`)
             .then(response => response.json())
             .then(options => {
-                const webSelect = form.querySelector('[name="web_equivalent"]');
-                const appSelect = form.querySelector('[name="app_equivalent"]');
+                const equivalentSelect = form.querySelector('[name="equivalent_dimension"]');
 
-                // Clear existing options (except first one)
-                [webSelect, appSelect].forEach(select => {
-                    while (select.options.length > 1) {
-                        select.remove(1);
-                    }
-                    options.forEach(opt => {
-                        const option = document.createElement('option');
-                        option.value = opt.id;
-                        option.textContent = opt.name;
-                        select.appendChild(option);
-                    });
+                // Clear existing options (except first 3: Not Set, No equivalent, Both platforms)
+                while (equivalentSelect.options.length > 3) {
+                    equivalentSelect.remove(3);
+                }
+
+                // Add all dimension options
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.id;
+                    option.textContent = opt.name;
+                    equivalentSelect.appendChild(option);
                 });
 
-                // Initialize searchable dropdowns
+                // Initialize searchable dropdown
                 initSearchableSelects();
+
+                // Initial update based on current platform availability
+                updateEquivalentDimensionSection();
             })
             .catch(err => console.error('Failed to load dimension options:', err));
     }
 
-    // Handle radio toggle for conditional dropdown display
-    function setupPlatformMappingToggle() {
-        const radios = form.querySelectorAll('[name="platform_mapping_type"]');
-        const webSection = form.querySelector('#web_equivalent_section');
-        const appSection = form.querySelector('#app_equivalent_section');
+    // Update Equivalent Dimension section based on Platform Availability
+    function updateEquivalentDimensionSection() {
+        const platformAvailability = form.querySelector('[name="platform_availability"]').value;
+        const equivalentSection = form.querySelector('#equivalent_dimension_section');
+        const equivalentLabel = form.querySelector('#equivalent_dimension_label');
+        const equivalentHelp = form.querySelector('#equivalent_dimension_help');
 
-        radios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                // Hide all conditional dropdowns
-                webSection.style.display = 'none';
-                appSection.style.display = 'none';
+        if (platformAvailability === 'app_only') {
+            // Show section, label as "Web Equivalent"
+            equivalentSection.style.display = 'block';
+            equivalentLabel.textContent = 'Web Equivalent';
+            equivalentHelp.textContent = 'Corresponding dimension on web platform';
+        } else if (platformAvailability === 'web_only') {
+            // Show section, label as "App Equivalent"
+            equivalentSection.style.display = 'block';
+            equivalentLabel.textContent = 'App Equivalent';
+            equivalentHelp.textContent = 'Corresponding dimension on app platform';
+        } else if (platformAvailability === 'both' || platformAvailability === '') {
+            // Hide section for "Both Web and App" or "Not Set"
+            equivalentSection.style.display = 'none';
+        } else {
+            // Default: show with generic label
+            equivalentSection.style.display = 'block';
+            equivalentLabel.textContent = 'Equivalent Dimension';
+            equivalentHelp.textContent = 'Cross-platform mapping for this dimension';
+        }
+    }
 
-                // Show appropriate dropdown based on selection
-                if (this.value === 'web') {
-                    webSection.style.display = 'block';
-                } else if (this.value === 'app') {
-                    appSection.style.display = 'block';
-                } else if (this.value === 'both') {
-                    // For "both platforms", no dropdown needed
-                    // Could show a message or info text instead
-                }
-                // 'none' shows nothing
-
-                markUnsaved();
+    // Setup listener for Platform Availability changes
+    function setupPlatformAvailabilityListener() {
+        const platformAvailabilitySelect = form.querySelector('[name="platform_availability"]');
+        if (platformAvailabilitySelect) {
+            platformAvailabilitySelect.addEventListener('change', function() {
+                updateEquivalentDimensionSection();
             });
-        });
+        }
     }
 
     // Initialize searchable select dropdowns
@@ -476,17 +450,29 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Collect form data
     function getFormData() {
-        const mappingType = form.querySelector('[name="platform_mapping_type"]:checked').value;
+        const platformAvailability = form.querySelector('[name="platform_availability"]').value;
+        const equivalentDimension = form.querySelector('[name="equivalent_dimension"]').value;
+
+        // Determine which field to save based on platform availability
+        let webEquivalent = '';
+        let appEquivalent = '';
+
+        if (platformAvailability === 'app_only') {
+            // Save as web_equivalent
+            webEquivalent = equivalentDimension;
+        } else if (platformAvailability === 'web_only') {
+            // Save as app_equivalent
+            appEquivalent = equivalentDimension;
+        }
 
         return {
             plain_description: form.querySelector('[name="plain_description"]').value,
             technical_definition: form.querySelector('[name="technical_definition"]').value,
             expiry_notes: form.querySelector('[name="expiry_notes"]').value,
-            platform_availability: form.querySelector('[name="platform_availability"]').value,
+            platform_availability: platformAvailability,
             platform_notes: form.querySelector('[name="platform_notes"]').value,
-            platform_mapping_type: mappingType,
-            web_equivalent: mappingType === 'web' ? form.querySelector('[name="web_equivalent"]').value : '',
-            app_equivalent: mappingType === 'app' ? form.querySelector('[name="app_equivalent"]').value : '',
+            web_equivalent: webEquivalent,
+            app_equivalent: appEquivalent,
             use_cases: form.querySelector('[name="use_cases"]').value,
             typical_questions: form.querySelector('[name="typical_questions"]').value,
             squad_owners: selectedSquads,
@@ -502,17 +488,23 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         form.querySelector('[name="platform_availability"]').value = data.platform_availability || '';
         form.querySelector('[name="platform_notes"]').value = data.platform_notes || '';
 
-        // Set platform mapping type and conditional dropdowns
-        const mappingType = data.platform_mapping_type || 'none';
-        const mappingRadio = form.querySelector(`[name="platform_mapping_type"][value="${mappingType}"]`);
-        if (mappingRadio) {
-            mappingRadio.checked = true;
-            // Trigger the change event to show/hide appropriate sections
-            mappingRadio.dispatchEvent(new Event('change'));
+        // Set equivalent dimension based on platform availability
+        const platformAvailability = data.platform_availability || '';
+        let equivalentValue = '';
+
+        if (platformAvailability === 'app_only' && data.web_equivalent) {
+            // Load from web_equivalent
+            equivalentValue = data.web_equivalent;
+        } else if (platformAvailability === 'web_only' && data.app_equivalent) {
+            // Load from app_equivalent
+            equivalentValue = data.app_equivalent;
         }
 
-        form.querySelector('[name="web_equivalent"]').value = data.web_equivalent || '';
-        form.querySelector('[name="app_equivalent"]').value = data.app_equivalent || '';
+        form.querySelector('[name="equivalent_dimension"]').value = equivalentValue;
+
+        // Update the equivalent dimension section visibility and label
+        updateEquivalentDimensionSection();
+
         form.querySelector('[name="use_cases"]').value = data.use_cases || '';
         form.querySelector('[name="typical_questions"]').value = data.typical_questions || '';
         form.querySelector('[name="last_verified"]').value = data.last_verified || '';
@@ -608,7 +600,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     }
 
     // Initialize
-    setupPlatformMappingToggle();
+    setupPlatformAvailabilityListener();
     loadDimensionOptions();
     loadNotes();
 })();
