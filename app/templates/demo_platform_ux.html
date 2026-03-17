@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Platform & Equivalent UX Options Demo</h4>
+</div>
+
+<p class="text-muted mb-4">Compare four different UX approaches for the Platform Availability and Web/App Equivalent fields. Each option below is interactive.</p>
+
+<div class="row">
+    <!-- Option A: Conditional Single Dropdown -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <strong>Option A: Conditional Single Dropdown</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Shows only the relevant dropdown based on Platform selection.</p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Platform Availability</label>
+                    <select class="form-select form-select-sm" id="optionA-platform" onchange="updateOptionA()">
+                        <option value="">Not Set</option>
+                        <option value="web_only">Web Only</option>
+                        <option value="app_only">App Only</option>
+                        <option value="both">Both Web and App</option>
+                    </select>
+                </div>
+
+                <div id="optionA-equivalent-container" style="display: none;">
+                    <label class="form-label fw-semibold" id="optionA-equivalent-label">Equivalent</label>
+                    <select class="form-select form-select-sm" id="optionA-equivalent">
+                        <option value="">Not Set</option>
+                        <option value="none">None</option>
+                        <option value="evar1">evar1: Campaign Code</option>
+                        <option value="evar2">evar2: Product ID</option>
+                        <option value="evar3">evar3: Page Type</option>
+                    </select>
+                    <div class="form-text" id="optionA-equivalent-help"></div>
+                </div>
+
+                <div id="optionA-no-equivalent" class="text-muted small" style="display: none;">
+                    <em>No equivalent needed - same dimension on both platforms.</em>
+                </div>
+
+                <hr>
+                <small class="text-success">✓ Minimal UI, intuitive</small><br>
+                <small class="text-warning">△ Requires platform selection first</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Option B: Combined Radio Group -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <strong>Option B: Combined Platform + Equivalent Control</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Single radio group combining platform and equivalent selection.</p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Platform & Pairing</label>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="optionB" id="optionB-web" onchange="updateOptionB()">
+                        <label class="form-check-label" for="optionB-web">
+                            Web Only → paired with App dimension:
+                        </label>
+                        <select class="form-select form-select-sm mt-1 ms-4" id="optionB-app-equiv" style="width: auto;" disabled>
+                            <option value="">Select...</option>
+                            <option value="none">None</option>
+                            <option value="evar1">evar1: Campaign Code</option>
+                            <option value="evar2">evar2: Product ID</option>
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="optionB" id="optionB-app" onchange="updateOptionB()">
+                        <label class="form-check-label" for="optionB-app">
+                            App Only → paired with Web dimension:
+                        </label>
+                        <select class="form-select form-select-sm mt-1 ms-4" id="optionB-web-equiv" style="width: auto;" disabled>
+                            <option value="">Select...</option>
+                            <option value="none">None</option>
+                            <option value="evar1">evar1: Campaign Code</option>
+                            <option value="evar2">evar2: Product ID</option>
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="optionB" id="optionB-both" onchange="updateOptionB()">
+                        <label class="form-check-label" for="optionB-both">
+                            Both Web and App (same dimension)
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="optionB" id="optionB-none" checked onchange="updateOptionB()">
+                        <label class="form-check-label" for="optionB-none">
+                            Not platform-specific
+                        </label>
+                    </div>
+                </div>
+
+                <hr>
+                <small class="text-success">✓ Single mental model, very clear</small><br>
+                <small class="text-warning">△ More vertical space needed</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Option C: Linked Dimension with Context -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <strong>Option C: "Linked Dimension" with Smart Label</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Single dropdown with context-aware labeling.</p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Platform Availability</label>
+                    <select class="form-select form-select-sm" id="optionC-platform" onchange="updateOptionC()">
+                        <option value="">Not Set</option>
+                        <option value="web_only">Web Only</option>
+                        <option value="app_only">App Only</option>
+                        <option value="both">Both Web and App</option>
+                    </select>
+                </div>
+
+                <div id="optionC-linked-container" style="display: none;">
+                    <label class="form-label fw-semibold" id="optionC-linked-label">Linked Equivalent</label>
+                    <select class="form-select form-select-sm" id="optionC-linked">
+                        <option value="">Not Set</option>
+                        <option value="none">None</option>
+                        <option value="evar1">evar1: Campaign Code</option>
+                        <option value="evar2">evar2: Product ID</option>
+                        <option value="evar3">evar3: Page Type</option>
+                    </select>
+                    <div class="form-text" id="optionC-linked-help">Select the corresponding dimension</div>
+                </div>
+
+                <hr>
+                <small class="text-success">✓ Minimal UI, smart labeling</small><br>
+                <small class="text-warning">△ Subtle, might confuse initially</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Option D: Separate Pairings Page -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-secondary text-white">
+                <strong>Option D: Remove Equivalents (Separate Page)</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">No equivalent fields here. Managed on a dedicated admin page.</p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Platform Availability</label>
+                    <select class="form-select form-select-sm" id="optionD-platform">
+                        <option value="">Not Set</option>
+                        <option value="web_only">Web Only</option>
+                        <option value="app_only">App Only</option>
+                        <option value="both">Both Web and App</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-light border mt-3">
+                    <small>
+                        <strong>Dimension Pairings</strong><br>
+                        Web/App equivalents are managed on a separate
+                        <a href="#" class="alert-link">Dimension Pairings</a> page.
+                    </small>
+                </div>
+
+                <hr>
+                <small class="text-success">✓ Cleaner detail pages, bulk management</small><br>
+                <small class="text-warning">△ Extra page, less discoverable</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Implementation for comparison -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <strong>Current Implementation (for comparison)</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Platform Availability</label>
+                        <select class="form-select form-select-sm">
+                            <option value="">Not Set</option>
+                            <option value="web_only">Web Only</option>
+                            <option value="app_only">App Only</option>
+                            <option value="both">Both Web and App</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Web Equivalent</label>
+                        <select class="form-select form-select-sm">
+                            <option value="">Not Set</option>
+                            <option value="none">None</option>
+                            <option value="evar1">evar1: Campaign Code</option>
+                            <option value="evar2">evar2: Product ID</option>
+                        </select>
+                        <div class="form-text">Corresponding dimension on web platform</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">App Equivalent</label>
+                        <select class="form-select form-select-sm">
+                            <option value="">Not Set</option>
+                            <option value="none">None</option>
+                            <option value="evar1">evar1: Campaign Code</option>
+                            <option value="evar2">evar2: Product ID</option>
+                        </select>
+                        <div class="form-text">Corresponding dimension on app platform</div>
+                    </div>
+                </div>
+                <hr>
+                <small class="text-danger">✗ Redundant - both dropdowns shown regardless of platform</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Option A: Conditional Single Dropdown
+function updateOptionA() {
+    const platform = document.getElementById('optionA-platform').value;
+    const container = document.getElementById('optionA-equivalent-container');
+    const noEquiv = document.getElementById('optionA-no-equivalent');
+    const label = document.getElementById('optionA-equivalent-label');
+    const help = document.getElementById('optionA-equivalent-help');
+
+    if (platform === 'web_only') {
+        container.style.display = 'block';
+        noEquiv.style.display = 'none';
+        label.textContent = 'App Equivalent';
+        help.textContent = 'Select the corresponding App dimension';
+    } else if (platform === 'app_only') {
+        container.style.display = 'block';
+        noEquiv.style.display = 'none';
+        label.textContent = 'Web Equivalent';
+        help.textContent = 'Select the corresponding Web dimension';
+    } else if (platform === 'both') {
+        container.style.display = 'none';
+        noEquiv.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        noEquiv.style.display = 'none';
+    }
+}
+
+// Option B: Combined Radio Group
+function updateOptionB() {
+    const webRadio = document.getElementById('optionB-web');
+    const appRadio = document.getElementById('optionB-app');
+    const appEquiv = document.getElementById('optionB-app-equiv');
+    const webEquiv = document.getElementById('optionB-web-equiv');
+
+    appEquiv.disabled = !webRadio.checked;
+    webEquiv.disabled = !appRadio.checked;
+
+    if (!webRadio.checked) appEquiv.value = '';
+    if (!appRadio.checked) webEquiv.value = '';
+}
+
+// Option C: Linked Dimension with Context
+function updateOptionC() {
+    const platform = document.getElementById('optionC-platform').value;
+    const container = document.getElementById('optionC-linked-container');
+    const label = document.getElementById('optionC-linked-label');
+    const help = document.getElementById('optionC-linked-help');
+
+    if (platform === 'web_only') {
+        container.style.display = 'block';
+        label.textContent = 'Linked App Equivalent';
+        help.textContent = 'This is the App dimension that corresponds to this Web dimension';
+    } else if (platform === 'app_only') {
+        container.style.display = 'block';
+        label.textContent = 'Linked Web Equivalent';
+        help.textContent = 'This is the Web dimension that corresponds to this App dimension';
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+// Initialize
+updateOptionA();
+updateOptionB();
+updateOptionC();
+</script>
+{% endblock %}
