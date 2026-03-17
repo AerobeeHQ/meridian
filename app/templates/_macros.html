@@ -158,27 +158,54 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         </div>
     </div>
 
-    <!-- Web/App Equivalents -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label fw-semibold">Web Equivalent</label>
+    <!-- Cross-Platform Mapping with Radio Toggle -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Cross-Platform Mapping</label>
+
+        <div class="platform-mapping-radios mb-2">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_none" value="none" checked>
+                <label class="form-check-label" for="mapping_none">
+                    No equivalent (standalone dimension)
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_web" value="web">
+                <label class="form-check-label" for="mapping_web">
+                    Has Web equivalent
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_app" value="app">
+                <label class="form-check-label" for="mapping_app">
+                    Has App equivalent
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="platform_mapping_type" id="mapping_both" value="both">
+                <label class="form-check-label" for="mapping_both">
+                    Available on both platforms
+                </label>
+            </div>
+        </div>
+
+        <!-- Conditional dropdowns -->
+        <div class="conditional-dropdown" id="web_equivalent_section" style="display: none;">
+            <label class="form-label fw-semibold small">Web Equivalent Dimension</label>
             <div class="searchable-select-wrapper">
                 <select class="form-select form-select-sm searchable-select" name="web_equivalent" data-search-placeholder="Type to search...">
-                    <option value="">Not Set</option>
-                    <option value="none">None</option>
+                    <option value="">Select dimension...</option>
                 </select>
             </div>
-            <div class="form-text">Corresponding dimension on web platform</div>
         </div>
-        <div class="col-md-6">
-            <label class="form-label fw-semibold">App Equivalent</label>
+
+        <div class="conditional-dropdown" id="app_equivalent_section" style="display: none;">
+            <label class="form-label fw-semibold small">App Equivalent Dimension</label>
             <div class="searchable-select-wrapper">
                 <select class="form-select form-select-sm searchable-select" name="app_equivalent" data-search-placeholder="Type to search...">
-                    <option value="">Not Set</option>
-                    <option value="none">None</option>
+                    <option value="">Select dimension...</option>
                 </select>
             </div>
-            <div class="form-text">Corresponding dimension on app platform</div>
         </div>
     </div>
 
@@ -276,12 +303,12 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                 const webSelect = form.querySelector('[name="web_equivalent"]');
                 const appSelect = form.querySelector('[name="app_equivalent"]');
 
-                // Clear existing options (except first two)
+                // Clear existing options (except first one)
                 [webSelect, appSelect].forEach(select => {
-                    while (select.options.length > 2) {
-                        select.remove(2);
+                    while (select.options.length > 1) {
+                        select.remove(1);
                     }
-                    options.slice(2).forEach(opt => {
+                    options.forEach(opt => {
                         const option = document.createElement('option');
                         option.value = opt.id;
                         option.textContent = opt.name;
@@ -293,6 +320,34 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                 initSearchableSelects();
             })
             .catch(err => console.error('Failed to load dimension options:', err));
+    }
+
+    // Handle radio toggle for conditional dropdown display
+    function setupPlatformMappingToggle() {
+        const radios = form.querySelectorAll('[name="platform_mapping_type"]');
+        const webSection = form.querySelector('#web_equivalent_section');
+        const appSection = form.querySelector('#app_equivalent_section');
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Hide all conditional dropdowns
+                webSection.style.display = 'none';
+                appSection.style.display = 'none';
+
+                // Show appropriate dropdown based on selection
+                if (this.value === 'web') {
+                    webSection.style.display = 'block';
+                } else if (this.value === 'app') {
+                    appSection.style.display = 'block';
+                } else if (this.value === 'both') {
+                    // For "both platforms", no dropdown needed
+                    // Could show a message or info text instead
+                }
+                // 'none' shows nothing
+
+                markUnsaved();
+            });
+        });
     }
 
     // Initialize searchable select dropdowns
@@ -421,14 +476,17 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Collect form data
     function getFormData() {
+        const mappingType = form.querySelector('[name="platform_mapping_type"]:checked').value;
+
         return {
             plain_description: form.querySelector('[name="plain_description"]').value,
             technical_definition: form.querySelector('[name="technical_definition"]').value,
             expiry_notes: form.querySelector('[name="expiry_notes"]').value,
             platform_availability: form.querySelector('[name="platform_availability"]').value,
             platform_notes: form.querySelector('[name="platform_notes"]').value,
-            web_equivalent: form.querySelector('[name="web_equivalent"]').value,
-            app_equivalent: form.querySelector('[name="app_equivalent"]').value,
+            platform_mapping_type: mappingType,
+            web_equivalent: mappingType === 'web' ? form.querySelector('[name="web_equivalent"]').value : '',
+            app_equivalent: mappingType === 'app' ? form.querySelector('[name="app_equivalent"]').value : '',
             use_cases: form.querySelector('[name="use_cases"]').value,
             typical_questions: form.querySelector('[name="typical_questions"]').value,
             squad_owners: selectedSquads,
@@ -443,12 +501,22 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         form.querySelector('[name="expiry_notes"]').value = data.expiry_notes || defaultExpiry;
         form.querySelector('[name="platform_availability"]').value = data.platform_availability || '';
         form.querySelector('[name="platform_notes"]').value = data.platform_notes || '';
+
+        // Set platform mapping type and conditional dropdowns
+        const mappingType = data.platform_mapping_type || 'none';
+        const mappingRadio = form.querySelector(`[name="platform_mapping_type"][value="${mappingType}"]`);
+        if (mappingRadio) {
+            mappingRadio.checked = true;
+            // Trigger the change event to show/hide appropriate sections
+            mappingRadio.dispatchEvent(new Event('change'));
+        }
+
         form.querySelector('[name="web_equivalent"]').value = data.web_equivalent || '';
         form.querySelector('[name="app_equivalent"]').value = data.app_equivalent || '';
         form.querySelector('[name="use_cases"]').value = data.use_cases || '';
         form.querySelector('[name="typical_questions"]').value = data.typical_questions || '';
         form.querySelector('[name="last_verified"]').value = data.last_verified || '';
-        
+
         // Set squad chips
         selectedSquads = data.squad_owners || [];
         squadChips.forEach(chip => {
@@ -540,6 +608,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     }
 
     // Initialize
+    setupPlatformMappingToggle();
     loadDimensionOptions();
     loadNotes();
 })();
