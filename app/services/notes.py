@@ -35,8 +35,9 @@ def get_empty_note():
         "expiry_notes": "",
         "platform_availability": "",
         "platform_notes": "",
-        "web_equivalent": "",
-        "app_equivalent": "",
+        "platform_equivalent": "",  # Option A: single equivalent field
+        "web_equivalent": "",       # Kept for backward compatibility
+        "app_equivalent": "",       # Kept for backward compatibility
         "use_cases": "",
         "typical_questions": "",
         "squad_owners": [],
@@ -175,5 +176,4 @@ def generate_expiry_notes(dimension, dimension_type):
         return "Expiration not configured."
     
     return ""
-
 

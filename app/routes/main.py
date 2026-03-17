@@ -893,17 +893,6 @@ def cache_clear():
     )
 
 
-@main_bp.route('/demo/platform-ux')
-def demo_platform_ux():
-    """Demo page comparing Platform/Equivalent UX options"""
-    return render_template(
-        'demo_platform_ux.html',
-        title='Platform UX Demo',
-        app_title=current_app.config['APP_TITLE'],
-        rsid=get_rsid(),
-        active_tab=None
-    )
-
 
 # =============================================================================
 # Notes API Routes

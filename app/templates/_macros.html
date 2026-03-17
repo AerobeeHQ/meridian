@@ -117,30 +117,27 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     <!-- Plain English Description -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Plain English Description</label>
-        <textarea class="form-control form-control-sm" name="plain_description" rows="3" maxlength="1000"
-                  placeholder="Business user-friendly description of what this dimension captures..."></textarea>
+        <textarea class="form-control form-control-sm" name="plain_description" rows="3" maxlength="1000" placeholder="Business user-friendly description of what this dimension captures..."></textarea>
         <div class="form-text">Business-friendly description (max 1000 characters)</div>
     </div>
 
     <!-- Technical Definition -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Technical Definition</label>
-        <textarea class="form-control form-control-sm" name="technical_definition" rows="3" maxlength="1000"
-                  placeholder="Technical implementation details, data layer variable names, etc..."></textarea>
+        <textarea class="form-control form-control-sm" name="technical_definition" rows="3" maxlength="1000" placeholder="Technical implementation details, data layer variable names, etc..."></textarea>
         <div class="form-text">Technical details for developers (max 1000 characters)</div>
     </div>
 
     <!-- Expiry Notes -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Expiry Notes</label>
-        <textarea class="form-control form-control-sm" name="expiry_notes" rows="2" maxlength="500"
-                  placeholder="Notes on expiration policy..."></textarea>
+        <textarea class="form-control form-control-sm" name="expiry_notes" rows="2" maxlength="500" placeholder="Notes on expiration policy..."></textarea>
         <div class="form-text">Auto-generated from config, can be overridden (max 500 characters)</div>
     </div>
 
     <hr class="my-3">
 
-    <!-- Platform Section -->
+    <!-- Platform Section (Option A: Conditional Single Dropdown) -->
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label fw-semibold">Platform Availability</label>
@@ -153,29 +150,23 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">Platform Notes</label>
-            <textarea class="form-control form-control-sm" name="platform_notes" rows="2" maxlength="500"
-                      placeholder="Platform-specific implementation notes..."></textarea>
+            <textarea class="form-control form-control-sm" name="platform_notes" rows="2" maxlength="500" placeholder="Platform-specific implementation notes..."></textarea>
         </div>
     </div>
 
-    <!-- Web/App Equivalents -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <label class="form-label fw-semibold">Web Equivalent</label>
-            <select class="form-select form-select-sm" name="web_equivalent">
-                <option value="">Not Set</option>
-                <option value="none">None</option>
-            </select>
-            <div class="form-text">Corresponding dimension on web platform</div>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label fw-semibold">App Equivalent</label>
-            <select class="form-select form-select-sm" name="app_equivalent">
-                <option value="">Not Set</option>
-                <option value="none">None</option>
-            </select>
-            <div class="form-text">Corresponding dimension on app platform</div>
-        </div>
+    <!-- Conditional Equivalent Dropdown (shown based on platform selection) -->
+    <div class="mb-3 platform-equivalent-container" style="display: none;">
+        <label class="form-label fw-semibold platform-equivalent-label">Equivalent</label>
+        <select class="form-select form-select-sm" name="platform_equivalent">
+            <option value="">Not Set</option>
+            <option value="none">None</option>
+        </select>
+        <div class="form-text platform-equivalent-help">Select the corresponding dimension</div>
+    </div>
+
+    <!-- Message when "Both" is selected -->
+    <div class="mb-3 platform-both-message text-muted small" style="display: none;">
+        <em>No equivalent needed — this dimension is used on both Web and App platforms.</em>
     </div>
 
     <hr class="my-3">
@@ -183,16 +174,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     <!-- Use Cases -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Use Cases</label>
-        <textarea class="form-control form-control-sm" name="use_cases" rows="3" maxlength="1000"
-                  placeholder="Common use cases and analysis scenarios..."></textarea>
+        <textarea class="form-control form-control-sm" name="use_cases" rows="3" maxlength="1000" placeholder="Common use cases and analysis scenarios..."></textarea>
         <div class="form-text">How this dimension is typically used (max 1000 characters)</div>
     </div>
 
     <!-- Typical Questions -->
     <div class="mb-3">
         <label class="form-label fw-semibold">Typical Questions</label>
-        <textarea class="form-control form-control-sm" name="typical_questions" rows="3" maxlength="1000"
-                  placeholder="Questions this dimension helps answer..."></textarea>
+        <textarea class="form-control form-control-sm" name="typical_questions" rows="3" maxlength="1000" placeholder="Questions this dimension helps answer..."></textarea>
         <div class="form-text">Business questions this dimension helps answer (max 1000 characters)</div>
     </div>
 
@@ -242,6 +231,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     let saveTimeout = null;
     let hasUnsavedChanges = false;
 
+    // Platform equivalent elements (Option A)
+    const platformSelect = form.querySelector('[name="platform_availability"]');
+    const equivContainer = form.querySelector('.platform-equivalent-container');
+    const equivLabel = form.querySelector('.platform-equivalent-label');
+    const equivHelp = form.querySelector('.platform-equivalent-help');
+    const equivSelect = form.querySelector('[name="platform_equivalent"]');
+    const bothMessage = form.querySelector('.platform-both-message');
+
     // Squad chip selection
     const squadChips = form.querySelectorAll('.squad-chip');
     const squadInput = form.querySelector('[name="squad_owners"]');
@@ -264,25 +261,50 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         });
     });
 
-    // Load dimension options for Web/App Equivalent dropdowns
+    // Option A: Update equivalent dropdown visibility based on platform selection
+    function updatePlatformEquivalent() {
+        const platform = platformSelect.value;
+
+        if (platform === 'web_only') {
+            equivContainer.style.display = 'block';
+            bothMessage.style.display = 'none';
+            equivLabel.textContent = 'App Equivalent';
+            equivHelp.textContent = 'Select the corresponding App dimension';
+        } else if (platform === 'app_only') {
+            equivContainer.style.display = 'block';
+            bothMessage.style.display = 'none';
+            equivLabel.textContent = 'Web Equivalent';
+            equivHelp.textContent = 'Select the corresponding Web dimension';
+        } else if (platform === 'both') {
+            equivContainer.style.display = 'none';
+            bothMessage.style.display = 'block';
+            equivSelect.value = '';  // Clear selection when hidden
+        } else {
+            equivContainer.style.display = 'none';
+            bothMessage.style.display = 'none';
+            equivSelect.value = '';  // Clear selection when hidden
+        }
+    }
+
+    platformSelect.addEventListener('change', function() {
+        updatePlatformEquivalent();
+        markUnsaved();
+    });
+
+    // Load dimension options for Equivalent dropdown
     function loadDimensionOptions() {
         fetch(`/api/notes/options/${dimensionType}`)
             .then(response => response.json())
             .then(options => {
-                const webSelect = form.querySelector('[name="web_equivalent"]');
-                const appSelect = form.querySelector('[name="app_equivalent"]');
-
-                // Clear existing options (except first two)
-                [webSelect, appSelect].forEach(select => {
-                    while (select.options.length > 2) {
-                        select.remove(2);
-                    }
-                    options.slice(2).forEach(opt => {
-                        const option = document.createElement('option');
-                        option.value = opt.id;
-                        option.textContent = opt.name;
-                        select.appendChild(option);
-                    });
+                // Clear existing options (except first two: Not Set, None)
+                while (equivSelect.options.length > 2) {
+                    equivSelect.remove(2);
+                }
+                options.slice(2).forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.id;
+                    option.textContent = opt.name;
+                    equivSelect.appendChild(option);
                 });
             })
             .catch(err => console.error('Failed to load dimension options:', err));
@@ -290,14 +312,27 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Collect form data
     function getFormData() {
+        const platform = platformSelect.value;
+        const equiv = equivSelect.value;
+
+        // Map platform_equivalent to the correct field based on platform
+        let webEquiv = '';
+        let appEquiv = '';
+        if (platform === 'web_only') {
+            appEquiv = equiv;  // This dimension is Web, so equivalent is App
+        } else if (platform === 'app_only') {
+            webEquiv = equiv;  // This dimension is App, so equivalent is Web
+        }
+
         return {
             plain_description: form.querySelector('[name="plain_description"]').value,
             technical_definition: form.querySelector('[name="technical_definition"]').value,
             expiry_notes: form.querySelector('[name="expiry_notes"]').value,
-            platform_availability: form.querySelector('[name="platform_availability"]').value,
+            platform_availability: platform,
             platform_notes: form.querySelector('[name="platform_notes"]').value,
-            web_equivalent: form.querySelector('[name="web_equivalent"]').value,
-            app_equivalent: form.querySelector('[name="app_equivalent"]').value,
+            platform_equivalent: equiv,  // Store the raw value too
+            web_equivalent: webEquiv,
+            app_equivalent: appEquiv,
             use_cases: form.querySelector('[name="use_cases"]').value,
             typical_questions: form.querySelector('[name="typical_questions"]').value,
             squad_owners: selectedSquads,
@@ -310,13 +345,26 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         form.querySelector('[name="plain_description"]').value = data.plain_description || '';
         form.querySelector('[name="technical_definition"]').value = data.technical_definition || '';
         form.querySelector('[name="expiry_notes"]').value = data.expiry_notes || defaultExpiry;
-        form.querySelector('[name="platform_availability"]').value = data.platform_availability || '';
+        platformSelect.value = data.platform_availability || '';
         form.querySelector('[name="platform_notes"]').value = data.platform_notes || '';
-        form.querySelector('[name="web_equivalent"]').value = data.web_equivalent || '';
-        form.querySelector('[name="app_equivalent"]').value = data.app_equivalent || '';
         form.querySelector('[name="use_cases"]').value = data.use_cases || '';
         form.querySelector('[name="typical_questions"]').value = data.typical_questions || '';
         form.querySelector('[name="last_verified"]').value = data.last_verified || '';
+
+        // Set equivalent based on platform (Option A)
+        const platform = data.platform_availability || '';
+        if (data.platform_equivalent) {
+            equivSelect.value = data.platform_equivalent;
+        } else if (platform === 'web_only' && data.app_equivalent) {
+            equivSelect.value = data.app_equivalent;
+        } else if (platform === 'app_only' && data.web_equivalent) {
+            equivSelect.value = data.web_equivalent;
+        } else {
+            equivSelect.value = '';
+        }
+
+        // Update visibility
+        updatePlatformEquivalent();
 
         // Set squad chips
         selectedSquads = data.squad_owners || [];
@@ -413,4 +461,3 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     loadNotes();
 })();
 {% endmacro %}
-
