@@ -89,3 +89,21 @@ Keep previous versions when a note is updated?
 | 4. Add JavaScript handler | ✅ Complete | `notes_js` macro in `_macros.html` |
 | 5. Create `notes/` directory | ✅ Complete | Auto-created on first save, added to `.gitignore` |
 
+## Custom Notes
+
+New feature to allow users to add custom notes to each dimension.
+
+* **Plain English Description** 3 line (1000 char max) business user-friendly description of the dimension.
+* **Technical Definition** 3 line (1000 char max) technical definition of the dimension.
+* **Expiry Notes** 2 line (500 char max) notes on the dimension's expiry policy, auto generated from the API, but can be manually overridden.
+* **Platform Availability** Dropdown menu with the following options:
+  - Web Only
+  - App Only
+  - Both Web and App
+* **Platform Notes** 2 line (500 char max) user entered notes on the dimension's availability on each platform.
+* **Web Equivalent** Dropdown menu with the options: "None", "Not Set" or any named prop/eVar/event/listVar depending on the dimension type. Should default to "Not Set".
+* **App Equivalent** Dropdown menu with the options: "None", "Not Set" or any named prop/eVar/event/listVar depending on the dimension type. Should default to "Not Set".
+* **Use Cases** 3 line (1000 char max) notes on common use cases for the dimension.
+* **Typical Questions** 3 line (1000 char max) notes on typical questions users might ask about the dimension.
+* **Journey Squad Owner** Tag chips for the Squad Leads who own the journey that uses the dimension. The chips labels are: "Shop", "Inspire", "Checkout", "Trolley", "Loyalty", "Perso", "Finance", "Search", "Instore", "Platform", "All Squads"
+* **Last Verified** Date field for when the dimension was last verified by the user. 
