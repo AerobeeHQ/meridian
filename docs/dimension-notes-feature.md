@@ -1,7 +1,7 @@
 # Dimension Notes Feature Plan
 
 **Created:** March 14, 2026  
-**Updated:** March 16, 2026
+**Updated:** March 17, 2026
 
 ## Overview
 
@@ -133,4 +133,22 @@ Expanded the simple freeform notes to a structured form with multiple fields:
 - `app/services/notes.py` — Updated to handle structured data, added `SQUAD_OPTIONS`, `PLATFORM_OPTIONS`, `get_empty_note()`, `generate_expiry_notes()`
 - `app/routes/main.py` — Updated API routes for structured data, added `/api/notes/options/<dimension_type>` endpoint
 - `app/templates/_macros.html` — Added `notes_form` macro (HTML) and `notes_form_js` macro (JavaScript)
-- `app/templates/detail.html`, `event_detail.html`, `listvar_detail.html` — Updated to use new structured form 
+- `app/templates/detail.html`, `event_detail.html`, `listvar_detail.html` — Updated to use new structured form
+
+## UX Improvements
+
+### Option A: Conditional Single Dropdown (March 17, 2026)
+
+Replaced redundant Web/App Equivalent dropdowns with a single conditional dropdown:
+- **"Not Set"** → No equivalent dropdown shown
+- **"Web Only"** → Shows "App Equivalent" dropdown
+- **"App Only"** → Shows "Web Equivalent" dropdown
+- **"Both Web and App"** → Shows message "No equivalent needed"
+
+### Keyword Filter for Equivalent Dropdown (March 17, 2026)
+
+Added a keyword filter input above the platform equivalent dropdown to help users quickly find options in long lists (especially useful for Success Events with hundreds of values):
+- Text input filters options as you type
+- Matches against both dimension ID (e.g., "event123") and name (e.g., "Purchase Complete")
+- Filter is cleared when platform selection changes
+- Filter input does not trigger auto-save

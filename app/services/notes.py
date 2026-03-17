@@ -35,9 +35,8 @@ def get_empty_note():
         "expiry_notes": "",
         "platform_availability": "",
         "platform_notes": "",
-        "platform_equivalent": "",  # Option A: single equivalent field
-        "web_equivalent": "",       # Kept for backward compatibility
-        "app_equivalent": "",       # Kept for backward compatibility
+        "web_equivalent": "",
+        "app_equivalent": "",
         "use_cases": "",
         "typical_questions": "",
         "squad_owners": [],
