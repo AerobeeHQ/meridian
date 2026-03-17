@@ -259,7 +259,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Load dimension options for Equivalent Dimension dropdown
     function loadDimensionOptions() {
-        fetch(`/api/notes/options/${dimensionType}`)
+        return fetch(`/api/notes/options/${dimensionType}`)
             .then(response => response.json())
             .then(options => {
                 const equivalentSelect = form.querySelector('[name="equivalent_dimension"]');
@@ -303,14 +303,9 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             equivalentSection.style.display = 'block';
             equivalentLabel.textContent = 'App Equivalent';
             equivalentHelp.textContent = 'Corresponding dimension on app platform';
-        } else if (platformAvailability === 'both' || platformAvailability === '') {
+        } else {
             // Hide section for "Both Web and App" or "Not Set"
             equivalentSection.style.display = 'none';
-        } else {
-            // Default: show with generic label
-            equivalentSection.style.display = 'block';
-            equivalentLabel.textContent = 'Equivalent Dimension';
-            equivalentHelp.textContent = 'Cross-platform mapping for this dimension';
         }
     }
 
@@ -500,7 +495,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             equivalentValue = data.app_equivalent;
         }
 
-        form.querySelector('[name="equivalent_dimension"]').value = equivalentValue;
+        const equivalentSelect = form.querySelector('[name="equivalent_dimension"]');
+        equivalentSelect.value = equivalentValue;
+
+        // Sync the custom display button text to the newly selected option
+        const displayBtn = equivalentSelect.parentElement.querySelector('.custom-select-display');
+        if (displayBtn) {
+            displayBtn.textContent = equivalentSelect.options[equivalentSelect.selectedIndex]?.textContent || 'Not Set';
+        }
 
         // Update the equivalent dimension section visibility and label
         updateEquivalentDimensionSection();
@@ -601,8 +603,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Initialize
     setupPlatformAvailabilityListener();
-    loadDimensionOptions();
-    loadNotes();
+    loadDimensionOptions().then(loadNotes);
 })();
 {% endmacro %}
 
