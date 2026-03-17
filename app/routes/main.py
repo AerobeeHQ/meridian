@@ -4,12 +4,13 @@ Main routes for the Codex application
 import csv
 import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Blueprint, render_template, current_app, Response
+from flask import Blueprint, render_template, current_app, Response, request, jsonify
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
 from app.services.adobe_auth import OAuth2Auth
 from app.services.cache import CacheService
+from app.services import notes as notes_service
 
 
 main_bp = Blueprint('main', __name__)
@@ -890,4 +891,141 @@ def cache_clear():
         active_tab='cache',
         message='Cache cleared successfully'
     )
+
+
+
+# =============================================================================
+# Notes API Routes
+# =============================================================================
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['GET'])
+def get_note(dimension_type: str, dimension_id: str):
+    """
+    Get a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Returns:
+        JSON with all note fields
+    """
+    rsid = get_rsid()
+    note = notes_service.get(rsid, dimension_type, dimension_id)
+    return jsonify(note)
+
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['POST'])
+def save_note(dimension_type: str, dimension_id: str):
+    """
+    Save a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Request body:
+        JSON with note fields
+    
+    Returns:
+        JSON with saved note data including updated_at
+    """
+    rsid = get_rsid()
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Missing request body'}), 400
+    
+    note = notes_service.set(rsid, dimension_type, dimension_id, data)
+    return jsonify(note)
+
+
+@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['DELETE'])
+def delete_note(dimension_type: str, dimension_id: str):
+    """
+    Delete a note for a specific dimension.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+        dimension_id: The dimension identifier (e.g., 'prop1', 'evar5', 'event10')
+    
+    Returns:
+        JSON with success status
+    """
+    rsid = get_rsid()
+    deleted = notes_service.delete(rsid, dimension_type, dimension_id)
+    return jsonify({'deleted': deleted})
+
+
+@main_bp.route('/api/notes/options/<dimension_type>')
+def get_dimension_options(dimension_type: str):
+    """
+    Get list of dimensions for Web/App Equivalent dropdowns.
+    
+    Args:
+        dimension_type: Type of dimension (prop, evar, event, listvar)
+    
+    Returns:
+        JSON array of {id, name} objects for the specified dimension type
+    """
+    rsid = get_rsid()
+    api = get_api_service()
+    
+    # Get cached dimensions (used for props, evars, listvars)
+    cached_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    
+    options = [
+        {"id": "", "name": "Not Set"},
+        {"id": "none", "name": "None"}
+    ]
+    
+    if dimension_type == 'prop' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            # Match variables/prop1, variables/prop2, etc. (exclude classifications with dots)
+            if dim_id.startswith('variables/prop') and '.' not in dim_id.replace('variables/', ''):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:  # Only include named dimensions
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by prop number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('prop', '') or 0))
+    
+    elif dimension_type == 'evar' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            # Match variables/evar1, variables/evar2, etc. (exclude classifications with dots)
+            if dim_id.startswith('variables/evar') and '.' not in dim_id.replace('variables/', ''):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:  # Only include named dimensions
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by evar number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('evar', '') or 0))
+    
+    elif dimension_type == 'event':
+        # Events are fetched via get_success_events, cached under 'events' key
+        cached_events = get_cached_data('events', lambda: api.get_success_events(rsid))
+        if cached_events:
+            for event in cached_events:
+                event_id = event.get('id', '')
+                name = event.get('name') or ''
+                if name and name != event_id:  # Only include named events
+                    options.append({"id": event_id, "name": f"{event_id}: {name}"})
+            # Sort by event number
+            options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('event', '') or 0))
+    
+    elif dimension_type == 'listvar' and cached_dimensions:
+        for dim in cached_dimensions:
+            dim_id = dim.get('id', '')
+            if dim_id.startswith('variables/listvar'):
+                short_id = dim_id.replace('variables/', '')
+                name = dim.get('name') or dim.get('title') or ''
+                if name and name != short_id:
+                    options.append({"id": short_id, "name": f"{short_id}: {name}"})
+        # Sort by listvar number
+        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('listvar', '') or 0))
+    
+    return jsonify(options)
+
 

@@ -65,9 +65,21 @@
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
-                <div class="notes-editor" contenteditable="true" data-placeholder="Customer written descriptions here" style="min-height: 150px; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
-                </div>
-                <small class="text-muted mt-2 d-block">Click to add notes (local only, not saved)</small>
+                <h5 class="card-title">Documentation Notes</h5>
+                {% from '_macros.html' import notes_form %}
+                {% set default_expiry = '' %}
+                {% set expiry_type = listvar.get('expiration_type', '') %}
+                {% set custom_days = listvar.get('expiration_custom_days', '') %}
+                {% if expiry_type %}
+                    {% if custom_days %}
+                        {% set default_expiry = 'Expires after ' ~ custom_days ~ ' days (' ~ expiry_type ~ ').' %}
+                    {% else %}
+                        {% set default_expiry = 'Expiration type: ' ~ expiry_type ~ '.' %}
+                    {% endif %}
+                {% else %}
+                    {% set default_expiry = 'Expiration not configured.' %}
+                {% endif %}
+                {{ notes_form('listvar', listvar_num, default_expiry) }}
             </div>
         </div>
     </div>
@@ -164,10 +176,10 @@
 {% endblock %}
 
 {% block scripts %}
-{% from '_macros.html' import trend_chart_js, contenteditable_js %}
+{% from '_macros.html' import trend_chart_js, notes_form_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 {{ trend_chart_js(trend_data, 'Occurrences', ' occurrences') }}
-{{ contenteditable_js() }}
+{{ notes_form_js('listvar', listvar_num) }}
 </script>
 {% endblock %}

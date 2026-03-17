@@ -166,6 +166,7 @@ cython_debug/
 config.json
 cache/
 exports/
+notes/
 
 # OpenAPI generated clients - exclude build artifacts but keep source
 notebooks/**/openapi_client/

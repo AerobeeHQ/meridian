@@ -52,6 +52,10 @@
             padding: 2px 6px;
             border-radius: 3px;
         }
+        .notes-status {
+            font-size: 11px;
+            color: #888;
+        }
         .monospace {
             font-family: 'Courier New', monospace;
             font-size: 12px;
@@ -91,6 +95,71 @@
         /* Link color when row is selected */
         .table tbody tr.selected a {
             color: #fff !important;
+        }
+
+        /* Custom Searchable Select Styles */
+        .searchable-select-wrapper {
+            position: relative;
+        }
+
+        .custom-searchable-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-display {
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            margin-top: 2px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-select-search {
+            border: none;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 0;
+            margin: 0;
+        }
+
+        .custom-select-search:focus {
+            box-shadow: none;
+            border-bottom-color: #86b7fe;
+        }
+
+        .custom-select-options {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .custom-select-option {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .custom-select-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .custom-select-option.selected {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .custom-select-option.selected:hover {
+            background-color: #0b5ed7;
         }
     </style>
 </head>
