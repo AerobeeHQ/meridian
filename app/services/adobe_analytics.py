@@ -220,6 +220,28 @@ class AdobeAnalyticsService:
             return result[0].get('evars', [])
         return []
 
+    def get_evar(self, rsid: str, evar_id: str) -> dict:
+        """
+        Get configuration for a single eVar
+        
+        Args:
+            rsid: Report suite ID
+            evar_id: eVar ID (e.g., 'evar1' or 'variables/evar1')
+        
+        Returns:
+            eVar configuration dict with allocation, expiration, and merchandising settings
+        """
+        # Normalize evar_id to just the evar number (e.g., 'evar1')
+        evar_id = evar_id.replace('variables/', '')
+        
+        # Get all evars and find the matching one
+        evars = self.get_evars(rsid)
+        for evar in evars:
+            if evar.get('id') == evar_id:
+                return evar
+        
+        return {}
+
     def get_success_events(self, rsid: str) -> list[dict]:
         """
         Get success events for a report suite
