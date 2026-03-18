@@ -101,6 +101,32 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
+def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
+    """
+    Safely extract numeric suffix from a dimension ID.
+
+    Args:
+        dim_id: Dimension ID (e.g., 'prop1', 'evar42', 'event10')
+        prefix: Expected prefix to remove (e.g., 'prop', 'evar', 'event')
+
+    Returns:
+        Numeric suffix as integer, or 999 if parsing fails
+
+    Examples:
+        >>> safe_extract_dimension_number('prop1', 'prop')
+        1
+        >>> safe_extract_dimension_number('evar42', 'evar')
+        42
+        >>> safe_extract_dimension_number('invalid', 'prop')
+        999
+    """
+    try:
+        cleaned = dim_id.replace(prefix, '')
+        return int(cleaned) if cleaned else 999
+    except (ValueError, AttributeError):
+        return 999
+
+
 # Column mappings matching server.R transformations
 PROPS_COLUMNS = {
     'id': 'Prop',
@@ -137,6 +163,13 @@ LISTVARS_COLUMNS = {
     'id': 'ID',
     'expiration_custom_days': 'Expiry Days',
     'expiration_type': 'Expiry Type',
+    'description': 'Description'
+}
+
+CORE_COLUMNS = {
+    'id': 'Dimension',
+    'name': 'Label',
+    'type': 'Type',
     'description': 'Description'
 }
 
@@ -198,6 +231,194 @@ def generate_csv(data: list[dict], filename: str) -> Response:
         headers={'Content-Disposition': f'attachment; filename={filename}'}
     )
     return response
+
+
+# Define core dimension IDs (out-of-the-box dimensions)
+CORE_DIMENSION_IDS = [
+    'variables/page',
+    'variables/pageurl',
+    'variables/sitesection',
+    'variables/server',
+    'variables/channel',
+    'variables/customlink',
+    'variables/downloadlink',
+    'variables/exitlink',
+    'variables/product',
+    'variables/referrer',
+    'variables/campaign',
+    'variables/searchengine'
+]
+
+
+@main_bp.route('/core')
+def core():
+    """Display core/out-of-the-box dimensions"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Cache raw dimensions for reuse
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+
+    # Filter core dimensions
+    raw_core = []
+    for dim in raw_dimensions:
+        dim_id = dim.get("id", "")
+        if dim_id in CORE_DIMENSION_IDS:
+            # Transform to simpler format
+            core_item = {
+                'id': dim_id.replace("variables/", ""),
+                'name': dim.get("name") or dim.get("title", ""),
+                'type': dim.get("type", ""),
+                'description': dim.get("description", "")
+            }
+            raw_core.append(core_item)
+
+    # Sort by the order defined in CORE_DIMENSION_IDS
+    def sort_key(item):
+        full_id = f"variables/{item['id']}"
+        try:
+            return CORE_DIMENSION_IDS.index(full_id)
+        except ValueError:
+            return 999
+
+    raw_core.sort(key=sort_key)
+
+    data = transform_data(raw_core, CORE_COLUMNS)
+
+    return render_template(
+        'table.html',
+        title='Core',
+        app_title=current_app.config['APP_TITLE'],
+        data=data,
+        columns=list(CORE_COLUMNS.values()),
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='core',
+        monospace_columns=[]
+    )
+
+
+@main_bp.route('/core/export')
+def core_export():
+    """Export core dimensions as CSV"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Use cached dimensions
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_core = []
+    for dim in raw_dimensions:
+        dim_id = dim.get("id", "")
+        if dim_id in CORE_DIMENSION_IDS:
+            core_item = {
+                'id': dim_id.replace("variables/", ""),
+                'name': dim.get("name") or dim.get("title", ""),
+                'type': dim.get("type", ""),
+                'description': dim.get("description", "")
+            }
+            raw_core.append(core_item)
+
+    # Sort by the order defined in CORE_DIMENSION_IDS
+    def sort_key(item):
+        full_id = f"variables/{item['id']}"
+        try:
+            return CORE_DIMENSION_IDS.index(full_id)
+        except ValueError:
+            return 999
+
+    raw_core.sort(key=sort_key)
+
+    data = transform_data(raw_core, CORE_COLUMNS)
+
+    return generate_csv(data, f'{rsid}_core.csv')
+
+
+@main_bp.route('/core/<dimension_id>')
+def core_detail(dimension_id: str):
+    """Display detail page for a specific core dimension"""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    # Normalize dimension_id to API format
+    full_dimension_id = f"variables/{dimension_id}" if not dimension_id.startswith("variables/") else dimension_id
+    display_id = dimension_id.replace("variables/", "")
+
+    # Quick Win #1: Try to get dimension from already-cached dimensions list
+    cached_dimensions = cache.get(rsid, 'dimensions')
+
+    def fetch_dimension():
+        if cached_dimensions:
+            for dim in cached_dimensions:
+                if dim.get("id") == full_dimension_id:
+                    return dim
+        return api.get_dimension(rsid, full_dimension_id)
+
+    def fetch_top_items():
+        return api.get_top_items(rsid, full_dimension_id, metric="occurrences", limit=10, days=30)
+
+    def fetch_trend():
+        return api.get_dimension_trend(rsid, full_dimension_id, metric="occurrences", days=30)
+
+    # Quick Win #2: Check cache first, then parallelize needed API calls
+    dimension = cache.get(rsid, f'core_detail_{display_id}')
+    top_items = cache.get(rsid, f'core_top_{display_id}')
+    trend_data = cache.get(rsid, f'core_trend_{display_id}')
+
+    tasks = {}
+    if dimension is None:
+        tasks['dimension'] = fetch_dimension
+    if top_items is None:
+        tasks['top_items'] = fetch_top_items
+    if trend_data is None:
+        tasks['trend_data'] = fetch_trend
+
+    # Execute needed fetches in parallel
+    if tasks:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(func): key for key, func in tasks.items()}
+            for future in as_completed(futures):
+                key = futures[future]
+                value = future.result()
+                if key == 'dimension':
+                    cache.set(rsid, f'core_detail_{display_id}', value)
+                    dimension = value
+                elif key == 'top_items':
+                    cache.set(rsid, f'core_top_{display_id}', value)
+                    top_items = value
+                elif key == 'trend_data':
+                    cache.set(rsid, f'core_trend_{display_id}', value)
+                    trend_data = value
+
+    # Find classifications for this dimension (dimensions with parent = this dimension's ID)
+    classifications = []
+    if cached_dimensions:
+        for dim in cached_dimensions:
+            if dim.get("parent") == full_dimension_id:
+                classifications.append({
+                    'id': dim.get("id", "").replace("variables/", ""),
+                    'name': dim.get("name") or dim.get("title", ""),
+                    'description': dim.get("description", "")
+                })
+        # Sort classifications alphabetically by name
+        classifications.sort(key=lambda x: x.get("name", "").lower())
+
+    return render_template(
+        'detail.html',
+        title=f'{display_id}: {dimension.get("name", "")}',
+        app_title=current_app.config['APP_TITLE'],
+        dimension=dimension,
+        dimension_id=display_id,
+        dimension_type='core',
+        dimension_type_label='Core Dimension',
+        top_items=top_items,
+        trend_data=trend_data,
+        classifications=classifications,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='core',
+        back_url='/core',
+        back_label='Back to Core Listing'
+    )
 
 
 @main_bp.route('/')
@@ -989,7 +1210,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:  # Only include named dimensions
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by prop number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('prop', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'prop'))
     
     elif dimension_type == 'evar' and cached_dimensions:
         for dim in cached_dimensions:
@@ -1001,7 +1222,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:  # Only include named dimensions
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by evar number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('evar', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'evar'))
     
     elif dimension_type == 'event':
         # Events are fetched via get_success_events, cached under 'events' key
@@ -1013,7 +1234,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != event_id:  # Only include named events
                     options.append({"id": event_id, "name": f"{event_id}: {name}"})
             # Sort by event number
-            options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('event', '') or 0))
+            options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'event'))
     
     elif dimension_type == 'listvar' and cached_dimensions:
         for dim in cached_dimensions:
@@ -1024,7 +1245,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by listvar number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('listvar', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'listvar'))
     
     return jsonify(options)
 

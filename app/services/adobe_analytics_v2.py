@@ -4,6 +4,7 @@ Uses OAuth2 authentication via adobe_auth module
 """
 import logging
 import re
+import statistics
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -492,7 +493,7 @@ class AdobeAnalyticsV2Service:
             if numeric_values:
                 stats = {
                     "avg": round(sum(numeric_values) / len(numeric_values), 1),
-                    "median": round(sorted(numeric_values)[len(numeric_values) // 2], 1),
+                    "median": round(statistics.median(numeric_values), 1),
                     "max": max(numeric_values),
                     "min": min(numeric_values)
                 }
@@ -625,7 +626,7 @@ class AdobeAnalyticsV2Service:
             if numeric_values:
                 stats = {
                     "avg": round(sum(numeric_values) / len(numeric_values), 1),
-                    "median": round(sorted(numeric_values)[len(numeric_values) // 2], 1),
+                    "median": round(statistics.median(numeric_values), 1),
                     "max": max(numeric_values),
                     "min": min(numeric_values)
                 }
