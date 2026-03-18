@@ -582,6 +582,9 @@ def evars():
     
     # Filter eVars from dimensions and transform
     # Exclude classifications (IDs containing a dot after the evar number, e.g., evar101.catalogue-name)
+    # NOTE: API 2.0 dimensions don't include allocation/expiration fields, so these columns
+    # will be empty in the table view. Full configuration (including allocation, expiration,
+    # and merchandising) is available on the eVar detail pages via API 1.4.
     raw_evars = []
     for dim in raw_dimensions:
         dim_id = dim.get("id", "")
@@ -636,6 +639,7 @@ def evars_export():
 def evar_detail(evar_id: str):
     """Display detail page for a specific eVar"""
     api = get_api_service()
+    api_v14 = get_api_service_v14()
     rsid = get_rsid()
 
     # Normalize evar_id to API format
@@ -652,6 +656,10 @@ def evar_detail(evar_id: str):
                     return dim
         return api.get_dimension(rsid, dimension_id)
 
+    def fetch_evar_config():
+        """Fetch eVar configuration from API 1.4 (has allocation, expiration, merchandising)"""
+        return api_v14.get_evar(rsid, display_id)
+
     def fetch_top_items():
         return api.get_top_items(rsid, dimension_id, metric="occurrences", limit=10, days=30)
 
@@ -660,19 +668,22 @@ def evar_detail(evar_id: str):
 
     # Quick Win #2: Check cache first, then parallelize needed API calls
     dimension = cache.get(rsid, f'evar_detail_{display_id}')
+    evar_config = cache.get(rsid, f'evar_config_{display_id}')
     top_items = cache.get(rsid, f'evar_top_{display_id}')
     trend_data = cache.get(rsid, f'evar_trend_{display_id}')
 
     tasks = {}
     if dimension is None:
         tasks['dimension'] = fetch_dimension
+    if evar_config is None:
+        tasks['evar_config'] = fetch_evar_config
     if top_items is None:
         tasks['top_items'] = fetch_top_items
     if trend_data is None:
         tasks['trend_data'] = fetch_trend
 
     if tasks:
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {executor.submit(func): key for key, func in tasks.items()}
             for future in as_completed(futures):
                 key = futures[future]
@@ -680,12 +691,28 @@ def evar_detail(evar_id: str):
                 if key == 'dimension':
                     cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
+                elif key == 'evar_config':
+                    cache.set(rsid, f'evar_config_{display_id}', value)
+                    evar_config = value
                 elif key == 'top_items':
                     cache.set(rsid, f'evar_top_{display_id}', value)
                     top_items = value
                 elif key == 'trend_data':
                     cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
+
+    # Merge API 1.4 eVar configuration into dimension data
+    # API 1.4 has allocation, expiration, merchandising that API 2.0 lacks
+    if evar_config:
+        dimension = dimension.copy() if dimension else {}
+        dimension.update({
+            'allocation_type': evar_config.get('allocation_type'),
+            'expiration_type': evar_config.get('expiration_type'),
+            'expiration_custom_days': evar_config.get('expiration_custom_days'),
+            'merchandising_syntax': evar_config.get('merchandising_syntax'),
+            'binding_events': evar_config.get('binding_events'),
+            'enabled': evar_config.get('enabled')
+        })
 
     # Find classifications for this eVar (dimensions with parent = this dimension's ID)
     classifications = []

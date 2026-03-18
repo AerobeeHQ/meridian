@@ -46,12 +46,63 @@
                         {% else %}
                         <tr>
                             <th>Allocation</th>
-                            <td>{{ dimension.get('allocationModel', {}).get('name', 'N/A') }}</td>
+                            <td>
+                                {% set allocation = dimension.get('allocation_type', '') %}
+                                {% if allocation == 'most_recent_last' %}Most Recent (Last)
+                                {% elif allocation == 'original_value_first' %}Original Value (First)
+                                {% elif allocation == 'linear' %}Linear
+                                {% elif allocation == 'linear_to_items' %}Linear (to Items)
+                                {% elif allocation == 'merchandising_last' %}Merchandising (Last)
+                                {% elif allocation == 'merchandising_first' %}Merchandising (First)
+                                {% elif allocation %}{{ allocation }}
+                                {% else %}N/A
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th>Expiration</th>
-                            <td>{{ dimension.get('expirationType', 'N/A') }}</td>
+                            <td>
+                                {% set expiry = dimension.get('expiration_type', '') %}
+                                {% set custom_days = dimension.get('expiration_custom_days') %}
+                                {% if expiry == '0' or expiry == 'hit' or expiry == 'page_view' %}Hit
+                                {% elif expiry == '1' or expiry == 'visit' %}Visit
+                                {% elif expiry == '2' or expiry == 'day' %}Day
+                                {% elif expiry == '3' or expiry == 'week' %}Week
+                                {% elif expiry == '4' or expiry == 'month' %}Month
+                                {% elif expiry == '5' or expiry == 'quarter' %}Quarter
+                                {% elif expiry == '6' or expiry == 'year' %}Year
+                                {% elif expiry == '7' or expiry == 'purchase_event' %}Purchase Event
+                                {% elif expiry == '8' or expiry == 'product_view' %}Product View
+                                {% elif expiry == '9' or expiry == 'never' %}Never
+                                {% elif custom_days %}{{ custom_days }} days
+                                {% elif expiry %}{{ expiry }}
+                                {% else %}N/A
+                                {% endif %}
+                            </td>
                         </tr>
+                        <tr>
+                            <th>Enable Merchandising</th>
+                            <td>
+                                {% set merch_syntax = dimension.get('merchandising_syntax', '') %}
+                                {% if merch_syntax == '1' or merch_syntax == 'product' or merch_syntax == 'conversion_variable_syntax' %}Enabled
+                                {% elif merch_syntax == '0' or merch_syntax == 'none' %}Disabled
+                                {% else %}N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if dimension.get('merchandising_syntax') in ['1', 'product', 'conversion_variable_syntax'] %}
+                        <tr>
+                            <th>Merchandising</th>
+                            <td>
+                                {% set binding_events = dimension.get('binding_events', []) %}
+                                {% if binding_events and binding_events|length > 0 %}
+                                    Conversion Variable Syntax (Binding Events: {{ binding_events|join(', ') }})
+                                {% else %}
+                                    Product Syntax
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endif %}
                         <tr>
                             <th>Description</th>
