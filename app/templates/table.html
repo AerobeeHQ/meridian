@@ -16,8 +16,10 @@
         <tr>
             {% for col in columns %}
             <td {% if col in monospace_columns %}class="monospace"{% endif %}>
-                {# Make Prop, eVar, Event, and ListVar IDs clickable links to detail pages #}
-                {% if col == 'Prop' and row[col] %}
+                {# Make Prop, eVar, Event, ListVar, and Core Dimension IDs clickable links to detail pages #}
+                {% if col == 'Dimension' and row[col] and active_tab == 'core' %}
+                    <a href="/core/{{ row[col] }}">{{ row[col] }}</a>
+                {% elif col == 'Prop' and row[col] %}
                     <a href="/props/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'eVar' and row[col] %}
                     <a href="/evars/{{ row[col] }}">{{ row[col] }}</a>
