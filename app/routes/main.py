@@ -101,6 +101,32 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
+def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
+    """
+    Safely extract numeric suffix from a dimension ID.
+
+    Args:
+        dim_id: Dimension ID (e.g., 'prop1', 'evar42', 'event10')
+        prefix: Expected prefix to remove (e.g., 'prop', 'evar', 'event')
+
+    Returns:
+        Numeric suffix as integer, or 999 if parsing fails
+
+    Examples:
+        >>> safe_extract_dimension_number('prop1', 'prop')
+        1
+        >>> safe_extract_dimension_number('evar42', 'evar')
+        42
+        >>> safe_extract_dimension_number('invalid', 'prop')
+        999
+    """
+    try:
+        cleaned = dim_id.replace(prefix, '')
+        return int(cleaned) if cleaned else 999
+    except (ValueError, AttributeError):
+        return 999
+
+
 # Column mappings matching server.R transformations
 PROPS_COLUMNS = {
     'id': 'Prop',
@@ -1184,7 +1210,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:  # Only include named dimensions
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by prop number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('prop', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'prop'))
     
     elif dimension_type == 'evar' and cached_dimensions:
         for dim in cached_dimensions:
@@ -1196,7 +1222,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:  # Only include named dimensions
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by evar number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('evar', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'evar'))
     
     elif dimension_type == 'event':
         # Events are fetched via get_success_events, cached under 'events' key
@@ -1208,7 +1234,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != event_id:  # Only include named events
                     options.append({"id": event_id, "name": f"{event_id}: {name}"})
             # Sort by event number
-            options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('event', '') or 0))
+            options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'event'))
     
     elif dimension_type == 'listvar' and cached_dimensions:
         for dim in cached_dimensions:
@@ -1219,7 +1245,7 @@ def get_dimension_options(dimension_type: str):
                 if name and name != short_id:
                     options.append({"id": short_id, "name": f"{short_id}: {name}"})
         # Sort by listvar number
-        options[2:] = sorted(options[2:], key=lambda x: int(x['id'].replace('listvar', '') or 0))
+        options[2:] = sorted(options[2:], key=lambda x: safe_extract_dimension_number(x['id'], 'listvar'))
     
     return jsonify(options)
 
