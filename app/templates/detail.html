@@ -83,14 +83,16 @@
                         <tr>
                             <th>Enable Merchandising</th>
                             <td>
-                                {% set merch_syntax = dimension.get('merchandising_syntax', '') %}
-                                {% if merch_syntax == '1' or merch_syntax == 'product' or merch_syntax == 'conversion_variable_syntax' %}Enabled
-                                {% elif merch_syntax == '0' or merch_syntax == 'none' %}Disabled
-                                {% else %}N/A
+                                {# Merchandising is enabled if allocation_type contains 'merchandising' #}
+                                {% set allocation = dimension.get('allocation_type', '') %}
+                                {% if 'merchandising' in allocation %}
+                                    Enabled
+                                {% else %}
+                                    Disabled
                                 {% endif %}
                             </td>
                         </tr>
-                        {% if dimension.get('merchandising_syntax') in ['1', 'product', 'conversion_variable_syntax'] %}
+                        {% if 'merchandising' in dimension.get('allocation_type', '') %}
                         <tr>
                             <th>Merchandising</th>
                             <td>

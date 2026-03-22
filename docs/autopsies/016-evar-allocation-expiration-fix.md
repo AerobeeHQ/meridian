@@ -56,6 +56,16 @@ GET /dimensions/variables/evar1?rsid=xxx&expansion=attributionModel
 
 **Conclusion:** API 2.0 has no endpoint that provides the detailed eVar configuration settings found in API 1.4's `ReportSuite.GetEvars`. The hybrid API approach is the correct solution.
 
+### Additional Note: The `multiValued` Field
+
+Further research revealed that API 2.0's `multiValued` field does NOT reliably indicate whether merchandising is enabled:
+- **evar1**: `multiValued: false`, but has `merchandising_syntax: 'product'` and `allocation_type: 'merchandising_last'` → Merchandising IS enabled
+- **evar6**: `multiValued: true`, but has `merchandising_syntax: None` and `allocation_type: 'most_recent_last'` → Merchandising is NOT enabled
+
+The `multiValued` field appears to indicate something different (possibly related to list variables or multi-value delimiters). 
+
+**The correct way to determine if merchandising is enabled is by checking if `allocation_type` contains "merchandising"** (`merchandising_last` or `merchandising_first`), which is only available from API 1.4.
+
 ## Solution
 
 ### 1. Added `get_evar()` Method to API 1.4 Service
