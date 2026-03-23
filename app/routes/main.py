@@ -7,7 +7,7 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, url_for, make_response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
@@ -23,11 +23,24 @@ cache = CacheService()
 
 
 @main_bp.app_context_processor
-def inject_git_info():
-    """Inject git info into all templates"""
+def inject_globals():
+    """Inject global values into all templates"""
+    rsid = current_app.config.get('AW_REPORTSUITE_ID', '')
+
+    # Prefer explicit config value; fall back to API lookup (API 2.0 only)
+    suite_name = current_app.config.get('REPORTSUITE_NAME')
+    if not suite_name and get_api_version() == '2.0':
+        try:
+            svc = get_api_service()
+            suite_name = svc.get_report_suite_name(rsid)
+        except Exception:
+            suite_name = rsid
+    suite_name = suite_name or rsid
+
     return {
         'git_branch': current_app.config.get('GIT_BRANCH'),
-        'git_commit': current_app.config.get('GIT_COMMIT')
+        'git_commit': current_app.config.get('GIT_COMMIT'),
+        'suite_name': suite_name,
     }
 
 
@@ -286,14 +299,16 @@ def overview():
 
     # Read from cache only — do not trigger API calls on the overview page
     # Keep raw values (None = not yet cached) to track per-stat availability
-    _dimensions_raw = cache.get(rsid, 'dimensions')
-    _events_raw     = cache.get(rsid, 'events')
-    _listvars_raw   = cache.get(rsid, 'listvars')
+    _dimensions_raw        = cache.get(rsid, 'dimensions')
+    _events_raw            = cache.get(rsid, 'events')
+    _listvars_raw          = cache.get(rsid, 'listvars')
+    _processing_rules_raw  = cache.get(rsid, 'processing_rules')
+    _marketing_channels_raw = cache.get(rsid, 'marketing_channels')
 
     dimensions         = _dimensions_raw or []
     raw_events         = _events_raw or []
-    processing_rules   = cache.get(rsid, 'processing_rules') or []
-    marketing_channels = cache.get(rsid, 'marketing_channels') or []
+    processing_rules   = _processing_rules_raw or []
+    marketing_channels = _marketing_channels_raw or []
     listvars           = _listvars_raw or []
 
     # Count configured eVars and props (exclude classifications which have a dot in the id)
@@ -309,12 +324,12 @@ def overview():
     ]
 
     stats = {
-        'props':    {'count': len(props),      'total': 75,   'available': _dimensions_raw is not None},
-        'evars':    {'count': len(evars),       'total': 250,  'available': _dimensions_raw is not None},
-        'events':   {'count': len(raw_events),  'total': 1000, 'available': _events_raw is not None},
-        'listvars': {'count': len(listvars),    'total': 3,    'available': _listvars_raw is not None},
-        'processing_rules': len(processing_rules),
-        'marketing_channels': len(marketing_channels),
+        'props':    {'count': len(props),            'total': 75,   'available': _dimensions_raw is not None},
+        'evars':    {'count': len(evars),             'total': 250,  'available': _dimensions_raw is not None},
+        'events':   {'count': len(raw_events),        'total': 1000, 'available': _events_raw is not None},
+        'listvars': {'count': len(listvars),          'total': 3,    'available': _listvars_raw is not None},
+        'processing_rules':   {'count': len(processing_rules),   'available': _processing_rules_raw is not None},
+        'marketing_channels': {'count': len(marketing_channels), 'available': _marketing_channels_raw is not None},
         'cache_populated': _dimensions_raw is not None,
     }
 
@@ -353,7 +368,7 @@ def overview():
                 continue
         recent_notes = sorted(candidates, key=lambda x: x['updated_at'], reverse=True)[:5]
 
-    return render_template(
+    response = make_response(render_template(
         'overview.html',
         title='Overview',
         app_title=current_app.config['APP_TITLE'],
@@ -362,7 +377,9 @@ def overview():
         recent_notes=recent_notes,
         cache_info=get_cache_info(),
         active_tab='overview',
-    )
+    ))
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @main_bp.route('/core')

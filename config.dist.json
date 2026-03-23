@@ -1,6 +1,7 @@
 {
     "APP_TITLE":               "<COMPANY NAME>",
     "AW_REPORTSUITE_ID":       "<RSID>",
+    "REPORTSUITE_NAME":        "<HUMAN-READABLE REPORT SUITE NAME (optional, falls back to RSID)>",
 
     "_comment_api_version":    "Set API_VERSION to '2.0' for OAuth2, or '1.4' for WSSE (legacy)",
     "API_VERSION":             "2.0",

@@ -1,4 +1,4 @@
-# Version 2 Roadmap
+/reportsuites/collections/suites# Version 2 Roadmap
 
 This document summarises the planned features for Codex v2. Each item has a detailed implementation plan in `docs/plans/`.
 

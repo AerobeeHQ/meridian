@@ -36,8 +36,8 @@
         {% set display_colour = colour %}
     {% else %}
         {% set pct = 0 %}
-        {% set bar_class = 'bg-secondary' %}
-        {% set display_colour = '#adb5bd' %}
+        {% set bar_class = '' %}
+        {% set display_colour = '#d6dade' %}
     {% endif %}
 
     <div class="col-sm-6 col-xl-3">
@@ -51,17 +51,17 @@
                             {{ pct }}%
                         </span>
                         {% else %}
-                        <span class="badge rounded-pill bg-secondary" style="font-size: 11px;">Pending</span>
+                        <span class="badge rounded-pill" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
                         {% endif %}
                     </div>
                     <div class="display-6 fw-bold mb-1" style="color: {{ display_colour }};">
-                        {{ stat.count }}
+                        {{ stat.count if stat.available else '–' }}
                         <span class="fs-6 text-muted fw-normal">/ {{ stat.total }}</span>
                     </div>
                     <div class="text-muted" style="font-size: 12px;">configured</div>
                     <div class="progress mt-3" style="height: 5px;">
                         <div class="progress-bar {{ bar_class }}" role="progressbar"
-                             style="width: {{ pct }}%"
+                             style="width: {{ pct }}%; {% if not stat.available %}background-color: #d6dade;{% endif %}"
                              aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
@@ -80,11 +80,16 @@
         <a href="/processing-rules" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="fs-2 fw-bold text-secondary">{{ stats.processing_rules }}</div>
+                    <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.processing_rules.available else '#d6dade' }};">
+                        {{ stats.processing_rules.count if stats.processing_rules.available else '–' }}
+                    </div>
                     <div>
                         <div class="fw-semibold">Processing Rules</div>
                         <div class="text-muted" style="font-size: 12px;">active rule sections</div>
                     </div>
+                    {% if not stats.processing_rules.available %}
+                    <span class="badge ms-auto" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
+                    {% endif %}
                 </div>
             </div>
         </a>
@@ -94,11 +99,16 @@
         <a href="/marketing-channels" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="fs-2 fw-bold text-secondary">{{ stats.marketing_channels }}</div>
+                    <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.marketing_channels.available else '#d6dade' }};">
+                        {{ stats.marketing_channels.count if stats.marketing_channels.available else '–' }}
+                    </div>
                     <div>
                         <div class="fw-semibold">Marketing Channels</div>
                         <div class="text-muted" style="font-size: 12px;">defined channels</div>
                     </div>
+                    {% if not stats.marketing_channels.available %}
+                    <span class="badge ms-auto" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
+                    {% endif %}
                 </div>
             </div>
         </a>
