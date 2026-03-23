@@ -37,6 +37,7 @@ class AdobeAnalyticsV2Service:
         self.org_id = org_id
         self._global_company_id: Optional[str] = None
         self._discovery_data: Optional[dict] = None
+        self._suite_names: dict[str, str] = {}
 
     def _get_headers(self) -> dict:
         """Get headers required for API requests"""
@@ -193,6 +194,40 @@ class AdobeAnalyticsV2Service:
                     })
 
         return report_suites
+
+    def get_report_suite_name(self, rsid: str) -> str:
+        """
+        Get the friendly name of a report suite.
+
+        Fetches one segment tied to the rsid with expansion=reportSuiteName,
+        which is the cheapest API 2.0 call that returns this field.
+        Result is cached per rsid on the service instance.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            Friendly report suite name, or rsid if not found
+        """
+        if rsid in self._suite_names:
+            return self._suite_names[rsid]
+
+        try:
+            result = self._make_request(
+                "reportsuites/collections/suites",
+                params={"rsids": rsid}
+            )
+            content = result.get("content", [])
+            if content:
+                name = content[0].get("name", rsid)
+                self._suite_names[rsid] = name
+                logger.info("Report suite name for %s: %s", rsid, name)
+                return name
+        except Exception:
+            logger.warning("Could not fetch report suite name for %s", rsid)
+
+        self._suite_names[rsid] = rsid
+        return rsid
 
     def get_dimensions(self, rsid: str) -> list[dict]:
         """

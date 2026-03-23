@@ -32,6 +32,7 @@ def create_app():
     config = load_config()
     app.config['APP_TITLE'] = config.get('APP_TITLE', 'Codex')
     app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
+    app.config['REPORTSUITE_NAME'] = config.get('REPORTSUITE_NAME', '')
 
     # API version selection (default: 2.0)
     app.config['API_VERSION'] = config.get('API_VERSION', '2.0')

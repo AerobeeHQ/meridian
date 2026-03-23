@@ -210,7 +210,7 @@
 
     <!-- App Title Section -->
     <div class="container-fluid" style="padding: 15px 20px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-        <h5 class="mb-0">{{ app_title }} > {{ rsid }}{% if dimension_id %} > {{ dimension_id }}{% endif %}</h5>
+        <h5 class="mb-0">{{ app_title }} > <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ rsid }}">{{ suite_name }}</span>{% if dimension_id %} > {{ dimension_id }}{% endif %}</h5>
     </div>
 
     <!-- Main Content -->
@@ -297,6 +297,15 @@
                     table.querySelectorAll('tbody tr.selected').forEach(r => r.classList.remove('selected'));
                     row.classList.add('selected');
                 }
+            });
+        });
+    </script>
+
+    <!-- Bootstrap tooltip init -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                new bootstrap.Tooltip(el);
             });
         });
     </script>
