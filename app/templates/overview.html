@@ -11,7 +11,7 @@
         <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
     </svg>
     <div>
-        Cache is empty — stats will populate after you browse to any dimension page, or <a href="/cache/clear" class="alert-link">clear and refresh the cache</a>.
+        Cache is empty — stats will populate after you browse to any dimension page.
     </div>
 </div>
 {% endif %}
@@ -20,17 +20,24 @@
 <div class="row g-3 mb-4">
 
     {% set card_items = [
-        ('eVars',   stats.evars,   'variables/evar*',  '/evars',    '#667eea'),
-        ('Props',   stats.props,   'variables/prop*',  '/props',    '#179f9b'),
-        ('Events',  stats.events,  'metrics/event*',   '/events',   '#f093fb'),
-        ('ListVars',stats.listvars,'list variables',   '/listvars', '#f5a623'),
+        ('Props',   stats.props,   '/props',    '#179f9b'),
+        ('eVars',   stats.evars,   '/evars',    '#667eea'),
+        ('Events',  stats.events,  '/events',   '#f093fb'),
+        ('ListVars',stats.listvars,'/listvars', '#f5a623'),
     ] %}
 
-    {% for label, stat, hint, link, colour in card_items %}
-    {% set pct = ((stat.count / stat.total) * 100) | round(1) if stat.total > 0 else 0 %}
-    {% if pct < 50 %}{% set bar_class = 'bg-success' %}
-    {% elif pct < 80 %}{% set bar_class = 'bg-warning' %}
-    {% else %}{% set bar_class = 'bg-danger' %}
+    {% for label, stat, link, colour in card_items %}
+    {% if stat.available %}
+        {% set pct = ((stat.count / stat.total) * 100) | round(1) if stat.total > 0 else 0 %}
+        {% if pct < 50 %}{% set bar_class = 'bg-success' %}
+        {% elif pct < 80 %}{% set bar_class = 'bg-warning' %}
+        {% else %}{% set bar_class = 'bg-danger' %}
+        {% endif %}
+        {% set display_colour = colour %}
+    {% else %}
+        {% set pct = 0 %}
+        {% set bar_class = 'bg-secondary' %}
+        {% set display_colour = '#adb5bd' %}
     {% endif %}
 
     <div class="col-sm-6 col-xl-3">
@@ -39,11 +46,15 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h6 class="card-title text-muted mb-0">{{ label }}</h6>
+                        {% if stat.available %}
                         <span class="badge rounded-pill" style="background-color: {{ colour }}; font-size: 11px;">
                             {{ pct }}%
                         </span>
+                        {% else %}
+                        <span class="badge rounded-pill bg-secondary" style="font-size: 11px;">Pending</span>
+                        {% endif %}
                     </div>
-                    <div class="display-6 fw-bold mb-1" style="color: {{ colour }};">
+                    <div class="display-6 fw-bold mb-1" style="color: {{ display_colour }};">
                         {{ stat.count }}
                         <span class="fs-6 text-muted fw-normal">/ {{ stat.total }}</span>
                     </div>

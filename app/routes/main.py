@@ -285,11 +285,16 @@ def overview():
     rsid = get_rsid()
 
     # Read from cache only — do not trigger API calls on the overview page
-    dimensions = cache.get(rsid, 'dimensions') or []
-    raw_events = cache.get(rsid, 'events') or []
-    processing_rules = cache.get(rsid, 'processing_rules') or []
+    # Keep raw values (None = not yet cached) to track per-stat availability
+    _dimensions_raw = cache.get(rsid, 'dimensions')
+    _events_raw     = cache.get(rsid, 'events')
+    _listvars_raw   = cache.get(rsid, 'listvars')
+
+    dimensions         = _dimensions_raw or []
+    raw_events         = _events_raw or []
+    processing_rules   = cache.get(rsid, 'processing_rules') or []
     marketing_channels = cache.get(rsid, 'marketing_channels') or []
-    listvars = cache.get(rsid, 'listvars') or []
+    listvars           = _listvars_raw or []
 
     # Count configured eVars and props (exclude classifications which have a dot in the id)
     evars = [
@@ -304,13 +309,13 @@ def overview():
     ]
 
     stats = {
-        'evars':  {'count': len(evars),  'total': 250},
-        'props':  {'count': len(props),  'total': 75},
-        'events': {'count': len(raw_events), 'total': 1000},
-        'listvars': {'count': len(listvars), 'total': 4},
+        'props':    {'count': len(props),      'total': 75,   'available': _dimensions_raw is not None},
+        'evars':    {'count': len(evars),       'total': 250,  'available': _dimensions_raw is not None},
+        'events':   {'count': len(raw_events),  'total': 1000, 'available': _events_raw is not None},
+        'listvars': {'count': len(listvars),    'total': 3,    'available': _listvars_raw is not None},
         'processing_rules': len(processing_rules),
         'marketing_channels': len(marketing_channels),
-        'cache_populated': len(dimensions) > 0,
+        'cache_populated': _dimensions_raw is not None,
     }
 
     # Recent notes activity — scan notes dir for files belonging to this rsid
