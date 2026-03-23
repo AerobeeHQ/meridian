@@ -8,7 +8,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, current_app, Response, request, jsonify, url_for, make_response
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, make_response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
