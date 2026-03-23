@@ -1,7 +1,7 @@
 # AI Agent & Copilot Guide for Codex
 
 ## 1. Project Context
-**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr), aiming for **MVP velocity**.
+**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
 
 ## 2. Architecture & Tech Stack
 - **Framework**: Flask (`app/routes/`, `app/templates/`).

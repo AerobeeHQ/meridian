@@ -57,7 +57,7 @@ uv run verify_setup.py
 ```
 
 ### Testing Strategy
-**Important**: This project intentionally has **no formal test suite** to maintain MVP velocity.
+**Important**: This project is transitioning beyond MVP. While there is currently **no formal test suite**, the goal is to devise a fast and reliable testing strategy as part of post-MVP development.
 
 **Manual Testing Workflow:**
 1. Run `uv run verify_setup.py` to check basic health
@@ -170,16 +170,16 @@ Config file: `config.json` (git-ignored). Template: `config.dist.json`.
 
 ### Core Principles
 
-#### 1. MVP Velocity First
-- **Primary Goal:** Generate functional, pragmatic code for the quickest path to a working prototype
-- **Pragmatism Over Purity:** Choose simple solutions that reach functional milestones faster than architecturally perfect solutions
-- **YAGNI Principle:** Only implement features required for the immediate MVP goal
-- **Rapid Refactoring:** Expect and encourage frequent, small-scale refactoring - code is disposable and changeable
+#### 1. Post MVP: Architecture & Scalability First
+- **Primary Goal:** Build maintainable, scalable code with a focus on architecture and future enhancements
+- **Pragmatism Over Purity:** Choose simple solutions that are also extensible and easy to refactor
+- **Watch for Refactoring Opportunities:** Simplify and improve code as the project matures
+- **Incremental Improvement:** Expect frequent, small-scale refactoring - code should improve over time
 
-#### 2. Speed-Focused Technical Approach
-- **Code Style:** Generally follow PEP 8, but don't waste time on minor stylistic tweaks that don't affect functionality
-- **Testing:** Minimal/functional testing only - basic assertions to confirm immediate functionality works; skip comprehensive edge-case testing until post-MVP
-- **Documentation:** Minimal inline comments focusing on *what* the code does and *why* specific choices were made
+#### 2. Quality-Focused Technical Approach
+- **Code Style:** Follow PEP 8; style matters for long-term maintainability
+- **Testing:** Work toward a fast and reliable testing strategy; add tests for new features and regressions
+- **Documentation:** Inline comments focusing on *what* the code does and *why* specific choices were made
 - **Dependencies:** Suggest simplest, most lightweight libraries available
 - **Input/Output:** Prioritize simple interfaces (standard I/O, basic JSON/CSV) to quickly prove concepts
 
