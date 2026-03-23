@@ -175,6 +175,9 @@ Codex/
 
 ## Roadmap
 
+See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan with complexity assessments and implementation details.
+
+
 * [ ] Integrate with Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
 * [ ] Integrate with Marketing Channel Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
 * [ ] Integrate with Adobe Launch so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
