@@ -1,7 +1,7 @@
 [project]
 name = "codex"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "A data dictionary for Adobe Analytics report suites"
 requires-python = ">=3.13"
 dependencies = [
     "flask>=3.1.2",
