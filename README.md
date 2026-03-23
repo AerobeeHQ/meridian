@@ -173,6 +173,15 @@ Codex/
 
 ---
 
+## Roadmap
+
+* [ ] Integrate with Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
+* [ ] Integrate with Marketing Channel Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
+* [ ] Integrate with Adobe Launch so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
+* [ ] Enable User Oauth login instead of using Server to Server
+* [ ] Download and cache data dimension configuration data in the background so that we aren't fetching it when the user wants to first looks at it. The goal is to make the app feel a lot faster by pre-caching settings that rarely change. Cache the data for 1 day, and add a button the the listing and details pages to force a refresh.
+* [ ] Add a report suite summary overview page so the user can get a quick snapshot of the state of the Report Suite.
+
 ## License
 
 MIT
