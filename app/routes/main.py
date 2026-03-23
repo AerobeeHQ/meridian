@@ -4,6 +4,7 @@ Main routes for the Codex application
 import csv
 import io
 import json
+import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -16,6 +17,8 @@ from app.services.cache import CacheService
 from app.services import notes as notes_service
 
 
+logger = logging.getLogger(__name__)
+
 main_bp = Blueprint('main', __name__)
 
 # Initialize cache service
@@ -25,17 +28,25 @@ cache = CacheService()
 @main_bp.app_context_processor
 def inject_globals():
     """Inject global values into all templates"""
-    rsid = current_app.config.get('AW_REPORTSUITE_ID', '')
+    # Use a sentinel to distinguish "not yet resolved" from an empty string
+    suite_name = current_app.config.get('CODEX_RESOLVED_SUITE_NAME')
 
-    # Prefer explicit config value; fall back to API lookup (API 2.0 only)
-    suite_name = current_app.config.get('REPORTSUITE_NAME')
-    if not suite_name and get_api_version() == '2.0':
-        try:
-            svc = get_api_service()
-            suite_name = svc.get_report_suite_name(rsid)
-        except Exception:
-            suite_name = rsid
-    suite_name = suite_name or rsid
+    if suite_name is None:
+        rsid = current_app.config.get('AW_REPORTSUITE_ID', '')
+
+        # Prefer explicit config value; fall back to API lookup (API 2.0 only)
+        suite_name = current_app.config.get('REPORTSUITE_NAME')
+        if not suite_name and get_api_version() == '2.0':
+            try:
+                svc = get_api_service()
+                suite_name = svc.get_report_suite_name(rsid)
+            except Exception:
+                logger.warning("Could not resolve suite name for %s; falling back to RSID", rsid)
+                suite_name = rsid
+        suite_name = suite_name or rsid
+
+        # Cache on the app object so subsequent requests skip the API call
+        current_app.config['CODEX_RESOLVED_SUITE_NAME'] = suite_name
 
     return {
         'git_branch': current_app.config.get('GIT_BRANCH'),

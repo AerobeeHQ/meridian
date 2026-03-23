@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /Users/joris/Workspace/Python/Codex && uv run verify_setup.py 2>/dev/null || true",
+            "command": "uv run verify_setup.py 2>/dev/null || true",
             "statusMessage": "Running verify_setup.py..."
           }
         ]
