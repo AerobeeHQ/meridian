@@ -1,4 +1,4 @@
-# Codex
+# Codex `v1.0`
 
 ### A Data Dictionary for your Adobe Analytics Report Suites
 

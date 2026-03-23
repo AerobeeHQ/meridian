@@ -1,7 +1,7 @@
 # AI Agent & Copilot Guide for Codex
 
 ## 1. Project Context
-**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr), aiming for **MVP velocity**.
+**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
 
 ## 2. Architecture & Tech Stack
 - **Framework**: Flask (`app/routes/`, `app/templates/`).
@@ -20,8 +20,8 @@
 ## 3. User & Developer Context (Crucial)
 - **User Profile**: Strong JavaScript background, **Beginner in Python**.
   - *Action*: Explain Python concepts clearly. Avoid overly "pythonic" code if a JS-style approach is readable.
-- **Philosophy**: **MVP Velocity**. Speed over perfection. Code is disposable.
-  - *Testing*: **Manual testing only**. No unit tests. Reliant on `verify_setup.py`.
+- **Philosophy**: **Post MVP Velocity**. We are now working on version 2. There should be more emphasis on architechture and scaling for future enhancements. Watch for opportunities to refactor and simplify code.
+  - *Testing*: Currently there is only **Manual testing**. No unit tests. Reliant on `verify_setup.py`. Devise a testing strategy that is **fast and reliable**.
 
 ## 4. Critical Workflows
 - **Install/Sync**: `uv sync`.
