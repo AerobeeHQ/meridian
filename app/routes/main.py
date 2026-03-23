@@ -3,8 +3,11 @@ Main routes for the Codex application
 """
 import csv
 import io
+import json
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Blueprint, render_template, current_app, Response, request, jsonify
+from datetime import datetime, timezone
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, url_for
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
@@ -250,6 +253,113 @@ CORE_DIMENSION_IDS = [
 ]
 
 
+# =============================================================================
+# Overview Route
+# =============================================================================
+
+def _relative_time(iso_str):
+    """Convert an ISO timestamp string to a human-readable relative time."""
+    if not iso_str:
+        return ''
+    try:
+        dt = datetime.fromisoformat(iso_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        delta = datetime.now(timezone.utc) - dt
+        seconds = int(delta.total_seconds())
+        if seconds < 60:
+            return 'just now'
+        if seconds < 3600:
+            return f"{seconds // 60}m ago"
+        if seconds < 86400:
+            return f"{seconds // 3600}h ago"
+        return f"{seconds // 86400}d ago"
+    except (ValueError, TypeError):
+        return ''
+
+
+@main_bp.route('/')
+@main_bp.route('/overview')
+def overview():
+    """Report suite summary overview page"""
+    rsid = get_rsid()
+
+    # Read from cache only — do not trigger API calls on the overview page
+    dimensions = cache.get(rsid, 'dimensions') or []
+    raw_events = cache.get(rsid, 'events') or []
+    processing_rules = cache.get(rsid, 'processing_rules') or []
+    marketing_channels = cache.get(rsid, 'marketing_channels') or []
+    listvars = cache.get(rsid, 'listvars') or []
+
+    # Count configured eVars and props (exclude classifications which have a dot in the id)
+    evars = [
+        d for d in dimensions
+        if d.get('id', '').startswith('variables/evar')
+        and '.' not in d.get('id', '').replace('variables/', '')
+    ]
+    props = [
+        d for d in dimensions
+        if d.get('id', '').startswith('variables/prop')
+        and '.' not in d.get('id', '').replace('variables/', '')
+    ]
+
+    stats = {
+        'evars':  {'count': len(evars),  'total': 250},
+        'props':  {'count': len(props),  'total': 75},
+        'events': {'count': len(raw_events), 'total': 1000},
+        'listvars': {'count': len(listvars), 'total': 4},
+        'processing_rules': len(processing_rules),
+        'marketing_channels': len(marketing_channels),
+        'cache_populated': len(dimensions) > 0,
+    }
+
+    # Recent notes activity — scan notes dir for files belonging to this rsid
+    recent_notes = []
+    notes_dir = notes_service.NOTES_DIR
+    safe_rsid = rsid.replace('/', '_').replace('\\', '_')
+    type_to_route = {'prop': 'props', 'evar': 'evars', 'event': 'events', 'listvar': 'listvars'}
+
+    if os.path.exists(notes_dir):
+        candidates = []
+        for filename in os.listdir(notes_dir):
+            if not filename.startswith(safe_rsid + '_') or not filename.endswith('.json'):
+                continue
+            filepath = os.path.join(notes_dir, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    note = json.load(f)
+                updated_at = note.get('updated_at', '')
+                if not updated_at:
+                    continue
+                # Parse "rsid_type_id.json" → type and id
+                remainder = filename[len(safe_rsid) + 1:-5]  # strip prefix and .json
+                parts = remainder.split('_', 1)
+                dim_type = parts[0] if parts else ''
+                dim_id = parts[1] if len(parts) > 1 else remainder
+                candidates.append({
+                    'type': dim_type,
+                    'id': dim_id,
+                    'route': type_to_route.get(dim_type, dim_type + 's'),
+                    'updated_at': updated_at,
+                    'relative_time': _relative_time(updated_at),
+                    'description': note.get('plain_description', ''),
+                })
+            except (json.JSONDecodeError, IOError):
+                continue
+        recent_notes = sorted(candidates, key=lambda x: x['updated_at'], reverse=True)[:5]
+
+    return render_template(
+        'overview.html',
+        title='Overview',
+        app_title=current_app.config['APP_TITLE'],
+        rsid=rsid,
+        stats=stats,
+        recent_notes=recent_notes,
+        cache_info=get_cache_info(),
+        active_tab='overview',
+    )
+
+
 @main_bp.route('/core')
 def core():
     """Display core/out-of-the-box dimensions"""
@@ -421,7 +531,6 @@ def core_detail(dimension_id: str):
     )
 
 
-@main_bp.route('/')
 @main_bp.route('/props')
 def props():
     """Display traffic variables (props)"""

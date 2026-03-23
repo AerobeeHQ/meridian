@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set cache_populated = stats.cache_populated %}
+
+<!-- Cold cache banner -->
+{% if not cache_populated %}
+<div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </svg>
+    <div>
+        Cache is empty — stats will populate after you browse to any dimension page, or <a href="/cache/clear" class="alert-link">clear and refresh the cache</a>.
+    </div>
+</div>
+{% endif %}
+
+<!-- Stat cards row -->
+<div class="row g-3 mb-4">
+
+    {% set card_items = [
+        ('eVars',   stats.evars,   'variables/evar*',  '/evars',    '#667eea'),
+        ('Props',   stats.props,   'variables/prop*',  '/props',    '#179f9b'),
+        ('Events',  stats.events,  'metrics/event*',   '/events',   '#f093fb'),
+        ('ListVars',stats.listvars,'list variables',   '/listvars', '#f5a623'),
+    ] %}
+
+    {% for label, stat, hint, link, colour in card_items %}
+    {% set pct = ((stat.count / stat.total) * 100) | round(1) if stat.total > 0 else 0 %}
+    {% if pct < 50 %}{% set bar_class = 'bg-success' %}
+    {% elif pct < 80 %}{% set bar_class = 'bg-warning' %}
+    {% else %}{% set bar_class = 'bg-danger' %}
+    {% endif %}
+
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ link }}" class="text-decoration-none">
+            <div class="card h-100 shadow-sm overview-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title text-muted mb-0">{{ label }}</h6>
+                        <span class="badge rounded-pill" style="background-color: {{ colour }}; font-size: 11px;">
+                            {{ pct }}%
+                        </span>
+                    </div>
+                    <div class="display-6 fw-bold mb-1" style="color: {{ colour }};">
+                        {{ stat.count }}
+                        <span class="fs-6 text-muted fw-normal">/ {{ stat.total }}</span>
+                    </div>
+                    <div class="text-muted" style="font-size: 12px;">configured</div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar {{ bar_class }}" role="progressbar"
+                             style="width: {{ pct }}%"
+                             aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- Second row: rules / channels -->
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6">
+        <a href="/processing-rules" class="text-decoration-none">
+            <div class="card h-100 shadow-sm overview-card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-2 fw-bold text-secondary">{{ stats.processing_rules }}</div>
+                    <div>
+                        <div class="fw-semibold">Processing Rules</div>
+                        <div class="text-muted" style="font-size: 12px;">active rule sections</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6">
+        <a href="/marketing-channels" class="text-decoration-none">
+            <div class="card h-100 shadow-sm overview-card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-2 fw-bold text-secondary">{{ stats.marketing_channels }}</div>
+                    <div>
+                        <div class="fw-semibold">Marketing Channels</div>
+                        <div class="text-muted" style="font-size: 12px;">defined channels</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+<!-- Bottom row: recent notes + cache status -->
+<div class="row g-3">
+
+    <!-- Recent documentation activity -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold" style="font-size: 14px;">Recent Documentation</div>
+            <div class="card-body p-0">
+                {% if recent_notes %}
+                <table class="table table-sm table-hover mb-0">
+                    <tbody>
+                    {% for note in recent_notes %}
+                    <tr>
+                        <td class="ps-3" style="width: 80px;">
+                            <span class="badge bg-secondary" style="font-size: 10px; text-transform: uppercase;">{{ note.type }}</span>
+                        </td>
+                        <td>
+                            <a href="/{{ note.route }}/{{ note.id }}" class="fw-medium text-decoration-none">{{ note.id }}</a>
+                            {% if note.description %}
+                            <div class="text-muted" style="font-size: 12px;">{{ note.description | truncate(80) }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted text-end pe-3" style="font-size: 12px; white-space: nowrap;">{{ note.relative_time }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="p-3 text-muted" style="font-size: 13px;">
+                    No documentation notes yet. Visit a dimension detail page to add notes.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache status -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center" style="font-size: 14px;">
+                <span class="fw-semibold">Cache Status</span>
+                <a href="/cache" class="text-decoration-none" style="font-size: 12px;">Manage →</a>
+            </div>
+            <div class="card-body">
+                {% if cache_info and cache_info.exists %}
+                    {% if cache_info.expired %}
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-warning text-dark">Stale</span>
+                        <span class="text-muted" style="font-size: 13px;">Cache has expired</span>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-success">Fresh</span>
+                        <span class="text-muted" style="font-size: 13px;">{{ cache_info.age_mins }} minutes old</span>
+                    </div>
+                    {% endif %}
+                    <div class="text-muted mb-3" style="font-size: 12px;">Last refreshed: {{ cache_info.created[:19] | replace('T', ' ') if cache_info.created else 'Unknown' }}</div>
+                {% else %}
+                <div class="text-muted mb-3" style="font-size: 13px;">No cache data yet.</div>
+                {% endif %}
+                <a href="/cache/clear" class="btn btn-sm btn-outline-secondary">Clear &amp; Refresh Cache</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .overview-card {
+        transition: box-shadow 0.15s ease, transform 0.1s ease;
+        cursor: pointer;
+    }
+    .overview-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+        transform: translateY(-1px);
+    }
+</style>
+
+{% endblock %}
