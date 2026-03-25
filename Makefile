@@ -4,6 +4,7 @@
 #   make up                              # Build and start (current branch)
 #   make deploy BRANCH=main              # Switch to branch, pull, rebuild
 #   make deploy BRANCH=feature/xyz       # Switch to feature branch, pull, rebuild
+#   make deploy-commit COMMIT=abc1234    # Checkout specific commit, rebuild
 #   make down                            # Stop containers
 #   make logs                            # View logs
 #
@@ -13,7 +14,7 @@
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-.PHONY: build up down logs restart deploy
+.PHONY: build up down logs restart deploy deploy-commit
 
 build:
 	@echo "Building with $(GIT_BRANCH)@$(GIT_COMMIT)"
@@ -39,5 +40,15 @@ endif
 	git fetch
 	git switch $(BRANCH)
 	git pull
+	$(MAKE) restart
+
+# Deploy a specific commit: make deploy-commit COMMIT=abc1234
+deploy-commit:
+ifndef COMMIT
+	$(error COMMIT is required. Usage: make deploy-commit COMMIT=abc1234)
+endif
+	@echo "Deploying commit: $(COMMIT)"
+	git fetch
+	git checkout $(COMMIT)
 	$(MAKE) restart
 
