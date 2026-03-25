@@ -7,9 +7,12 @@ import json
 import logging
 import os
 import re
+import traceback as _traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
+
+import requests
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
@@ -24,6 +27,39 @@ main_bp = Blueprint('main', __name__)
 
 # Initialize cache service
 cache = CacheService()
+
+
+def _render_api_error(exc: Exception, status: int = 503):
+    """Render the API 1.4 error page with full traceback available for debugging.
+
+    Args:
+        exc:    The exception that caused the failure.
+        status: HTTP status code to return (default 503 Service Unavailable).
+    """
+    tb_text = _traceback.format_exc()
+    return render_template(
+        '_api_error.html',
+        title='API Unavailable',
+        rsid=current_app.config.get('AW_REPORTSUITE_ID', ''),
+        cache_info=None,
+        active_tab=None,
+        dimension_id=None,
+        error_type=type(exc).__name__,
+        error_message=str(exc),
+        traceback_text=tb_text,
+    ), status
+
+
+@main_bp.app_errorhandler(requests.exceptions.RequestException)
+def handle_api14_error(exc: requests.exceptions.RequestException):
+    """Catch any unhandled requests error and show a friendly error page.
+
+    This covers ReadTimeout, ConnectionError, HTTPError, etc. that bubble up
+    from API 1.4 calls in route functions.  API 1.4 errors that are already
+    caught inside ThreadPoolExecutor loops (evar_detail) don't reach here.
+    """
+    logger.warning("API 1.4 request failed — returning error page: %s", exc)
+    return _render_api_error(exc)
 
 
 @main_bp.app_context_processor
