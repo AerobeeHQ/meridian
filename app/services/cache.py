@@ -169,6 +169,8 @@ class CacheService:
                 info['age_mins'] = round(age_seconds / 60, 1)
                 info['expired'] = age_seconds > 3600
             except (ValueError, TypeError):
+                # If the stored timestamp is invalid, fall back to default
+                # values (treat as expired) rather than failing the call.
                 pass
 
         if cache_path.exists():
@@ -187,6 +189,8 @@ class CacheService:
                     'expired': age_seconds > (ttl_hours * 3600),
                 }
             except (ValueError, TypeError, KeyError):
+                # Skip keys with invalid or incomplete metadata; they will
+                # simply not appear in the reported per-key cache info.
                 pass
 
         return info
