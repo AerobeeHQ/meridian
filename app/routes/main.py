@@ -739,13 +739,6 @@ def prop_detail(prop_id: str):
         # Sort classifications alphabetically by name
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
-    # Cross-reference cached processing rules.
-    # cache.get() returns None on a cold cache — distinguish that from an
-    # empty list so the template can show a "not yet loaded" state.
-    _cached_rules_raw = cache.get(rsid, 'processing_rules')
-    processing_rules_cached = _cached_rules_raw is not None
-    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
-
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -756,8 +749,6 @@ def prop_detail(prop_id: str):
         top_items=top_items,
         trend_data=trend_data,
         classifications=classifications,
-        related_rules=related_rules,
-        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
@@ -873,17 +864,23 @@ def evar_detail(evar_id: str):
             futures = {executor.submit(func): key for key, func in tasks.items()}
             for future in as_completed(futures):
                 key = futures[future]
-                value = future.result()
-                if key == 'dimension':
+                try:
+                    value = future.result()
+                except Exception as exc:
+                    logger.warning("evar_detail: failed to fetch '%s' for %s — %s", key, display_id, exc)
+                    value = None
+                # Only cache successful results; a None value means the API
+                # was unavailable and we want to retry on the next request.
+                if key == 'dimension' and value is not None:
                     cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
-                elif key == 'evar_config':
+                elif key == 'evar_config' and value is not None:
                     cache.set(rsid, f'evar_config_{display_id}', value)
                     evar_config = value
-                elif key == 'top_items':
+                elif key == 'top_items' and value is not None:
                     cache.set(rsid, f'evar_top_{display_id}', value)
                     top_items = value
-                elif key == 'trend_data':
+                elif key == 'trend_data' and value is not None:
                     cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
@@ -925,11 +922,6 @@ def evar_detail(evar_id: str):
         # Sort classifications alphabetically by name
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
-    # Cross-reference cached processing rules
-    _cached_rules_raw = cache.get(rsid, 'processing_rules')
-    processing_rules_cached = _cached_rules_raw is not None
-    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
-
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -940,8 +932,6 @@ def evar_detail(evar_id: str):
         top_items=top_items,
         trend_data=trend_data,
         classifications=classifications,
-        related_rules=related_rules,
-        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
@@ -1022,19 +1012,12 @@ def event_detail(event_id: str):
                     cache.set(rsid, f'event_trend_{display_id}', value)
                     trend_data = value
 
-    # Cross-reference cached processing rules
-    _cached_rules_raw = cache.get(rsid, 'processing_rules')
-    processing_rules_cached = _cached_rules_raw is not None
-    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
-
     return render_template(
         'event_detail.html',
         title=f'{display_id}: {metric.get("name", "")}',
         metric=metric,
         event_id=display_id,
         trend_data=trend_data,
-        related_rules=related_rules,
-        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
@@ -1137,14 +1120,6 @@ def listvar_detail(listvar_name: str):
                     cache.set(rsid, f'listvar_trend_{listvar_num}', value)
                     trend_data = value
 
-    # Cross-reference cached processing rules
-    # Search both 'list1' (Adobe internal name) and 'listvar1' (API 2.0 ID)
-    _cached_rules_raw = cache.get(rsid, 'processing_rules')
-    processing_rules_cached = _cached_rules_raw is not None
-    related_rules = find_related_processing_rules(
-        _cached_rules_raw or [], f'list{listvar_num}', f'listvar{listvar_num}'
-    )
-
     return render_template(
         'listvar_detail.html',
         title=f'{listvar_name}',
@@ -1153,8 +1128,6 @@ def listvar_detail(listvar_name: str):
         listvar_num=listvar_num,
         top_items=top_items or [],
         trend_data=trend_data or {},
-        related_rules=related_rules,
-        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',
@@ -1317,6 +1290,45 @@ def cache_refresh(cache_key):
     warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
     return redirect(request.referrer or '/')
+
+
+# =============================================================================
+# Processing Rules Fragment API
+# =============================================================================
+
+@main_bp.route('/api/related-rules/<dimension_type>/<dimension_id>')
+def api_related_rules(dimension_type: str, dimension_id: str):
+    """Return the "Related Processing Rules" card as an HTML fragment.
+
+    Called asynchronously by detail pages after initial render so that a cold
+    or unavailable processing-rules cache doesn't block page load.
+
+    Args:
+        dimension_type: 'prop', 'evar', 'event', or 'listvar'
+        dimension_id:   The dimension's display ID (e.g. 'prop3', 'evar5',
+                        'event2') or listvar number (e.g. '1').
+    """
+    rsid = get_rsid()
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
+
+    if dimension_type == 'listvar':
+        # Search for both 'list1' (Adobe internal) and 'listvar1' (API 2.0 ID)
+        related_rules = find_related_processing_rules(
+            _cached_rules_raw or [],
+            f'list{dimension_id}',
+            f'listvar{dimension_id}',
+        )
+    else:
+        related_rules = find_related_processing_rules(
+            _cached_rules_raw or [], dimension_id
+        )
+
+    return render_template(
+        '_fragment_related_rules.html',
+        related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
+    )
 
 
 # =============================================================================
