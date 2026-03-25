@@ -859,9 +859,8 @@ def evar_detail(evar_id: str):
 
     # Parse expiration & allocation from the API 2.0 description field.
     # This avoids dependence on API 1.4 (deprecated August 2026).
-    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2
     dimension = dimension.copy() if dimension else {}
-    parsed = AdobeAnalyticsV2.parse_description_metadata(dimension.get('description', ''))
+    parsed = AdobeAnalyticsV2Service.parse_description_metadata(dimension.get('description', ''))
     if parsed['expiration_type']:
         dimension['expiration_type'] = parsed['expiration_type']
     if parsed['expiration_custom_days']:

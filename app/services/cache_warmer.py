@@ -98,14 +98,13 @@ def start_scheduler(app):
     Start the background scheduler that warms the cache every 24 hours.
 
     Guards against double-start in Flask's dev reloader by only running
-    in the main Werkzeug process.
+    in the child worker process (where WERKZEUG_RUN_MAIN == 'true').
+    In production (no reloader), starts unconditionally.
     """
-    # In dev mode, Flask's reloader spawns a child process. Only start the
-    # scheduler in the child (where WERKZEUG_RUN_MAIN == 'true') to avoid
-    # running it twice. In production there is no reloader so the env var
-    # won't be set — start unconditionally.
-    is_reloader_active = os.environ.get('WERKZEUG_RUN_MAIN')
-    if is_reloader_active is not None and is_reloader_active != 'true':
+    # In dev mode (debug=True), Flask's reloader spawns a child process and sets
+    # WERKZEUG_RUN_MAIN='true' in it. We skip the parent process to avoid
+    # starting two schedulers. In production, debug is False so we always start.
+    if app.debug and os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         return None
 
     scheduler = BackgroundScheduler()
