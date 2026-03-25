@@ -607,3 +607,65 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 })();
 {% endmacro %}
 
+
+{% macro related_processing_rules_section(related_rules, rules_available=true) %}
+{# Collapsible card listing processing rules that reference the current dimension.  #}
+{# related_rules:   list of rule dicts (ruleNum, title, rules, actions, comment).  #}
+{# rules_available: False when the processing_rules cache key is absent (cold cache #}
+{#                  or API 1.4 unavailable) — shows a distinct "not loaded" notice. #}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Related Processing Rules</h5>
+        {% if not rules_available %}
+        <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
+            <span style="font-size:1.1rem;">&#9888;</span>
+            <div>
+                <strong>Processing rules data is not available.</strong>
+                <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
+                <a href="/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
+            </div>
+        </div>
+        {% elif related_rules %}
+        <p class="text-muted small mb-3">
+            {{ related_rules | length }} rule{{ 's' if related_rules | length != 1 else '' }}
+            reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
+        </p>
+        <div class="accordion accordion-flush" id="relatedRulesAccordion">
+            {% for rule in related_rules %}
+            <div class="accordion-item border rounded mb-2">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed rounded" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#relatedRule{{ rule.ruleNum }}"
+                            aria-expanded="false"
+                            aria-controls="relatedRule{{ rule.ruleNum }}">
+                        <span class="badge bg-secondary me-2">#{{ rule.ruleNum }}</span>
+                        {{ rule.title or 'Untitled Rule' }}
+                    </button>
+                </h2>
+                <div id="relatedRule{{ rule.ruleNum }}" class="accordion-collapse collapse">
+                    <div class="accordion-body pt-2 pb-3">
+                        {% if rule.rules %}
+                        <p class="mb-1"><small class="text-muted fw-semibold">Conditions</small></p>
+                        <pre class="monospace small bg-light rounded p-2 mb-3">{{ rule.rules }}</pre>
+                        {% endif %}
+                        {% if rule.actions %}
+                        <p class="mb-1"><small class="text-muted fw-semibold">Actions</small></p>
+                        <pre class="monospace small bg-light rounded p-2 mb-3">{{ rule.actions }}</pre>
+                        {% endif %}
+                        {% if rule.comment %}
+                        <p class="mb-1"><small class="text-muted fw-semibold">Notes</small></p>
+                        <p class="small mb-0">{{ rule.comment }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No processing rules reference this dimension.</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+

@@ -65,6 +65,17 @@
             </div>
         </div>
 
+        <!-- Related Processing Rules (loaded asynchronously) -->
+        <div id="related-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Related Processing Rules</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
@@ -184,5 +195,22 @@
 <script>
 {{ trend_chart_js(trend_data, 'Occurrences', ' occurrences') }}
 {{ notes_form_js('listvar', listvar_num) }}
+
+// Async: load Related Processing Rules after page render
+(function () {
+    var placeholder = document.getElementById('related-rules-placeholder');
+    if (!placeholder) return;
+    fetch('/api/related-rules/listvar/{{ listvar_num }}')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            placeholder.insertAdjacentHTML('afterend', html);
+            placeholder.remove();
+        })
+        .catch(function () {
+            placeholder.querySelector('.card-body').innerHTML =
+                '<h5 class="card-title">Related Processing Rules</h5>' +
+                '<p class="text-muted mb-0">Could not load processing rules data.</p>';
+        });
+}());
 </script>
 {% endblock %}

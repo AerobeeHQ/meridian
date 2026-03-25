@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
@@ -187,6 +188,37 @@ def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
         return int(cleaned) if cleaned else 999
     except (ValueError, AttributeError):
         return 999
+
+
+def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
+    """Return processing rules whose conditions or actions reference any of the
+    given dimension terms.
+
+    Uses whole-word, case-insensitive matching so that e.g. ``prop1`` does not
+    accidentally match ``prop10`` or ``prop100``.
+
+    Args:
+        rules: Cached list of processing rule dicts from ``get_processing_rules()``.
+        *terms: One or more dimension identifiers to search for
+                (e.g. ``'evar5'``, or ``'list1', 'listvar1'``).
+
+    Returns:
+        Subset of ``rules`` that reference at least one of the given terms.
+    """
+    if not rules or not terms:
+        return []
+    safe_terms = [t for t in terms if t]
+    if not safe_terms:
+        return []
+    pattern = re.compile(
+        r'\b(' + '|'.join(re.escape(t) for t in safe_terms) + r')\b',
+        re.IGNORECASE,
+    )
+    return [
+        rule for rule in rules
+        if pattern.search(rule.get('rules', '') or '')
+        or pattern.search(rule.get('actions', '') or '')
+    ]
 
 
 # Column mappings matching server.R transformations
@@ -841,6 +873,8 @@ def evar_detail(evar_id: str):
                         key, display_id, exc,
                     )
                     value = None
+                # Only cache successful results; a None value means the API
+                # was unavailable and we want to retry on the next request.
                 if value is None:
                     continue
                 if key == 'dimension':
@@ -1034,7 +1068,6 @@ def listvar_detail(listvar_name: str):
     # ListVar names are like "List Var 1", "List Var 2", etc.
     # The API 2.0 dimension ID is like "variables/listvar1"
     # Extract number from name to build dimension ID
-    import re
     listvar_match = re.search(r'(\d+)$', listvar_name.replace(' ', ''))
     listvar_num = listvar_match.group(1) if listvar_match else '1'
     dimension_id = f"variables/listvar{listvar_num}"
@@ -1263,6 +1296,45 @@ def cache_refresh(cache_key):
     warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
     return redirect(request.referrer or '/')
+
+
+# =============================================================================
+# Processing Rules Fragment API
+# =============================================================================
+
+@main_bp.route('/api/related-rules/<dimension_type>/<dimension_id>')
+def api_related_rules(dimension_type: str, dimension_id: str):
+    """Return the "Related Processing Rules" card as an HTML fragment.
+
+    Called asynchronously by detail pages after initial render so that a cold
+    or unavailable processing-rules cache doesn't block page load.
+
+    Args:
+        dimension_type: 'prop', 'evar', 'event', or 'listvar'
+        dimension_id:   The dimension's display ID (e.g. 'prop3', 'evar5',
+                        'event2') or listvar number (e.g. '1').
+    """
+    rsid = get_rsid()
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
+
+    if dimension_type == 'listvar':
+        # Search for both 'list1' (Adobe internal) and 'listvar1' (API 2.0 ID)
+        related_rules = find_related_processing_rules(
+            _cached_rules_raw or [],
+            f'list{dimension_id}',
+            f'listvar{dimension_id}',
+        )
+    else:
+        related_rules = find_related_processing_rules(
+            _cached_rules_raw or [], dimension_id
+        )
+
+    return render_template(
+        '_fragment_related_rules.html',
+        related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
+    )
 
 
 # =============================================================================

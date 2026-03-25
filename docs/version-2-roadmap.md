@@ -8,7 +8,7 @@ This document summarises the planned features for Codex v2. Each item has a deta
 
 | # | Feature | Complexity | Status | Plan |
 |---|---------|------------|--------|------|
-| 1 | [Processing Rules Integration](#1-processing-rules-integration) | Medium | Planned | [v2-001](plans/v2-001-processing-rules-integration.md) |
+| 1 | [Processing Rules Integration](#1-processing-rules-integration) | Medium | **Done** | [v2-001](plans/v2-001-processing-rules-integration.md) |
 | 2 | [Marketing Channel Rules Integration](#2-marketing-channel-rules-integration) | Medium | Planned | [v2-002](plans/v2-002-marketing-channel-rules-integration.md) |
 | 3 | [Adobe Launch Integration](#3-adobe-launch-integration) | High | Planned | [v2-003](plans/v2-003-adobe-launch-integration.md) |
 | 4 | [User OAuth Login](#4-user-oauth-login) | High | Planned | [v2-004](plans/v2-004-user-oauth-login.md) |
@@ -23,7 +23,7 @@ Start with low-risk, high-value additions before architectural changes:
 
 1. ~~**Overview page** (v2-006) — New page only, no risk to existing features.~~ **Done**
 2. ~~**Background pre-caching** (v2-005) — Makes the whole app feel faster; improves UX for all users.~~ **Done**
-3. **Processing Rules integration** (v2-001) — Data already cached; adds cross-linking to detail pages.
+3. ~~**Processing Rules integration** (v2-001) — Data already cached; adds cross-linking to detail pages.~~ **Done**
 4. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
 5. **Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.
 6. **User OAuth login** (v2-004) — Largest architectural change; do last.
