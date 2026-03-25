@@ -8,6 +8,12 @@
 </div>
 {% endif %}
 
+{% if page_note %}
+<div class="alert alert-info alert-sm mb-3" role="alert">
+    <small>{{ page_note }}</small>
+</div>
+{% endif %}
+
 {% if data %}
 <table id="dataTable" class="table table-striped table-hover" style="width:100%">
     <thead>

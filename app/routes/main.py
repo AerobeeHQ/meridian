@@ -816,7 +816,13 @@ def evars():
         cache_info=get_cache_info(),
         active_tab='evars',
         monospace_columns=[],
-        cache_key='dimensions'
+        cache_key='dimensions',
+        page_note=(
+            "Expiration and Allocation values are read from each eVar's description field. "
+            "These columns will be empty if the description does not contain structured metadata "
+            '(e.g. "Expiration: Hit. Allocation: Most Recent (Last)"). '
+            'Full configuration is always available on the eVar detail page.'
+        )
     )
 
 

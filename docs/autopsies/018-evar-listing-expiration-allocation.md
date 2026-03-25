@@ -37,6 +37,23 @@ Applied formatting in both the `/evars` listing route and `/evars/export` CSV ro
 - **API 2.0 only:** Relies entirely on `parse_description_metadata()` which extracts data from API 2.0 description fields — no API 1.4 dependency for listing pages.
 - **Consistent labels:** The formatting maps mirror the Jinja2 conditionals in `detail.html`, ensuring listing and detail pages show identical labels.
 
+## Known Limitation: Dependency on Structured Description Metadata
+
+The Expiration and Allocation values on the listing page are sourced **entirely from the eVar description field** in Adobe Analytics. The parser (`parse_description_metadata()`) looks for structured text in a specific format embedded in each dimension's description, for example:
+
+```
+Expiration: Purchase.
+Allocation: Merchandising (Last)
+```
+
+**If an eVar's description does not contain this structured metadata, the Expiration and Allocation columns will be blank in the listing view.**
+
+This is a known trade-off of the API 2.0-only approach (which avoids a slow API 1.4 call for all eVars on page load). Full configuration — sourced from both API 2.0 and API 1.4 — is always available on the individual eVar detail page.
+
+To make this dependency visible to users, the `/evars` listing page displays an info note:
+
+> *Expiration and Allocation values are read from each eVar's description field. These columns will be empty if the description does not contain structured metadata (e.g. "Expiration: Hit. Allocation: Most Recent (Last)"). Full configuration is always available on the eVar detail page.*
+
 ## Testing
 
 1. Run `uv run run.py` and navigate to `/evars`
@@ -44,3 +61,4 @@ Applied formatting in both the `/evars` listing route and `/evars/export` CSV ro
 3. Verify Allocation column shows labels like "Most Recent (Last)", "Merchandising (Last)"
 4. Verify eVar detail pages still display correctly (unchanged code path)
 5. Export CSV from `/evars/export` and confirm formatted values in the file
+6. Verify the info note appears below the Refresh button on the `/evars` page
