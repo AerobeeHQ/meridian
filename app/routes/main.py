@@ -838,18 +838,31 @@ def evar_detail(evar_id: str):
                     cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
-    # Merge API 1.4 eVar configuration into dimension data
-    # API 1.4 has allocation, expiration, merchandising that API 2.0 lacks
+    # Parse expiration & allocation from the API 2.0 description field.
+    # This avoids dependence on API 1.4 (deprecated August 2026).
+    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2
+    dimension = dimension.copy() if dimension else {}
+    parsed = AdobeAnalyticsV2.parse_description_metadata(dimension.get('description', ''))
+    if parsed['expiration_type']:
+        dimension['expiration_type'] = parsed['expiration_type']
+    if parsed['expiration_custom_days']:
+        dimension['expiration_custom_days'] = parsed['expiration_custom_days']
+    if parsed['allocation_type']:
+        dimension['allocation_type'] = parsed['allocation_type']
+
+    # Fallback: merge API 1.4 data for fields not available from API 2.0
+    # (merchandising_syntax, binding_events, enabled).
+    # Also backfill expiration/allocation if the description didn't contain them.
     if evar_config:
-        dimension = dimension.copy() if dimension else {}
-        dimension.update({
-            'allocation_type': evar_config.get('allocation_type'),
-            'expiration_type': evar_config.get('expiration_type'),
-            'expiration_custom_days': evar_config.get('expiration_custom_days'),
-            'merchandising_syntax': evar_config.get('merchandising_syntax'),
-            'binding_events': evar_config.get('binding_events'),
-            'enabled': evar_config.get('enabled')
-        })
+        if not dimension.get('expiration_type'):
+            dimension['expiration_type'] = str(evar_config.get('expiration_type', ''))
+        if not dimension.get('expiration_custom_days'):
+            dimension['expiration_custom_days'] = evar_config.get('expiration_custom_days')
+        if not dimension.get('allocation_type'):
+            dimension['allocation_type'] = evar_config.get('allocation_type')
+        dimension.setdefault('merchandising_syntax', evar_config.get('merchandising_syntax'))
+        dimension.setdefault('binding_events', evar_config.get('binding_events'))
+        dimension.setdefault('enabled', evar_config.get('enabled'))
 
     # Find classifications for this eVar (dimensions with parent = this dimension's ID)
     classifications = []
