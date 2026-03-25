@@ -32,22 +32,8 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">Created</th>
+                    <th scope="row">Last Updated</th>
                     <td><code>{{ cache_info.created or 'N/A' }}</code></td>
-                </tr>
-                <tr>
-                    <th scope="row">Age</th>
-                    <td><code>{{ cache_info.age_mins or 0 }} minutes</code></td>
-                </tr>
-                <tr>
-                    <th scope="row">Status</th>
-                    <td>
-                        {% if cache_info.expired %}
-                        <span class="badge bg-warning text-dark">Expired</span>
-                        {% else %}
-                        <span class="badge bg-success">Valid</span>
-                        {% endif %}
-                    </td>
                 </tr>
                 <tr>
                     <th scope="row">Size</th>
@@ -58,12 +44,54 @@
 
         <div class="mt-3">
             <a href="/cache/clear" class="btn btn-warning">
-                <i class="bi bi-trash"></i> Clear Cache
+                <i class="bi bi-trash"></i> Clear All Cache
             </a>
-            <small class="text-muted ms-2">This will force a fresh API call on next page load</small>
+            <small class="text-muted ms-2">Clears all cached data. The background warmer will re-populate config data automatically.</small>
         </div>
     </div>
 </div>
+
+{% if cache_info.keys %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Per-Key Cache Status</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Last Refreshed</th>
+                    <th>Age</th>
+                    <th>TTL</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, meta in cache_info.keys.items()|sort %}
+                <tr>
+                    <td><code>{{ key }}</code></td>
+                    <td><code>{{ meta.created or 'N/A' }}</code></td>
+                    <td>{{ meta.age_mins }} min</td>
+                    <td>{{ meta.ttl_hours }}h</td>
+                    <td>
+                        {% if meta.expired %}
+                        <span class="badge bg-warning text-dark">Expired</span>
+                        {% else %}
+                        <span class="badge bg-success">Valid</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/cache/refresh/{{ key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh this key">&#x21ba;</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 <div class="card mt-4">
     <div class="card-header">
@@ -71,12 +99,12 @@
     </div>
     <div class="card-body">
         <ul class="mb-0">
-            <li>Cache expires automatically after <strong>1 hour</strong></li>
+            <li>Configuration data (dimensions, events, processing rules, etc.) is cached for <strong>24 hours</strong></li>
+            <li>Report data (trends, top items) is cached for <strong>1 hour</strong></li>
+            <li>Cache is warmed automatically at startup and every 24 hours in the background</li>
+            <li>Use the <strong>Refresh</strong> buttons to force-refresh individual cache keys on demand</li>
             <li>Cache is stored as JSON files in the <code>cache/</code> directory</li>
-            <li>Each report suite has its own cache file</li>
-            <li>API calls are made only when cache is empty or expired</li>
         </ul>
     </div>
 </div>
 {% endblock %}
-

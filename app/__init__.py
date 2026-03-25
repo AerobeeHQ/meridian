@@ -52,15 +52,12 @@ def create_app():
     app.config['GIT_BRANCH'] = git_info.get('branch')
     app.config['GIT_COMMIT'] = git_info.get('commit')
 
-    # Clear cached API responses so each restart fetches fresh data
-    try:
-        CacheService().clear_all()
-        app.logger.info("Cleared cache directory on startup")
-    except Exception as exc:
-        app.logger.warning("Failed to clear cache on startup: %s", exc)
-
     # Register blueprints
     from app.routes.main import main_bp
     app.register_blueprint(main_bp)
+
+    # Start background cache warmer (warms at startup + every 24h)
+    from app.services.cache_warmer import start_scheduler
+    app.cache_scheduler = start_scheduler(app)
 
     return app

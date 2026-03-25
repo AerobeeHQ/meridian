@@ -373,24 +373,84 @@ class AdobeAnalyticsV2Service:
             "description": dim.get("description", "")
         }
 
+    @staticmethod
+    def parse_description_metadata(description: str) -> dict:
+        """Parse expiration and allocation from an API 2.0 description field.
+
+        The API 2.0 embeds configuration metadata as structured text at the
+        end of the description, e.g.:
+
+            Expiration: Purchase.
+            Allocation: Merchandising (Last)
+
+        Returns a dict with keys ``expiration_type``, ``expiration_custom_days``
+        and ``allocation_type`` (any may be empty strings).
+        """
+        result = {
+            'expiration_type': '',
+            'expiration_custom_days': '',
+            'allocation_type': '',
+        }
+        if not description:
+            return result
+
+        # Match "Expiration: <value>." — value may include digits + text
+        exp_match = re.search(r'Expiration:\s*(.+?)\.', description)
+        if exp_match:
+            raw = exp_match.group(1).strip()
+            # Check for custom-day format, e.g. "30 Days"
+            days_match = re.match(r'^(\d+)\s*[Dd]ays?$', raw)
+            if days_match:
+                result['expiration_custom_days'] = days_match.group(1)
+                result['expiration_type'] = 'custom'
+            else:
+                # Map common labels to the canonical keys the template expects
+                label_map = {
+                    'hit': 'hit',
+                    'visit': 'visit',
+                    'day': 'day',
+                    'week': 'week',
+                    'month': 'month',
+                    'quarter': 'quarter',
+                    'year': 'year',
+                    'purchase': 'purchase_event',
+                    'purchase event': 'purchase_event',
+                    'product view': 'product_view',
+                    'never': 'never',
+                }
+                result['expiration_type'] = label_map.get(raw.lower(), raw)
+
+        # Match "Allocation: <value>" (may or may not end with period)
+        alloc_match = re.search(r'Allocation:\s*(.+?)\.?\s*$', description, re.MULTILINE)
+        if alloc_match:
+            result['allocation_type'] = alloc_match.group(1).strip()
+
+        return result
+
     def _transform_dimension_to_evar(self, dim: dict) -> dict:
         """Transform a 2.0 dimension to 1.4 eVar format"""
         dim_id = dim.get("id", "")
         # Extract evar number from "variables/evar1" -> "evar1"
         evar_id = dim_id.replace("variables/", "")
-        
+
         # Extract status from reportable list (e.g., ['oberon'] -> 'oberon')
         reportable = dim.get("reportable", [])
         status = ", ".join(reportable) if reportable else ""
+
+        # Parse expiration & allocation from the description field — API 2.0
+        # embeds these as structured text rather than separate fields.
+        description = dim.get("description", "")
+        parsed = self.parse_description_metadata(description)
 
         return {
             "id": evar_id,
             "name": dim.get("name", ""),
             "status": status,
             "type": dim.get("type", "text string"),
-            "expiration_type": dim.get("expirationType", ""),
-            "allocation_type": dim.get("allocationModel", {}).get("name", ""),
-            "description": dim.get("description", "")
+            "expiration_type": parsed['expiration_type'],
+            "expiration_custom_days": parsed['expiration_custom_days'],
+            "allocation_type": parsed['allocation_type'],
+            "description": description
         }
 
     def _transform_metric_to_event(self, metric: dict) -> dict:
