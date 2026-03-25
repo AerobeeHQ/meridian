@@ -868,28 +868,25 @@ def evar_detail(evar_id: str):
                 try:
                     value = future.result()
                 except Exception as exc:
-                    logger.warning("evar_detail: failed to fetch '%s' for %s — %s", key, display_id, exc)
-                    value = None
-                # Only cache successful results; a None value means the API
-                # was unavailable and we want to retry on the next request.
-                if key == 'dimension' and value is not None:
                     logger.warning(
                         "evar_detail: failed to fetch '%s' for %s — %s",
                         key, display_id, exc,
                     )
                     value = None
+                # Only cache successful results; a None value means the API
+                # was unavailable and we want to retry on the next request.
                 if value is None:
                     continue
                 if key == 'dimension':
                     cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
-                elif key == 'evar_config' and value is not None:
+                elif key == 'evar_config':
                     cache.set(rsid, f'evar_config_{display_id}', value)
                     evar_config = value
-                elif key == 'top_items' and value is not None:
+                elif key == 'top_items':
                     cache.set(rsid, f'evar_top_{display_id}', value)
                     top_items = value
-                elif key == 'trend_data' and value is not None:
+                elif key == 'trend_data':
                     cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
