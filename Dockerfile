@@ -7,12 +7,12 @@ ARG GIT_COMMIT=unknown
 
 WORKDIR /app
 
-# Install build tools for pip package compilation
-RUN apt-get update && apt-get install -y build-essential gcc && rm -rf /var/lib/apt/lists/*
+# Install uv for dependency management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies (cached layer - only rebuilds when lock/pyproject change)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
 # Copy application code
 COPY app/ app/
@@ -30,4 +30,4 @@ RUN mkdir -p cache exports
 # Expose port
 EXPOSE 5010
 
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5010"]
+CMD ["uv", "run", "run.py"]
