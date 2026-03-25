@@ -8,7 +8,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, current_app, Response, request, jsonify, make_response
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
@@ -437,7 +437,6 @@ def core():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='core',
-        monospace_columns=[]
     )
 
 
@@ -560,7 +559,6 @@ def core_detail(dimension_id: str):
         cache_info=get_cache_info(),
         active_tab='core',
         back_url='/core',
-        back_label='Back to Core Listing'
     )
 
 
@@ -598,7 +596,6 @@ def props():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
-        monospace_columns=[]
     )
 
 
@@ -709,7 +706,6 @@ def prop_detail(prop_id: str):
         cache_info=get_cache_info(),
         active_tab='props',
         back_url='/props',
-        back_label='Back to Props Listing'
     )
 
 
@@ -750,7 +746,6 @@ def evars():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
-        monospace_columns=[]
     )
 
 
@@ -884,7 +879,6 @@ def evar_detail(evar_id: str):
         cache_info=get_cache_info(),
         active_tab='evars',
         back_url='/evars',
-        back_label='Back to eVars Listing'
     )
 
 
@@ -906,7 +900,6 @@ def events():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
-        monospace_columns=[]
     )
 
 
@@ -980,7 +973,6 @@ def event_detail(event_id: str):
         cache_info=get_cache_info(),
         active_tab='events',
         back_url='/events',
-        back_label='Back to Events Listing'
     )
 
 
@@ -1003,7 +995,6 @@ def listvars():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',
-        monospace_columns=[]
     )
 
 
@@ -1101,7 +1092,6 @@ def listvar_detail(listvar_name: str):
         cache_info=get_cache_info(),
         active_tab='listvars',
         back_url='/listvars',
-        back_label='Back to ListVars Listing'
     )
 
 
@@ -1124,7 +1114,6 @@ def processing_rules():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='processing-rules',
-        monospace_columns=['Actions', 'Conditions']
     )
 
 
@@ -1195,7 +1184,6 @@ def channel_rules():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='channel-rules',
-        monospace_columns=['Query String', 'Hit Attribute', 'Hit Query Param', 'Matches']
     )
 
 
@@ -1282,6 +1270,20 @@ def cache_clear():
         message='Cache cleared successfully'
     )
 
+
+@main_bp.route('/cache/refresh/<cache_key>')
+def cache_refresh(cache_key):
+    """Clear a specific cache key and re-warm it."""
+    from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
+
+    if cache_key not in CONFIG_CACHE_KEYS:
+        abort(400)
+
+    rsid = get_rsid()
+    cache.clear_key(rsid, cache_key)
+    warm_cache_key(current_app._get_current_object(), rsid, cache_key)
+
+    return redirect(request.referrer or '/')
 
 
 # =============================================================================
