@@ -58,7 +58,7 @@
 
         <!-- Related Processing Rules -->
         {% from '_macros.html' import related_processing_rules_section %}
-        {{ related_processing_rules_section(related_rules | default([])) }}
+        {{ related_processing_rules_section(related_rules | default([]), processing_rules_cached | default(false)) }}
 
         <!-- Editable Notes Section -->
         <div class="card">

@@ -739,9 +739,12 @@ def prop_detail(prop_id: str):
         # Sort classifications alphabetically by name
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
-    # Cross-reference cached processing rules
-    cached_rules = cache.get(rsid, 'processing_rules') or []
-    related_rules = find_related_processing_rules(cached_rules, display_id)
+    # Cross-reference cached processing rules.
+    # cache.get() returns None on a cold cache — distinguish that from an
+    # empty list so the template can show a "not yet loaded" state.
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
+    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
 
     return render_template(
         'detail.html',
@@ -754,6 +757,7 @@ def prop_detail(prop_id: str):
         trend_data=trend_data,
         classifications=classifications,
         related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
@@ -922,8 +926,9 @@ def evar_detail(evar_id: str):
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
     # Cross-reference cached processing rules
-    cached_rules = cache.get(rsid, 'processing_rules') or []
-    related_rules = find_related_processing_rules(cached_rules, display_id)
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
+    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
 
     return render_template(
         'detail.html',
@@ -936,6 +941,7 @@ def evar_detail(evar_id: str):
         trend_data=trend_data,
         classifications=classifications,
         related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
@@ -1017,8 +1023,9 @@ def event_detail(event_id: str):
                     trend_data = value
 
     # Cross-reference cached processing rules
-    cached_rules = cache.get(rsid, 'processing_rules') or []
-    related_rules = find_related_processing_rules(cached_rules, display_id)
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
+    related_rules = find_related_processing_rules(_cached_rules_raw or [], display_id)
 
     return render_template(
         'event_detail.html',
@@ -1027,6 +1034,7 @@ def event_detail(event_id: str):
         event_id=display_id,
         trend_data=trend_data,
         related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
@@ -1131,9 +1139,10 @@ def listvar_detail(listvar_name: str):
 
     # Cross-reference cached processing rules
     # Search both 'list1' (Adobe internal name) and 'listvar1' (API 2.0 ID)
-    cached_rules = cache.get(rsid, 'processing_rules') or []
+    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    processing_rules_cached = _cached_rules_raw is not None
     related_rules = find_related_processing_rules(
-        cached_rules, f'list{listvar_num}', f'listvar{listvar_num}'
+        _cached_rules_raw or [], f'list{listvar_num}', f'listvar{listvar_num}'
     )
 
     return render_template(
@@ -1145,6 +1154,7 @@ def listvar_detail(listvar_name: str):
         top_items=top_items or [],
         trend_data=trend_data or {},
         related_rules=related_rules,
+        processing_rules_cached=processing_rules_cached,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',

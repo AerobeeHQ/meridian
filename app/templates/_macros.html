@@ -608,13 +608,24 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 {% endmacro %}
 
 
-{% macro related_processing_rules_section(related_rules) %}
-{# Collapsible card listing processing rules that reference the current dimension. #}
-{# related_rules: list of rule dicts (ruleNum, title, rules, actions, comment).   #}
+{% macro related_processing_rules_section(related_rules, rules_available=true) %}
+{# Collapsible card listing processing rules that reference the current dimension.  #}
+{# related_rules:   list of rule dicts (ruleNum, title, rules, actions, comment).  #}
+{# rules_available: False when the processing_rules cache key is absent (cold cache #}
+{#                  or API 1.4 unavailable) — shows a distinct "not loaded" notice. #}
 <div class="card mb-4">
     <div class="card-body">
         <h5 class="card-title">Related Processing Rules</h5>
-        {% if related_rules %}
+        {% if not rules_available %}
+        <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
+            <span style="font-size:1.1rem;">&#9888;</span>
+            <div>
+                <strong>Processing rules data is not available.</strong>
+                <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
+                <a href="/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
+            </div>
+        </div>
+        {% elif related_rules %}
         <p class="text-muted small mb-3">
             {{ related_rules | length }} rule{{ 's' if related_rules | length != 1 else '' }}
             reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
