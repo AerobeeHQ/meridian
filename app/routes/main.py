@@ -240,6 +240,54 @@ MKTRULES_COLUMNS = {
 }
 
 
+def format_expiration(expiration_type: str, custom_days: str = '') -> str:
+    """Convert an internal expiration key to a human-readable label.
+
+    Mirrors the display logic in detail.html so the listing page shows the
+    same friendly text (e.g. "Purchase Event" instead of "purchase_event").
+    """
+    if not expiration_type:
+        return ''
+    labels = {
+        'hit': 'Hit',
+        'page_view': 'Hit',
+        'visit': 'Visit',
+        'day': 'Day',
+        'week': 'Week',
+        'month': 'Month',
+        'quarter': 'Quarter',
+        'year': 'Year',
+        'purchase_event': 'Purchase Event',
+        'product_view': 'Product View',
+        'never': 'Never',
+    }
+    if expiration_type == 'custom' and custom_days:
+        return f'{custom_days} Days'
+    if custom_days and expiration_type not in labels:
+        return f'{custom_days} Days'
+    return labels.get(expiration_type, expiration_type)
+
+
+def format_allocation(allocation_type: str) -> str:
+    """Convert an internal allocation key to a human-readable label.
+
+    The API 2.0 description parser already returns human-readable text in
+    most cases, but API 1.4 snake_case values may still appear in cached
+    data, so we handle both.
+    """
+    if not allocation_type:
+        return ''
+    labels = {
+        'most_recent_last': 'Most Recent (Last)',
+        'original_value_first': 'Original Value (First)',
+        'linear': 'Linear',
+        'linear_to_items': 'Linear (to Items)',
+        'merchandising_last': 'Merchandising (Last)',
+        'merchandising_first': 'Merchandising (First)',
+    }
+    return labels.get(allocation_type, allocation_type)
+
+
 def transform_data(raw_data: list, column_mapping: dict) -> list[dict]:
     """Transform raw API data to display format with renamed columns"""
     transformed = []
@@ -737,21 +785,25 @@ def evars():
     
     # Filter eVars from dimensions and transform
     # Exclude classifications (IDs containing a dot after the evar number, e.g., evar101.catalogue-name)
-    # NOTE: API 2.0 dimensions don't include allocation/expiration fields, so these columns
-    # will be empty in the table view. Full configuration (including allocation, expiration,
-    # and merchandising) is available on the eVar detail pages via API 1.4.
     raw_evars = []
     for dim in raw_dimensions:
         dim_id = dim.get("id", "")
         if dim_id.startswith("variables/evar"):
-            # Check if this is a classification (has a dot after evar number)
             evar_part = dim_id.replace("variables/", "")
             if "." not in evar_part:
                 raw_evars.append(api._transform_dimension_to_evar(dim))
-    
+
     # Sort by evar number
     raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
+
+    # Format expiration and allocation values for human-readable display
+    for evar in raw_evars:
+        evar['expiration_type'] = format_expiration(
+            evar.get('expiration_type', ''),
+            evar.get('expiration_custom_days', '')
+        )
+        evar['allocation_type'] = format_allocation(evar.get('allocation_type', ''))
+
     data = transform_data(raw_evars, EVARS_COLUMNS)
 
     return render_template(
@@ -764,7 +816,13 @@ def evars():
         cache_info=get_cache_info(),
         active_tab='evars',
         monospace_columns=[],
-        cache_key='dimensions'
+        cache_key='dimensions',
+        page_note=(
+            "Expiration and Allocation values are read from each eVar's description field. "
+            "These columns will be empty if the description does not contain structured metadata "
+            '(e.g. "Expiration: Hit. Allocation: Most Recent (Last)"). '
+            'Full configuration is always available on the eVar detail page.'
+        )
     )
 
 
@@ -785,7 +843,14 @@ def evars_export():
             if "." not in evar_part:
                 raw_evars.append(api._transform_dimension_to_evar(dim))
     raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
+
+    for evar in raw_evars:
+        evar['expiration_type'] = format_expiration(
+            evar.get('expiration_type', ''),
+            evar.get('expiration_custom_days', '')
+        )
+        evar['allocation_type'] = format_allocation(evar.get('allocation_type', ''))
+
     data = transform_data(raw_evars, EVARS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_evars.csv')
