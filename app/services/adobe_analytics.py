@@ -23,7 +23,7 @@ class AdobeAnalyticsService:
 
     API_ENDPOINT = "https://api.omniture.com/admin/1.4/rest/"
 
-    def __init__(self, username: str, secret: str, request_timeout: float = 5.0):
+    def __init__(self, username: str, secret: str, request_timeout: float | tuple[float, float] = 5.0):
         """
         Initialize the Adobe Analytics service
 
