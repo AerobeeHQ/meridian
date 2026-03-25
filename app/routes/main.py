@@ -52,6 +52,7 @@ def inject_globals():
         'git_branch': current_app.config.get('GIT_BRANCH'),
         'git_commit': current_app.config.get('GIT_COMMIT'),
         'suite_name': suite_name,
+        'app_title': current_app.config.get('APP_TITLE', ''),
     }
 
 
@@ -135,6 +136,30 @@ def get_cache_info() -> dict:
     """Get cache information for footer"""
     rsid = get_rsid()
     return cache.get_info(rsid)
+
+
+def render_listing(title, data, columns, active_tab, monospace_columns=None, **kwargs):
+    """Render listing.html with common context variables injected automatically.
+
+    Args:
+        title: Page title shown in the browser tab and heading.
+        data: List of row dicts to display in the table.
+        columns: Ordered list of column header strings.
+        active_tab: Nav-tab identifier used to highlight the current section.
+        monospace_columns: Column names whose cells should be styled monospace.
+        **kwargs: Extra variables forwarded to the template (e.g. cache_key).
+    """
+    return render_template(
+        'listing.html',
+        title=title,
+        data=data,
+        columns=columns,
+        rsid=get_rsid(),
+        cache_info=get_cache_info(),
+        active_tab=active_tab,
+        monospace_columns=monospace_columns or [],
+        **kwargs
+    )
 
 
 def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
@@ -391,7 +416,6 @@ def overview():
     response = make_response(render_template(
         'overview.html',
         title='Overview',
-        app_title=current_app.config['APP_TITLE'],
         rsid=rsid,
         stats=stats,
         recent_notes=recent_notes,
@@ -437,18 +461,7 @@ def core():
 
     data = transform_data(raw_core, CORE_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Core',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(CORE_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='core',
-        monospace_columns=[],
-        cache_key='dimensions'
-    )
+    return render_listing('Core', data, list(CORE_COLUMNS.values()), 'core', cache_key='dimensions')
 
 
 @main_bp.route('/core/export')
@@ -558,7 +571,6 @@ def core_detail(dimension_id: str):
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
-        app_title=current_app.config['APP_TITLE'],
         dimension=dimension,
         dimension_id=display_id,
         dimension_type='core',
@@ -600,18 +612,7 @@ def props():
     
     data = transform_data(raw_props, PROPS_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Props',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(PROPS_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='props',
-        monospace_columns=[],
-        cache_key='dimensions'
-    )
+    return render_listing('Props', data, list(PROPS_COLUMNS.values()), 'props', cache_key='dimensions')
 
 
 @main_bp.route('/props/export')
@@ -709,7 +710,6 @@ def prop_detail(prop_id: str):
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
-        app_title=current_app.config['APP_TITLE'],
         dimension=dimension,
         dimension_id=display_id,
         dimension_type='prop',
@@ -754,18 +754,7 @@ def evars():
     
     data = transform_data(raw_evars, EVARS_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='eVars',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(EVARS_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='evars',
-        monospace_columns=[],
-        cache_key='dimensions'
-    )
+    return render_listing('eVars', data, list(EVARS_COLUMNS.values()), 'evars', cache_key='dimensions')
 
 
 @main_bp.route('/evars/export')
@@ -898,7 +887,6 @@ def evar_detail(evar_id: str):
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
-        app_title=current_app.config['APP_TITLE'],
         dimension=dimension,
         dimension_id=display_id,
         dimension_type='evar',
@@ -924,18 +912,7 @@ def events():
     raw_data = get_cached_data('events', lambda: api.get_success_events(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, EVENTS_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Events',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(EVENTS_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='events',
-        monospace_columns=[],
-        cache_key='events'
-    )
+    return render_listing('Events', data, list(EVENTS_COLUMNS.values()), 'events', cache_key='events')
 
 
 @main_bp.route('/events/export')
@@ -1000,7 +977,6 @@ def event_detail(event_id: str):
     return render_template(
         'event_detail.html',
         title=f'{display_id}: {metric.get("name", "")}',
-        app_title=current_app.config['APP_TITLE'],
         metric=metric,
         event_id=display_id,
         trend_data=trend_data,
@@ -1023,18 +999,7 @@ def listvars():
     raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='ListVars',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(LISTVARS_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='listvars',
-        monospace_columns=[],
-        cache_key='listvars'
-    )
+    return render_listing('ListVars', data, list(LISTVARS_COLUMNS.values()), 'listvars', cache_key='listvars')
 
 
 @main_bp.route('/listvars/export')
@@ -1121,7 +1086,6 @@ def listvar_detail(listvar_name: str):
     return render_template(
         'listvar_detail.html',
         title=f'{listvar_name}',
-        app_title=current_app.config['APP_TITLE'],
         listvar=listvar or {},
         listvar_name=listvar_name,
         listvar_num=listvar_num,
@@ -1146,15 +1110,8 @@ def processing_rules():
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Proc Rules',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(PROCRULES_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='processing-rules',
+    return render_listing(
+        'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
         monospace_columns=['Actions', 'Conditions'],
         cache_key='processing_rules'
     )
@@ -1183,18 +1140,7 @@ def marketing_channels():
     raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Marketing Channels',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(MKTCHANNELS_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='marketing-channels',
-        monospace_columns=[],
-        cache_key='marketing_channels'
-    )
+    return render_listing('Marketing Channels', data, list(MKTCHANNELS_COLUMNS.values()), 'marketing-channels', cache_key='marketing_channels')
 
 
 @main_bp.route('/marketing-channels/export')
@@ -1219,15 +1165,8 @@ def channel_rules():
     raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
-    return render_template(
-        'listing.html',
-        title='Channel Rules',
-        app_title=current_app.config['APP_TITLE'],
-        data=data,
-        columns=list(MKTRULES_COLUMNS.values()),
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='channel-rules',
+    return render_listing(
+        'Channel Rules', data, list(MKTRULES_COLUMNS.values()), 'channel-rules',
         monospace_columns=['Query String', 'Hit Attribute', 'Hit Query Param', 'Matches'],
         cache_key='channel_rules'
     )
@@ -1250,27 +1189,13 @@ def channel_rules_export():
 def report_suites():
     """Display report suites"""
     api = get_api_service()
-    rsid = get_rsid()
 
     raw_data = get_cached_data('report_suites', lambda: api.get_report_suites())
 
     # Report suites have variable structure, just use as-is
-    if raw_data:
-        columns = list(raw_data[0].keys())
-    else:
-        columns = []
+    columns = list(raw_data[0].keys()) if raw_data else []
 
-    return render_template(
-        'listing.html',
-        title='Report Suites',
-        app_title=current_app.config['APP_TITLE'],
-        data=raw_data,
-        columns=columns,
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='report-suites',
-        monospace_columns=[]
-    )
+    return render_listing('Report Suites', raw_data, columns, 'report-suites')
 
 
 @main_bp.route('/report-suites/export')
@@ -1293,7 +1218,6 @@ def cache_view():
     return render_template(
         'cache.html',
         title='Cache',
-        app_title=current_app.config['APP_TITLE'],
         cache_info=cache_info,
         rsid=rsid,
         active_tab='cache'
@@ -1309,7 +1233,6 @@ def cache_clear():
     return render_template(
         'cache.html',
         title='Cache',
-        app_title=current_app.config['APP_TITLE'],
         cache_info=get_cache_info(),
         rsid=rsid,
         active_tab='cache',
