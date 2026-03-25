@@ -239,7 +239,7 @@ class AdobeAnalyticsService:
         for evar in evars:
             if evar.get('id') == evar_id:
                 return evar
-        
+
         return {}
 
     def get_success_events(self, rsid: str) -> list[dict]:
