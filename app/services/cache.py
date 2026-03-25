@@ -3,11 +3,13 @@ Cache service for Adobe Analytics API responses
 Implements file-based caching using JSON files with per-key TTL support
 """
 import json
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_TTL_HOURS = 1
 CONFIG_TTL_HOURS = 24  # for dimension/event configs that rarely change
@@ -218,7 +220,13 @@ class CacheService:
                 with open(cache_path, 'w') as f:
                     json.dump(cache_data, f, indent=2, default=str)
             except (json.JSONDecodeError, IOError):
-                pass
+                # Best-effort cleanup: log and ignore cache file issues during key removal
+                logger.warning(
+                    "Failed to remove key '%s' from cache file '%s'",
+                    key,
+                    cache_path,
+                    exc_info=True,
+                )
 
         # Remove the key from metadata
         metadata = self._load_metadata(cache_name)
