@@ -23,22 +23,16 @@ class AdobeAnalyticsService:
 
     API_ENDPOINT = "https://api.omniture.com/admin/1.4/rest/"
 
-    def __init__(self, username: str, secret: str, request_timeout: float = 5.0):
+    def __init__(self, username: str, secret: str):
         """
         Initialize the Adobe Analytics service
 
         Args:
             username: WSSE username (format: username:company)
             secret: WSSE shared secret
-            request_timeout: Timeout in seconds for API 1.4 HTTP requests.
-                             A (connect, read) tuple is also accepted.
-                             Defaults to 5 seconds — fast enough to fail
-                             quickly when the endpoint is unreachable, while
-                             still allowing normal cross-Pacific responses through.
         """
         self.username = username
         self.secret = secret
-        self.request_timeout = request_timeout
 
     def _generate_wsse_header(self) -> str:
         """
@@ -99,8 +93,7 @@ class AdobeAnalyticsService:
             response = requests.post(
                 url,
                 headers=headers,
-                json=payload,
-                timeout=self.request_timeout,
+                json=payload
             )
             response.raise_for_status()
             logger.debug(
@@ -134,8 +127,7 @@ class AdobeAnalyticsService:
             url,
             headers=retry_headers,
             json=params,
-            stream=True,
-            timeout=self.request_timeout,
+            stream=True
         )
         response.raise_for_status()
 

@@ -833,7 +833,16 @@ def evar_detail(evar_id: str):
             futures = {executor.submit(func): key for key, func in tasks.items()}
             for future in as_completed(futures):
                 key = futures[future]
-                value = future.result()
+                try:
+                    value = future.result()
+                except Exception as exc:
+                    logger.warning(
+                        "evar_detail: failed to fetch '%s' for %s — %s",
+                        key, display_id, exc,
+                    )
+                    value = None
+                if value is None:
+                    continue
                 if key == 'dimension':
                     cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
