@@ -3,6 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ dimension_id }}: {{ dimension.name or dimension.title or 'Unknown' }}</h4>
+    {% if cache_key %}
+    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+    {% endif %}
 </div>
 
 <div class="row">
@@ -62,7 +65,7 @@
                         <tr>
                             <th>Expiration</th>
                             <td>
-                                {% set expiry = dimension.get('expiration_type', '') %}
+                                {% set expiry = dimension.get('expiration_type', '')|string %}
                                 {% set custom_days = dimension.get('expiration_custom_days') %}
                                 {% if expiry == '0' or expiry == 'hit' or expiry == 'page_view' %}Hit
                                 {% elif expiry == '1' or expiry == 'visit' %}Visit
@@ -74,8 +77,9 @@
                                 {% elif expiry == '7' or expiry == 'purchase_event' %}Purchase Event
                                 {% elif expiry == '8' or expiry == 'product_view' %}Product View
                                 {% elif expiry == '9' or expiry == 'never' %}Never
-                                {% elif custom_days %}{{ custom_days }} days
-                                {% elif expiry %}{{ expiry }}
+                                {% elif expiry == 'custom' and custom_days %}{{ custom_days }} Days
+                                {% elif custom_days %}{{ custom_days }} Days
+                                {% elif expiry and expiry != 'None' %}{{ expiry }}
                                 {% else %}N/A
                                 {% endif %}
                             </td>

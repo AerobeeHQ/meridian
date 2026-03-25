@@ -2,6 +2,12 @@
 
 {% block content %}
 
+{% if cache_key %}
+<div class="d-flex justify-content-end mb-2">
+    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+</div>
+{% endif %}
+
 {% if data %}
 <table id="dataTable" class="table table-striped table-hover" style="width:100%">
     <thead>
