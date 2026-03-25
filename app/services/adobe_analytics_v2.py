@@ -751,7 +751,6 @@ class AdobeAnalyticsV2Service:
             result = self._make_request(
                 "segments",
                 params={
-                    "rsids": rsid,
                     "expansion": "ownerFullName,modified,tags",
                     "limit": page_size,
                     "page": page,
