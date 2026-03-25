@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                </svg>
+                <strong>Adobe Analytics API 1.4 Unavailable</strong>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">This page relies on Adobe's legacy API (version 1.4), which is not responding right now.</p>
+                <p class="text-muted mb-4 small">
+                    This typically happens when Adobe's <code>api.omniture.com</code> endpoint is temporarily unreachable or slow to respond.
+                    Data may become available again once the API recovers &mdash; you can also try warming the cache manually from
+                    the <a href="/cache">Cache</a> page once connectivity is restored.
+                </p>
+
+                <div class="d-flex gap-2 mb-4">
+                    <a href="{{ request.url }}" class="btn btn-outline-danger btn-sm">↺ &nbsp;Try again</a>
+                    <a href="/" class="btn btn-outline-secondary btn-sm">← &nbsp;Home</a>
+                </div>
+
+                <details>
+                    <summary class="text-muted small" style="cursor: pointer; user-select: none;">
+                        Technical details
+                    </summary>
+                    <div class="mt-3">
+                        <p class="mb-1 small">
+                            <strong>Error type:</strong>&ensp;<code>{{ error_type }}</code>
+                        </p>
+                        <p class="mb-2 small">
+                            <strong>Message:</strong>&ensp;<code>{{ error_message }}</code>
+                        </p>
+                        <pre class="monospace bg-light p-3 rounded border small mt-2"
+                             style="white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto;">{{ traceback_text }}</pre>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -47,6 +47,9 @@ def create_app():
     app.config['AW_USERNAME'] = config.get('AW_USERNAME')
     app.config['AW_SECRET'] = config.get('AW_SECRET')
 
+    # API 1.4 request timeout (seconds); see config.dist.json for guidance
+    app.config['API_V14_TIMEOUT'] = config.get('API_V14_TIMEOUT', 5.0)
+
     # Git info for footer display
     git_info = get_git_info()
     app.config['GIT_BRANCH'] = git_info.get('branch')
