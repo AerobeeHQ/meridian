@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue:*)",
+      "Bash(git checkout:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(uv run:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "Bash(git pull:*)",
+      "Bash(uv add:*)"
+    ]
+  }
+}
