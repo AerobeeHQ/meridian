@@ -5,6 +5,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 ## TODOs
 
 - [x] Add the allocation and expiration data to the data dimensions listing page. The data is visible on the details page, but not the listing pages
+  - **Note:** Current approach parses the API 2.0 `description` field, which is user-editable text — works as a short-term solution but is not reliable long-term. Need to find the correct API 2.0 endpoint/parameter that returns structured allocation/expiration data. The debug page (below) should help investigate this.
 - [ ] Change the data dimensions listing page template name. I think it is table.html at the moment, but it would be clearer if it was something else like .... what? listing.html, or summary.html, or props.html + evars.html, + events.html + listVars.html (all plural, and all have different column requirements)
 - [ ] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
   - [adobe_analytics_api_1.4_swagger.json](adobe_analytics_api_1.4_swagger.json)
