@@ -12,12 +12,13 @@ app = create_app()
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5010))
     debug = os.environ.get('FLASK_DEBUG', 'true').lower() == 'true'
+    host = os.environ.get('HOST', '127.0.0.1')
 
-    print(f"Starting Codex on http://127.0.0.1:{port}")
+    print(f"Starting Codex on http://{host}:{port}")
     print(f"Debug mode: {debug}")
 
     app.run(
-        host='127.0.0.1',
+        host=host,
         port=port,
         debug=debug
     )
