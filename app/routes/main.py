@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
@@ -186,6 +187,37 @@ def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
         return int(cleaned) if cleaned else 999
     except (ValueError, AttributeError):
         return 999
+
+
+def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
+    """Return processing rules whose conditions or actions reference any of the
+    given dimension terms.
+
+    Uses whole-word, case-insensitive matching so that e.g. ``prop1`` does not
+    accidentally match ``prop10`` or ``prop100``.
+
+    Args:
+        rules: Cached list of processing rule dicts from ``get_processing_rules()``.
+        *terms: One or more dimension identifiers to search for
+                (e.g. ``'evar5'``, or ``'list1', 'listvar1'``).
+
+    Returns:
+        Subset of ``rules`` that reference at least one of the given terms.
+    """
+    if not rules or not terms:
+        return []
+    safe_terms = [t for t in terms if t]
+    if not safe_terms:
+        return []
+    pattern = re.compile(
+        r'\b(' + '|'.join(re.escape(t) for t in safe_terms) + r')\b',
+        re.IGNORECASE,
+    )
+    return [
+        rule for rule in rules
+        if pattern.search(rule.get('rules', '') or '')
+        or pattern.search(rule.get('actions', '') or '')
+    ]
 
 
 # Column mappings matching server.R transformations
@@ -707,6 +739,10 @@ def prop_detail(prop_id: str):
         # Sort classifications alphabetically by name
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
+    # Cross-reference cached processing rules
+    cached_rules = cache.get(rsid, 'processing_rules') or []
+    related_rules = find_related_processing_rules(cached_rules, display_id)
+
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -717,6 +753,7 @@ def prop_detail(prop_id: str):
         top_items=top_items,
         trend_data=trend_data,
         classifications=classifications,
+        related_rules=related_rules,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
@@ -884,6 +921,10 @@ def evar_detail(evar_id: str):
         # Sort classifications alphabetically by name
         classifications.sort(key=lambda x: x.get("name", "").lower())
 
+    # Cross-reference cached processing rules
+    cached_rules = cache.get(rsid, 'processing_rules') or []
+    related_rules = find_related_processing_rules(cached_rules, display_id)
+
     return render_template(
         'detail.html',
         title=f'{display_id}: {dimension.get("name", "")}',
@@ -894,6 +935,7 @@ def evar_detail(evar_id: str):
         top_items=top_items,
         trend_data=trend_data,
         classifications=classifications,
+        related_rules=related_rules,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
@@ -974,12 +1016,17 @@ def event_detail(event_id: str):
                     cache.set(rsid, f'event_trend_{display_id}', value)
                     trend_data = value
 
+    # Cross-reference cached processing rules
+    cached_rules = cache.get(rsid, 'processing_rules') or []
+    related_rules = find_related_processing_rules(cached_rules, display_id)
+
     return render_template(
         'event_detail.html',
         title=f'{display_id}: {metric.get("name", "")}',
         metric=metric,
         event_id=display_id,
         trend_data=trend_data,
+        related_rules=related_rules,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
@@ -1024,7 +1071,6 @@ def listvar_detail(listvar_name: str):
     # ListVar names are like "List Var 1", "List Var 2", etc.
     # The API 2.0 dimension ID is like "variables/listvar1"
     # Extract number from name to build dimension ID
-    import re
     listvar_match = re.search(r'(\d+)$', listvar_name.replace(' ', ''))
     listvar_num = listvar_match.group(1) if listvar_match else '1'
     dimension_id = f"variables/listvar{listvar_num}"
@@ -1083,6 +1129,13 @@ def listvar_detail(listvar_name: str):
                     cache.set(rsid, f'listvar_trend_{listvar_num}', value)
                     trend_data = value
 
+    # Cross-reference cached processing rules
+    # Search both 'list1' (Adobe internal name) and 'listvar1' (API 2.0 ID)
+    cached_rules = cache.get(rsid, 'processing_rules') or []
+    related_rules = find_related_processing_rules(
+        cached_rules, f'list{listvar_num}', f'listvar{listvar_num}'
+    )
+
     return render_template(
         'listvar_detail.html',
         title=f'{listvar_name}',
@@ -1091,6 +1144,7 @@ def listvar_detail(listvar_name: str):
         listvar_num=listvar_num,
         top_items=top_items or [],
         trend_data=trend_data or {},
+        related_rules=related_rules,
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',
