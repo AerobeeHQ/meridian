@@ -438,7 +438,7 @@ def core():
     data = transform_data(raw_core, CORE_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Core',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -601,7 +601,7 @@ def props():
     data = transform_data(raw_props, PROPS_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Props',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -755,7 +755,7 @@ def evars():
     data = transform_data(raw_evars, EVARS_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='eVars',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -925,7 +925,7 @@ def events():
     data = transform_data(raw_data, EVENTS_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Events',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -1024,7 +1024,7 @@ def listvars():
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='ListVars',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -1147,7 +1147,7 @@ def processing_rules():
     data = transform_data(raw_data, PROCRULES_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Proc Rules',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -1184,7 +1184,7 @@ def marketing_channels():
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Marketing Channels',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -1220,7 +1220,7 @@ def channel_rules():
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Channel Rules',
         app_title=current_app.config['APP_TITLE'],
         data=data,
@@ -1261,7 +1261,7 @@ def report_suites():
         columns = []
 
     return render_template(
-        'table.html',
+        'listing.html',
         title='Report Suites',
         app_title=current_app.config['APP_TITLE'],
         data=raw_data,
