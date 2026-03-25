@@ -108,7 +108,8 @@ def get_api_service_v14() -> AdobeAnalyticsService:
     if not hasattr(app, 'codex_api_service_v14'):
         app.codex_api_service_v14 = AdobeAnalyticsService(
             username=current_app.config['AW_USERNAME'],
-            secret=current_app.config['AW_SECRET']
+            secret=current_app.config['AW_SECRET'],
+            request_timeout=current_app.config.get('API_V14_TIMEOUT', 5.0),
         )
     return app.codex_api_service_v14
 
@@ -872,6 +873,14 @@ def evar_detail(evar_id: str):
                 # Only cache successful results; a None value means the API
                 # was unavailable and we want to retry on the next request.
                 if key == 'dimension' and value is not None:
+                    logger.warning(
+                        "evar_detail: failed to fetch '%s' for %s — %s",
+                        key, display_id, exc,
+                    )
+                    value = None
+                if value is None:
+                    continue
+                if key == 'dimension':
                     cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
                 elif key == 'evar_config' and value is not None:
