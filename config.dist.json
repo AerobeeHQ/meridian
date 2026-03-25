@@ -14,5 +14,8 @@
 
     "_comment_wsse":           "WSSE credentials for API 1.4 (legacy, also used for processing rules)",
     "AW_USERNAME":             "<WSSE USERNAME:ORG NAME>",
-    "AW_SECRET":               "<WSSE SECRET>"
+    "AW_SECRET":               "<WSSE SECRET>",
+
+    "_comment_api14_timeout":  "Timeout in seconds for API 1.4 HTTP requests. Increase if you see spurious timeouts on slow connections. 500ms (0.5) is possible but aggressive; 5 is a safe default for cross-Pacific calls.",
+    "API_V14_TIMEOUT":         5
 }

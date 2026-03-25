@@ -107,7 +107,8 @@ def get_api_service_v14() -> AdobeAnalyticsService:
     if not hasattr(app, 'codex_api_service_v14'):
         app.codex_api_service_v14 = AdobeAnalyticsService(
             username=current_app.config['AW_USERNAME'],
-            secret=current_app.config['AW_SECRET']
+            secret=current_app.config['AW_SECRET'],
+            request_timeout=current_app.config.get('API_V14_TIMEOUT', 5.0),
         )
     return app.codex_api_service_v14
 
