@@ -13,7 +13,7 @@ from flask import Blueprint, render_template, current_app, Response, request, js
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
 from app.services.adobe_auth import OAuth2Auth
-from app.services.cache import CacheService
+from app.services.cache import CacheService, CONFIG_TTL_HOURS
 from app.services import notes as notes_service
 
 
@@ -116,10 +116,19 @@ def get_rsid() -> str:
     return current_app.config['AW_REPORTSUITE_ID']
 
 
-def get_cached_data(key: str, fetch_func):
-    """Get data from cache or fetch from API"""
+def get_cached_data(key: str, fetch_func, ttl_hours: float = None):
+    """Get data from cache or fetch from API.
+
+    Args:
+        key: Cache key name
+        fetch_func: Callable that fetches fresh data on cache miss
+        ttl_hours: Optional TTL override (default uses CacheService default)
+    """
     rsid = get_rsid()
-    return cache.get_or_set(rsid, key, fetch_func)
+    kwargs = {}
+    if ttl_hours is not None:
+        kwargs['ttl_hours'] = ttl_hours
+    return cache.get_or_set(rsid, key, fetch_func, **kwargs)
 
 
 def get_cache_info() -> dict:
@@ -400,7 +409,7 @@ def core():
     rsid = get_rsid()
 
     # Cache raw dimensions for reuse
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
 
     # Filter core dimensions
     raw_core = []
@@ -437,6 +446,8 @@ def core():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='core',
+        monospace_columns=[],
+        cache_key='dimensions'
     )
 
 
@@ -447,7 +458,7 @@ def core_export():
     rsid = get_rsid()
 
     # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     raw_core = []
     for dim in raw_dimensions:
         dim_id = dim.get("id", "")
@@ -559,6 +570,8 @@ def core_detail(dimension_id: str):
         cache_info=get_cache_info(),
         active_tab='core',
         back_url='/core',
+        back_label='Back to Core Listing',
+        cache_key='dimensions'
     )
 
 
@@ -569,7 +582,7 @@ def props():
     rsid = get_rsid()
 
     # Cache raw dimensions for reuse by detail pages (Quick Win #1)
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     
     # Filter props from dimensions and transform
     # Exclude classifications (IDs containing a dot after the prop number, e.g., prop12.screen-height)
@@ -596,6 +609,8 @@ def props():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
+        monospace_columns=[],
+        cache_key='dimensions'
     )
 
 
@@ -606,7 +621,7 @@ def props_export():
     rsid = get_rsid()
 
     # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     raw_props = []
     for dim in raw_dimensions:
         dim_id = dim.get("id", "")
@@ -706,6 +721,8 @@ def prop_detail(prop_id: str):
         cache_info=get_cache_info(),
         active_tab='props',
         back_url='/props',
+        back_label='Back to Props Listing',
+        cache_key='dimensions'
     )
 
 
@@ -716,7 +733,7 @@ def evars():
     rsid = get_rsid()
 
     # Cache raw dimensions for reuse by detail pages (Quick Win #1)
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     
     # Filter eVars from dimensions and transform
     # Exclude classifications (IDs containing a dot after the evar number, e.g., evar101.catalogue-name)
@@ -746,6 +763,8 @@ def evars():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
+        monospace_columns=[],
+        cache_key='dimensions'
     )
 
 
@@ -756,7 +775,7 @@ def evars_export():
     rsid = get_rsid()
 
     # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     raw_evars = []
     for dim in raw_dimensions:
         dim_id = dim.get("id", "")
@@ -892,6 +911,8 @@ def evar_detail(evar_id: str):
         cache_info=get_cache_info(),
         active_tab='evars',
         back_url='/evars',
+        back_label='Back to eVars Listing',
+        cache_key='dimensions'
     )
 
 
@@ -901,7 +922,7 @@ def events():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('events', lambda: api.get_success_events(rsid))
+    raw_data = get_cached_data('events', lambda: api.get_success_events(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, EVENTS_COLUMNS)
 
     return render_template(
@@ -913,6 +934,8 @@ def events():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
+        monospace_columns=[],
+        cache_key='events'
     )
 
 
@@ -922,7 +945,7 @@ def events_export():
     api = get_api_service()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('events', lambda: api.get_success_events(rsid))
+    raw_data = get_cached_data('events', lambda: api.get_success_events(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, EVENTS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_events.csv')
@@ -986,6 +1009,8 @@ def event_detail(event_id: str):
         cache_info=get_cache_info(),
         active_tab='events',
         back_url='/events',
+        back_label='Back to Events Listing',
+        cache_key='events'
     )
 
 
@@ -996,7 +1021,7 @@ def listvars():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
+    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
     return render_template(
@@ -1008,6 +1033,8 @@ def listvars():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',
+        monospace_columns=[],
+        cache_key='listvars'
     )
 
 
@@ -1017,7 +1044,7 @@ def listvars_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid))
+    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_listvars.csv')
@@ -1105,6 +1132,8 @@ def listvar_detail(listvar_name: str):
         cache_info=get_cache_info(),
         active_tab='listvars',
         back_url='/listvars',
+        back_label='Back to ListVars Listing',
+        cache_key='listvars'
     )
 
 
@@ -1115,7 +1144,7 @@ def processing_rules():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
+    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
 
     return render_template(
@@ -1127,6 +1156,8 @@ def processing_rules():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='processing-rules',
+        monospace_columns=['Actions', 'Conditions'],
+        cache_key='processing_rules'
     )
 
 
@@ -1137,7 +1168,7 @@ def processing_rules_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid))
+    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_processing_rules.csv')
@@ -1150,7 +1181,7 @@ def marketing_channels():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
+    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
     return render_template(
@@ -1162,7 +1193,8 @@ def marketing_channels():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='marketing-channels',
-        monospace_columns=[]
+        monospace_columns=[],
+        cache_key='marketing_channels'
     )
 
 
@@ -1172,7 +1204,7 @@ def marketing_channels_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid))
+    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_marketing_channels.csv')
@@ -1185,7 +1217,7 @@ def channel_rules():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
+    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return render_template(
@@ -1197,6 +1229,8 @@ def channel_rules():
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='channel-rules',
+        monospace_columns=['Query String', 'Hit Attribute', 'Hit Query Param', 'Matches'],
+        cache_key='channel_rules'
     )
 
 
@@ -1207,7 +1241,7 @@ def channel_rules_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid))
+    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_channel_rules.csv')
@@ -1377,7 +1411,7 @@ def get_dimension_options(dimension_type: str):
     api = get_api_service()
     
     # Get cached dimensions (used for props, evars, listvars)
-    cached_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid))
+    cached_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
     
     options = [
         {"id": "", "name": "Not Set"},
@@ -1410,7 +1444,7 @@ def get_dimension_options(dimension_type: str):
     
     elif dimension_type == 'event':
         # Events are fetched via get_success_events, cached under 'events' key
-        cached_events = get_cached_data('events', lambda: api.get_success_events(rsid))
+        cached_events = get_cached_data('events', lambda: api.get_success_events(rsid), ttl_hours=CONFIG_TTL_HOURS)
         if cached_events:
             for event in cached_events:
                 event_id = event.get('id', '')

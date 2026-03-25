@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 
+DEFAULT_TTL_HOURS = 1
+CONFIG_TTL_HOURS = 24  # for dimension/event configs that rarely change
+
+
 class CacheService:
     """File-based cache for API responses with per-key expiration"""
 
