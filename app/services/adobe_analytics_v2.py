@@ -728,6 +728,66 @@ class AdobeAnalyticsV2Service:
 
         return {"dates": dates, "values": values, "stats": stats}
 
+    def get_segments(self, rsid: str) -> list[dict]:
+        """
+        Get all segments for a report suite (all pages).
+
+        Fetches segments tied to ``rsid``, paging through the API until all
+        results are collected.  Each segment is normalised to a flat dict so
+        the route layer can use it directly without further processing.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of segment dicts with id, name, description, owner,
+            modified, and tags fields.
+        """
+        segments: list[dict] = []
+        page = 0
+        page_size = 1000  # maximum allowed by the API
+
+        while True:
+            result = self._make_request(
+                "segments",
+                params={
+                    "rsids": rsid,
+                    "expansion": "ownerFullName,modified,tags",
+                    "limit": page_size,
+                    "page": page,
+                    "sortProperty": "name",
+                    "sortDirection": "ASC",
+                },
+            )
+
+            # Response is a paginated envelope: {"content": [...], "totalElements": N, ...}
+            content = result.get("content", [])
+            if not isinstance(content, list):
+                break
+
+            for seg in content:
+                owner_obj = seg.get("owner") or {}
+                tags_list = seg.get("tags") or []
+                tag_names = ", ".join(
+                    t.get("name", "") for t in tags_list if t.get("name")
+                )
+                segments.append({
+                    "id": seg.get("id", ""),
+                    "name": seg.get("name", ""),
+                    "description": seg.get("description", ""),
+                    "owner": owner_obj.get("name") or owner_obj.get("login", ""),
+                    "modified": (seg.get("modified") or "")[:10],  # keep date only
+                    "tags": tag_names,
+                })
+
+            total = result.get("totalElements", 0)
+            if len(segments) >= total or not content:
+                break
+            page += 1
+
+        logger.debug("Found %s segments for %s", len(segments), rsid)
+        return segments
+
     @staticmethod
     def _extract_number(s: str) -> int:
         """Extract numeric suffix from a string like 'prop1' -> 1"""

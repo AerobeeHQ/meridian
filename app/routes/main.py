@@ -333,6 +333,15 @@ MKTRULES_COLUMNS = {
     'matches': 'Matches'
 }
 
+SEGMENTS_COLUMNS = {
+    'name': 'Name',
+    'id': 'ID',
+    'owner': 'Owner',
+    'modified': 'Modified',
+    'tags': 'Tags',
+    'description': 'Description',
+}
+
 
 def transform_data(raw_data: list, column_mapping: dict) -> list[dict]:
     """Transform raw API data to display format with renamed columns"""
@@ -418,12 +427,14 @@ def overview():
     _listvars_raw          = cache.get(rsid, 'listvars')
     _processing_rules_raw  = cache.get(rsid, 'processing_rules')
     _marketing_channels_raw = cache.get(rsid, 'marketing_channels')
+    _segments_raw          = cache.get(rsid, 'segments')
 
     dimensions         = _dimensions_raw or []
     raw_events         = _events_raw or []
     processing_rules   = _processing_rules_raw or []
     marketing_channels = _marketing_channels_raw or []
     listvars           = _listvars_raw or []
+    segments           = _segments_raw or []
 
     # Count configured eVars and props (exclude classifications which have a dot in the id)
     evars = [
@@ -442,6 +453,7 @@ def overview():
         'evars':    {'count': len(evars),             'total': 250,  'available': _dimensions_raw is not None},
         'events':   {'count': len(raw_events),        'total': 1000, 'available': _events_raw is not None},
         'listvars': {'count': len(listvars),          'total': 3,    'available': _listvars_raw is not None},
+        'segments': {'count': len(segments),          'available': _segments_raw is not None},
         'processing_rules':   {'count': len(processing_rules),   'available': _processing_rules_raw is not None},
         'marketing_channels': {'count': len(marketing_channels), 'available': _marketing_channels_raw is not None},
         'cache_populated': _dimensions_raw is not None,
@@ -1262,6 +1274,34 @@ def channel_rules_export():
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_channel_rules.csv')
+
+
+# =============================================================================
+# Segments Routes (API 2.0)
+# =============================================================================
+
+@main_bp.route('/segments')
+def segments():
+    """Display segments for the configured report suite (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data('segments', lambda: api.get_segments(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    data = transform_data(raw_data, SEGMENTS_COLUMNS)
+
+    return render_listing('Segments', data, list(SEGMENTS_COLUMNS.values()), 'segments', cache_key='segments')
+
+
+@main_bp.route('/segments/export')
+def segments_export():
+    """Export segments as CSV (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data('segments', lambda: api.get_segments(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    data = transform_data(raw_data, SEGMENTS_COLUMNS)
+
+    return generate_csv(data, f'{rsid}_segments.csv')
 
 
 @main_bp.route('/report-suites')

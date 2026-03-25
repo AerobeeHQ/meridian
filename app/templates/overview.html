@@ -73,10 +73,10 @@
 
 </div>
 
-<!-- Second row: rules / channels -->
+<!-- Second row: rules / channels / segments -->
 <div class="row g-3 mb-4">
 
-    <div class="col-sm-6">
+    <div class="col-sm-4">
         <a href="/processing-rules" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -95,7 +95,7 @@
         </a>
     </div>
 
-    <div class="col-sm-6">
+    <div class="col-sm-4">
         <a href="/marketing-channels" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -107,6 +107,25 @@
                         <div class="text-muted" style="font-size: 12px;">defined channels</div>
                     </div>
                     {% if not stats.marketing_channels.available %}
+                    <span class="badge ms-auto" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-4">
+        <a href="/segments" class="text-decoration-none">
+            <div class="card h-100 shadow-sm overview-card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.segments.available else '#d6dade' }};">
+                        {{ stats.segments.count if stats.segments.available else '–' }}
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Segments</div>
+                        <div class="text-muted" style="font-size: 12px;">saved segments</div>
+                    </div>
+                    {% if not stats.segments.available %}
                     <span class="badge ms-auto" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
                     {% endif %}
                 </div>
