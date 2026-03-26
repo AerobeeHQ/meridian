@@ -7,9 +7,17 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Add the allocation and expiration data to the data dimensions listing page. The data is visible on the details page, but not the listing pages
 - [x] Change the data dimensions listing page template name. Renamed `table.html` → `listing.html` (autopsy 019)
 - [x] Add a Segments listing page (API 2.0 `/segments` endpoint). See autopsy 025.
+- [ ] Add a Metrics listing page (API 2.0 `/metrics` endpoint).
 - [ ] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
   - [adobe_analytics_api_1.4_swagger.json](adobe_analytics_api_1.4_swagger.json)
   - [adobe_analytics_api_2.0_swagger.json](adobe_analytics_api_2.0_swagger.json)
+- [ ] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date).
+- [ ] Cleanup the display of monospace text on the Processing Rules pages. It's a bit smaller than other text, and other pages like Segment Details use a pink monospace font that looks a bit more at home in the app. So maybe use that style instead?
+- [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See autopsy 026.
+- [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
+- [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
+- [ ] Update the README and make sure it is up to date with the latest changes.
+- [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 
 ## Bugs
 
