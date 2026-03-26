@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import traceback as _traceback
+from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
@@ -288,6 +289,50 @@ def _parse_segment_schema(schema: list[str]) -> dict:
     return {'container': container, 'variables': variables, 'events': events}
 
 
+def _walk_formula(node: Any, metrics: set, segments: set) -> None:
+    """Recursively walk a calculated metric formula tree collecting references.
+
+    Extracted items:
+    - metrics:  set of (metric_id, description) tuples  e.g. ('metrics/visits', 'Visits')
+    - segments: set of (segment_id, description) tuples e.g. ('s200000529_abc', 'My segment')
+    """
+    if not isinstance(node, dict):
+        return
+    func = node.get("func", "")
+    if func == "metric":
+        name = node.get("name", "")
+        desc = node.get("description", "")
+        if name:
+            metrics.add((name, desc))
+    elif func == "segment-ref":
+        seg_id = node.get("id", "")
+        desc = node.get("description", "")
+        if seg_id:
+            segments.add((seg_id, desc))
+    else:
+        for value in node.values():
+            if isinstance(value, dict):
+                _walk_formula(value, metrics, segments)
+            elif isinstance(value, list):
+                for item in value:
+                    _walk_formula(item, metrics, segments)
+
+
+def _parse_calc_metric_formula(definition: dict) -> dict:
+    """Return sorted lists of referenced metrics and segments from a formula.
+
+    Returns:
+        {'metrics': [(id, desc), ...], 'segments': [(id, desc), ...]}
+    """
+    metrics: set = set()
+    segments: set = set()
+    _walk_formula(definition, metrics, segments)
+    return {
+        "metrics": sorted(metrics, key=lambda x: x[0]),
+        "segments": sorted(segments, key=lambda x: x[1].lower()),
+    }
+
+
 # Column mappings matching server.R transformations
 PROPS_COLUMNS = {
     'id': 'Prop',
@@ -366,6 +411,15 @@ MKTRULES_COLUMNS = {
 
 SEGMENTS_COLUMNS = {
     'name': 'Name',
+    'owner': 'Owner',
+    'modified': 'Modified',
+    'tags': 'Tags',
+    'description': 'Description',
+}
+
+CALC_METRICS_COLUMNS = {
+    'name': 'Name',
+    'type': 'Type',
     'owner': 'Owner',
     'modified': 'Modified',
     'tags': 'Tags',
@@ -458,6 +512,7 @@ def overview():
     _processing_rules_raw  = cache.get(rsid, 'processing_rules')
     _marketing_channels_raw = cache.get(rsid, 'marketing_channels')
     _segments_raw          = cache.get(rsid, 'segments')
+    _calc_metrics_raw      = cache.get(rsid, 'calculated_metrics')
 
     dimensions         = _dimensions_raw or []
     raw_events         = _events_raw or []
@@ -465,6 +520,7 @@ def overview():
     marketing_channels = _marketing_channels_raw or []
     listvars           = _listvars_raw or []
     segments           = _segments_raw or []
+    calc_metrics       = _calc_metrics_raw or []
 
     # Count configured eVars and props (exclude classifications which have a dot in the id)
     evars = [
@@ -483,7 +539,8 @@ def overview():
         'evars':    {'count': len(evars),             'total': 250,  'available': _dimensions_raw is not None},
         'events':   {'count': len(raw_events),        'total': 1000, 'available': _events_raw is not None},
         'listvars': {'count': len(listvars),          'total': 3,    'available': _listvars_raw is not None},
-        'segments': {'count': len(segments),          'available': _segments_raw is not None},
+        'segments':        {'count': len(segments),      'available': _segments_raw is not None},
+        'calc_metrics':    {'count': len(calc_metrics),  'available': _calc_metrics_raw is not None},
         'processing_rules':   {'count': len(processing_rules),   'available': _processing_rules_raw is not None},
         'marketing_channels': {'count': len(marketing_channels), 'available': _marketing_channels_raw is not None},
         'cache_populated': _dimensions_raw is not None,
@@ -1304,6 +1361,79 @@ def channel_rules_export():
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_channel_rules.csv')
+
+
+# =============================================================================
+# Calculated Metrics Routes (API 2.0)
+# =============================================================================
+
+@main_bp.route('/calculated-metrics')
+def calculated_metrics():
+    """Display all calculated metrics for the configured report suite (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data(
+        'calculated_metrics', lambda: api.get_calculated_metrics(rsid),
+        ttl_hours=CONFIG_TTL_HOURS,
+    )
+    data = transform_data(raw_data, CALC_METRICS_COLUMNS)
+
+    for i, row in enumerate(data):
+        row['cm_id'] = raw_data[i]['id']
+
+    return render_listing(
+        'Calculated Metrics', data, list(CALC_METRICS_COLUMNS.values()),
+        'calculated-metrics',
+        cache_key='calculated_metrics',
+        column_styles={'Name': 'max-width:320px; white-space:normal; word-break:break-word;'},
+    )
+
+
+@main_bp.route('/calculated-metrics/export')
+def calculated_metrics_export():
+    """Export calculated metrics as CSV (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data(
+        'calculated_metrics', lambda: api.get_calculated_metrics(rsid),
+        ttl_hours=CONFIG_TTL_HOURS,
+    )
+    data = transform_data(raw_data, CALC_METRICS_COLUMNS)
+    return generate_csv(data, f'{rsid}_calculated_metrics.csv')
+
+
+@main_bp.route('/calculated-metrics/<cm_id>')
+def calculated_metric_detail(cm_id: str):
+    """Display detail page for a single calculated metric (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    cm = cache.get_or_set(
+        rsid, f'cm_detail_{cm_id}',
+        lambda: api.get_calculated_metric(cm_id),
+        ttl_hours=CONFIG_TTL_HOURS,
+    )
+
+    if not cm:
+        abort(404)
+
+    refs = _parse_calc_metric_formula(cm.get('definition') or {})
+
+    return render_template(
+        'calc_metric_detail.html',
+        title=cm.get('name', cm_id),
+        cm=cm,
+        cm_id=cm_id,
+        refs=refs,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='calculated-metrics',
+        back_url='/calculated-metrics',
+        back_label='Back to Calculated Metrics',
+        definition_json=json.dumps(cm.get('definition') or {}, indent=2),
+    )
 
 
 # =============================================================================

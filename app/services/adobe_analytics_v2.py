@@ -747,6 +747,87 @@ class AdobeAnalyticsV2Service:
             logger.warning("Could not fetch segment %s", segment_id)
             return {}
 
+    def get_calculated_metric(self, cm_id: str) -> dict:
+        """
+        Get full detail for a single calculated metric.
+
+        Args:
+            cm_id: Calculated metric ID (e.g. 'cm200000529_...')
+
+        Returns:
+            Calculated metric dict with all expanded fields, or empty dict.
+        """
+        try:
+            return self._make_request(
+                f"calculatedmetrics/{cm_id}",
+                params={"expansion": "ownerFullName,modified,tags,definition"},
+            )
+        except Exception:
+            logger.warning("Could not fetch calculated metric %s", cm_id)
+            return {}
+
+    def get_calculated_metrics(self, rsid: str) -> list[dict]:
+        """
+        Get all calculated metrics for a report suite (all pages).
+
+        Uses includeType=all so company-level calculated metrics (which have no
+        owner RSID binding) are included alongside RSID-specific ones.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of calculated metric dicts with id, name, description, type,
+            polarity, precision, owner, modified, and tags fields.
+        """
+        results: list[dict] = []
+        page = 0
+        page_size = 1000
+
+        while True:
+            data = self._make_request(
+                "calculatedmetrics",
+                params={
+                    "rsids": rsid,
+                    "includeType": "all",
+                    "expansion": "ownerFullName,modified,tags",
+                    "limit": page_size,
+                    "page": page,
+                    "sortProperty": "name",
+                    "sortDirection": "ASC",
+                },
+            )
+
+            content = data.get("content", [])
+            if not isinstance(content, list):
+                break
+
+            for cm in content:
+                owner_obj = cm.get("owner") or {}
+                tags_list = cm.get("tags") or []
+                tag_names = ", ".join(
+                    t.get("name", "") for t in tags_list if t.get("name")
+                )
+                results.append({
+                    "id": cm.get("id", ""),
+                    "name": cm.get("name", ""),
+                    "description": cm.get("description", ""),
+                    "type": cm.get("type", ""),
+                    "polarity": cm.get("polarity", ""),
+                    "precision": cm.get("precision", ""),
+                    "owner": owner_obj.get("name") or owner_obj.get("login", ""),
+                    "modified": (cm.get("modified") or "")[:10],
+                    "tags": tag_names,
+                })
+
+            total = data.get("totalElements", 0)
+            if len(results) >= total or not content:
+                break
+            page += 1
+
+        logger.debug("Found %s calculated metrics for %s", len(results), rsid)
+        return results
+
     def get_segments(self, rsid: str) -> list[dict]:
         """
         Get all segments for a report suite (all pages).

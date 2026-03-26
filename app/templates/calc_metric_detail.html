@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ back_url }}" class="text-muted text-decoration-none" style="font-size: 13px;">&#8592; {{ back_label }}</a>
+        <h4 class="mb-0 mt-1">{{ cm.name or cm_id }}</h4>
+    </div>
+    <a href="/cache/refresh/calculated_metrics" class="btn btn-sm btn-outline-secondary" title="Force refresh calculated metrics from API">&#x21ba; Refresh</a>
+</div>
+
+<div class="row">
+    <!-- Left column: configuration -->
+    <div class="col-md-6 mb-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Calculated Metric Configuration</h5>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th style="width:38%;">Metric ID</th>
+                            <td><code>{{ cm_id }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Name</th>
+                            <td>{{ cm.name or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ cm.description or '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Owner</th>
+                            <td>
+                                {% set owner = cm.owner or {} %}
+                                {{ owner.name or owner.login or '—' }}
+                                {% if owner.login and owner.name %}
+                                <span class="text-muted" style="font-size:12px;">({{ owner.login }})</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last Modified</th>
+                            <td>{{ (cm.modified or '')[:10] or '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type</th>
+                            <td>
+                                {% if cm.type %}
+                                <span class="badge bg-secondary text-capitalize">{{ cm.type }}</span>
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Polarity</th>
+                            <td>
+                                {% if cm.polarity == 'positive' %}
+                                <span class="badge bg-success">Positive ↑</span>
+                                {% elif cm.polarity == 'negative' %}
+                                <span class="badge bg-danger">Negative ↓</span>
+                                {% else %}
+                                {{ cm.polarity or '—' }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Decimal Places</th>
+                            <td>{{ cm.precision if cm.precision is not none else '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tags</th>
+                            <td>
+                                {% if cm.tags %}
+                                    {% for tag in cm.tags %}
+                                    <span class="badge bg-light text-dark border me-1">{{ tag.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>RSID</th>
+                            <td><code>{{ cm.rsid or rsid }}</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Referenced metrics and segments -->
+        {% if refs.metrics or refs.segments %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Formula References</h5>
+
+                {% if refs.metrics %}
+                <p class="mb-1" style="font-size:13px;"><strong>Native Metrics</strong></p>
+                <div class="mb-3">
+                    {% for metric_id, desc in refs.metrics %}
+                    {% set short_id = metric_id.split('/')[-1] %}
+                    {% if short_id.startswith('event') %}
+                    <a href="/events/{{ short_id }}"
+                       class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"
+                       title="{{ metric_id }}">{{ desc or short_id }}</a>
+                    {% else %}
+                    <span class="badge bg-light text-dark border me-1 mb-1"
+                          title="{{ metric_id }}">{{ desc or short_id }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if refs.segments %}
+                <p class="mb-1" style="font-size:13px;"><strong>Segments</strong></p>
+                <div>
+                    {% for seg_id, desc in refs.segments %}
+                    <a href="/segments/{{ seg_id }}"
+                       class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"
+                       title="{{ seg_id }}">{{ desc or seg_id }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right column: formula JSON -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Formula Definition</h5>
+                <p class="text-muted mb-2" style="font-size:12px;">
+                    Raw JSON formula as returned by the Adobe Analytics 2.0 API.
+                </p>
+                <pre style="max-height:600px; overflow-y:auto; font-size:12px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; padding:12px;">{{ definition_json }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
