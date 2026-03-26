@@ -1307,8 +1307,7 @@ def processing_rules():
 
     return render_listing(
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
-        monospace_columns=['Actions'],
-        preformatted_columns=['Conditions'],
+        preformatted_columns=['Conditions', 'Actions'],
         cache_key='processing_rules'
     )
 
