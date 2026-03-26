@@ -145,6 +145,17 @@
             </div>
         </div>
 
+        <!-- Components (loaded asynchronously) -->
+        <div id="components-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Components</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
@@ -278,6 +289,23 @@
             placeholder.querySelector('.card-body').innerHTML =
                 '<h5 class="card-title">Related Processing Rules</h5>' +
                 '<p class="text-muted mb-0">Could not load processing rules data.</p>';
+        });
+}());
+
+// Async: load Components after page render
+(function () {
+    var placeholder = document.getElementById('components-placeholder');
+    if (!placeholder) return;
+    fetch('/api/components/{{ dimension_type }}/{{ dimension_id }}')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            placeholder.insertAdjacentHTML('afterend', html);
+            placeholder.remove();
+        })
+        .catch(function () {
+            placeholder.querySelector('.card-body').innerHTML =
+                '<h5 class="card-title">Components</h5>' +
+                '<p class="text-muted mb-0">Could not load components data.</p>';
         });
 }());
 </script>

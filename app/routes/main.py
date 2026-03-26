@@ -1596,6 +1596,80 @@ def cache_refresh(cache_key):
 
 
 # =============================================================================
+# Components Fragment API
+# =============================================================================
+
+def _find_components(rsid: str, variable_id: str) -> dict:
+    """Find segments and calculated metrics whose definitions reference a variable.
+
+    Searches the cached listing data (which includes `definition` fields) for
+    any occurrence of the exact variable_id string inside each item's definition
+    JSON.  Exact matching is done by searching for the quoted string
+    ``'"<variable_id>"'`` to avoid false substring matches (e.g. prop1 vs prop10).
+
+    Args:
+        rsid:        Report suite ID (used to key the cache lookup).
+        variable_id: Fully-qualified variable identifier, e.g. ``variables/prop1``
+                     or ``metrics/event3``.
+
+    Returns:
+        Dict with ``segments`` and ``calc_metrics`` keys, each a list of
+        ``{id, name}`` dicts for matched items.
+    """
+    segments_raw = cache.get(rsid, 'segments') or []
+    calc_metrics_raw = cache.get(rsid, 'calculated_metrics') or []
+    needle = f'"{variable_id}"'
+
+    matching_segments = []
+    for seg in segments_raw:
+        definition = seg.get('definition')
+        if definition and needle in json.dumps(definition):
+            matching_segments.append({'id': seg['id'], 'name': seg.get('name', seg['id'])})
+
+    matching_metrics = []
+    for cm in calc_metrics_raw:
+        definition = cm.get('definition')
+        if definition and needle in json.dumps(definition):
+            matching_metrics.append({'id': cm['id'], 'name': cm.get('name', cm['id'])})
+
+    return {'segments': matching_segments, 'calc_metrics': matching_metrics}
+
+
+@main_bp.route('/api/components/<dimension_type>/<dimension_id>')
+def api_components(dimension_type: str, dimension_id: str):
+    """Return the "Components" card as an HTML fragment.
+
+    Called asynchronously by detail pages after initial render so that a cold
+    segments/calculated-metrics cache doesn't block page load.
+
+    Args:
+        dimension_type: ``prop``, ``evar``, ``event``, or ``listvar``
+        dimension_id:   Display ID (e.g. ``prop3``, ``evar5``, ``event2``)
+                        or listvar number (e.g. ``1``).
+    """
+    rsid = get_rsid()
+
+    variable_id_map = {
+        'prop':    f'variables/{dimension_id}',
+        'evar':    f'variables/{dimension_id}',
+        'event':   f'metrics/{dimension_id}',
+        'listvar': f'variables/listvar{dimension_id}',
+    }
+    variable_id = variable_id_map.get(dimension_type, f'variables/{dimension_id}')
+
+    components = _find_components(rsid, variable_id)
+    segments_cached = cache.get(rsid, 'segments') is not None
+    calc_metrics_cached = cache.get(rsid, 'calculated_metrics') is not None
+
+    return render_template(
+        '_fragment_components.html',
+        components=components,
+        segments_cached=segments_cached,
+        calc_metrics_cached=calc_metrics_cached,
+    )
+
+
+# =============================================================================
 # Processing Rules Fragment API
 # =============================================================================
 

@@ -18,7 +18,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [x] Update the README and make sure it is up to date with the latest changes.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
-- [ ] Add a panel to the props/evars/events/listvar details pages (similar to the Related Processing Rules) named "Components", and lists Segments and Calculated Metrics that use that data dimension. The user should be able to click on the component name to view the details page for that component.
+- [x] Add a panel to the props/evars/events/listvar details pages (similar to the Related Processing Rules) named "Components", and lists Segments and Calculated Metrics that use that data dimension. The user should be able to click on the component name to view the details page for that component. See autopsy 028.
 
 ## Bugs
 
