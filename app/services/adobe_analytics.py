@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any
 
 import requests
+from flask import current_app
 
 
 logger = logging.getLogger(__name__)
@@ -21,9 +22,14 @@ logger = logging.getLogger(__name__)
 class AdobeAnalyticsService:
     """Service for interacting with Adobe Analytics API 1.4"""
 
-    API_ENDPOINT = "https://api.omniture.com/admin/1.4/rest/"
+    API_ENDPOINTS = [
+        "https://api.omniture.com/admin/1.4/rest/",
+        "https://api2.omniture.com/admin/1.4/rest/",
+        "https://api3.omniture.com/admin/1.4/rest/",
+        "https://api4.omniture.com/admin/1.4/rest/",
+    ]
 
-    def __init__(self, username: str, secret: str, request_timeout: float | tuple[float, float] = 5.0):
+    def __init__(self, username: str, secret: str, request_timeout: float | tuple[float, float] = 10.0):
         """
         Initialize the Adobe Analytics service
 
@@ -39,6 +45,7 @@ class AdobeAnalyticsService:
         self.username = username
         self.secret = secret
         self.request_timeout = request_timeout
+        self._active_endpoint_index = 0  # index into API_ENDPOINTS; advances on timeout
 
     def _generate_wsse_header(self) -> str:
         """
@@ -73,7 +80,8 @@ class AdobeAnalyticsService:
 
     def _make_request(self, method: str, params: dict = None) -> Any:
         """
-        Make a request to the Adobe Analytics API
+        Make a request to the Adobe Analytics API, rotating through fallback
+        endpoints when the primary host is unresponsive.
 
         Args:
             method: API method name (e.g., "Company.GetReportSuites")
@@ -82,47 +90,49 @@ class AdobeAnalyticsService:
         Returns:
             JSON response from the API
         """
-        headers = {
-            'X-WSSE': self._generate_wsse_header(),
-            'Content-Type': 'application/json',
-        }
-
-        url = f"{self.API_ENDPOINT}?method={method}"
         payload = params or {}
-        logger.debug(
-            "Adobe API request %s payload keys=%s",
-            method,
-            list(payload.keys())
-        )
+        n = len(self.API_ENDPOINTS)
+        last_exc: Exception = None
 
-        try:
-            response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=self.request_timeout,
-            )
-            response.raise_for_status()
-            logger.debug(
-                "Adobe API response %s status=%s encoding=%s length=%s",
-                method,
-                response.status_code,
-                response.headers.get('Content-Encoding', 'unknown'),
-                response.headers.get('Content-Length', 'unknown')
-            )
-            data = response.json()
-            logger.debug(
-                "Adobe API response %s parsed type=%s",
-                method,
-                type(data).__name__
-            )
-            return data
-        except requests.exceptions.ContentDecodingError:
-            logger.warning(
-                "Adobe API response %s had broken compression; retrying with manual decoding",
-                method
-            )
-            return self._fetch_with_manual_decoding(url, payload, headers)
+        for attempt in range(n):
+            idx = (self._active_endpoint_index + attempt) % n
+            endpoint = self.API_ENDPOINTS[idx]
+            url = f"{endpoint}?method={method}"
+            # Fresh WSSE header per attempt — the token is time-stamped
+            headers = {
+                'X-WSSE': self._generate_wsse_header(),
+                'Content-Type': 'application/json',
+            }
+            logger.debug("Adobe API request %s via %s (attempt %d)", method, endpoint, attempt + 1)
+
+            try:
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=self.request_timeout,
+                )
+                response.raise_for_status()
+                logger.debug(
+                    "Adobe API response %s status=%s encoding=%s",
+                    method,
+                    response.status_code,
+                    response.headers.get('Content-Encoding', 'unknown'),
+                )
+                data = response.json()
+                # Remember the working endpoint for subsequent calls
+                if idx != self._active_endpoint_index:
+                    logger.info("API 1.4 endpoint rotated to %s after %d attempt(s)", endpoint, attempt + 1)
+                    self._active_endpoint_index = idx
+                return data
+            except requests.exceptions.ContentDecodingError:
+                logger.warning("Adobe API response %s had broken compression; retrying with manual decoding", method)
+                return self._fetch_with_manual_decoding(url, payload, headers)
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+                logger.warning("API 1.4 endpoint %s unavailable (%s); trying next", endpoint, exc)
+                last_exc = exc
+
+        raise last_exc
 
     def _fetch_with_manual_decoding(self, url: str, params: dict, headers: dict) -> Any:
         """Retry the request while handling compression manually"""
@@ -372,3 +382,25 @@ class AdobeAnalyticsService:
         if result and len(result) > 0:
             return result[0].get('marketing_channel_rules', [])
         return []
+
+
+def get_api_service_v14() -> AdobeAnalyticsService:
+    """
+    Get API 1.4 service (used for processing rules which aren't in 2.0).
+
+    Stored on the app instance for the same reason as ``get_api_service``.
+
+    Returns:
+        AdobeAnalyticsService configured for API 1.4
+    """
+    app = current_app._get_current_object()
+
+    if not hasattr(app, 'codex_api_service_v14'):
+        request_timeout = current_app.config.get('API_V14_TIMEOUT', 25.0)
+        logger.info("Initializing API 1.4 service with timeout=%s", request_timeout)
+        app.codex_api_service_v14 = AdobeAnalyticsService(
+            username=current_app.config['AW_USERNAME'],
+            secret=current_app.config['AW_SECRET'],
+            request_timeout=request_timeout,
+        )
+    return app.codex_api_service_v14
