@@ -177,7 +177,7 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
-def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, **kwargs):
+def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, **kwargs):
     """Render listing.html with common context variables injected automatically.
 
     Args:
@@ -199,6 +199,8 @@ def render_listing(title, data, columns, active_tab, monospace_columns=None, col
         active_tab=active_tab,
         monospace_columns=monospace_columns or [],
         column_styles=column_styles or {},
+        dt_order=dt_order or [],
+        column_badges=column_badges or {},
         **kwargs
     )
 
@@ -1387,6 +1389,15 @@ def calculated_metrics():
         'calculated-metrics',
         cache_key='calculated_metrics',
         column_styles={'Name': 'max-width:320px; white-space:normal; word-break:break-word;'},
+        dt_order=[[3, 'desc']],
+        column_badges={
+            'Type': {
+                'decimal':  '<span class="badge bg-info text-dark">0.0</span>',
+                'percent':  '<span class="badge bg-success">%</span>',
+                'currency': '<span class="badge bg-warning text-dark">$</span>',
+                'time':     '<span class="badge bg-secondary">0:00</span>',
+            }
+        },
     )
 
 
@@ -1421,6 +1432,12 @@ def calculated_metric_detail(cm_id: str):
 
     refs = _parse_calc_metric_formula(cm.get('definition') or {})
 
+    trend_data = cache.get_or_set(
+        rsid, f'cm_trend_{cm_id}',
+        lambda: api.get_metric_trend(rsid, cm_id),
+        ttl_hours=1,
+    )
+
     return render_template(
         'calc_metric_detail.html',
         title=cm.get('name', cm_id),
@@ -1433,6 +1450,7 @@ def calculated_metric_detail(cm_id: str):
         back_url='/calculated-metrics',
         back_label='Back to Calculated Metrics',
         definition_json=json.dumps(cm.get('definition') or {}, indent=2),
+        trend_data=trend_data,
     )
 
 

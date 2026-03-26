@@ -595,6 +595,70 @@ class AdobeAnalyticsV2Service:
 
         return {"dates": dates, "values": values, "stats": stats}
 
+    def get_metric_trend(
+        self,
+        rsid: str,
+        metric_id: str,
+        days: int = 30
+    ) -> dict:
+        """
+        Get daily trend data for a calculated metric.
+
+        Args:
+            rsid: Report suite ID
+            metric_id: Calculated metric ID (e.g., 'cm200000529_abc') — used as-is,
+                       no 'metrics/' prefix added
+            days: Number of days to look back
+
+        Returns:
+            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        request_body = {
+            "rsid": rsid,
+            "globalFilters": [
+                {
+                    "type": "dateRange",
+                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                }
+            ],
+            "metricContainer": {
+                "metrics": [{"id": metric_id}]
+            },
+            "dimension": "variables/daterangeday",
+            "settings": {
+                "dimensionSort": "asc",
+                "limit": days + 1
+            }
+        }
+
+        result = self._make_request("reports", method="POST", json_data=request_body)
+
+        dates = []
+        values = []
+
+        for row in result.get("rows", []):
+            date_str = row.get("value", "")
+            dates.append(date_str)
+            row_data = row.get("data", [0])
+            value = row_data[0] if row_data else 0
+            values.append(value)
+
+        stats = {}
+        if values:
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                stats = {
+                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
+                    "median": round(statistics.median(numeric_values), 1),
+                    "max": max(numeric_values),
+                    "min": min(numeric_values)
+                }
+
+        return {"dates": dates, "values": values, "stats": stats}
+
     def get_top_items(
         self,
         rsid: str,
