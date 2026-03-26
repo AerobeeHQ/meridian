@@ -45,6 +45,8 @@
                     <a href="/calculated-metrics/{{ row.cm_id }}">{{ row[col] }}</a>
                 {% elif col in column_badges and row[col] and (row[col] | lower) in column_badges[col] %}
                     {{ column_badges[col][row[col] | lower] | safe }}
+                {% elif col in monospace_columns %}
+                    <code>{{ row[col] if row[col] is not none else '' }}</code>
                 {% else %}
                     {{ row[col] if row[col] is not none else '' }}
                 {% endif %}
