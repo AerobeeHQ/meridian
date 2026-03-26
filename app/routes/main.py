@@ -1901,9 +1901,9 @@ def _load_debug_endpoints() -> list[dict]:
     Results are cached in a module-level variable since the specs are static
     files that never change at runtime.
     """
-    global _DEBUG_ENDPOINTS_CACHE
-    if _DEBUG_ENDPOINTS_CACHE is not None:
-        return _DEBUG_ENDPOINTS_CACHE
+    # Use a function-level cache attribute instead of a separate global.
+    if hasattr(_load_debug_endpoints, "_cache"):
+        return _load_debug_endpoints._cache  # type: ignore[attr-defined]
 
     endpoints: list[dict] = []
 
@@ -1971,7 +1971,7 @@ def _load_debug_endpoints() -> list[dict]:
                     'params': params,
                 })
 
-    _DEBUG_ENDPOINTS_CACHE = endpoints
+    _load_debug_endpoints._cache = endpoints  # type: ignore[attr-defined]
     return endpoints
 
 
