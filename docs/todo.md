@@ -14,11 +14,14 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date). **Fixed in [feature/report-suites-page](.docs/autopsies/031-report-suites-page.md)**
 - [x] Cleanup the display of monospace text on the Processing Rules pages. It's a bit smaller than other text, and other pages like Segment Details use a pink monospace font that looks a bit more at home in the app. So maybe use that style instead? **Fixed in [fix/processing-rules-monospace](.docs/autopsies/030-processing-rules-monospace.md)**
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See [autopsy 026](.docs/autopsies/026-channels-nav-dropdown.md).
+- [ ] Display the Data Feed column name in the data dimensions's details as a new row in the Data Configuration table. Use this page as a reference for the column names: https://experienceleague.adobe.com/docs/analytics/components/reference/data-feeds/columns.html?lang=en This data is quite stable, never changes, so no extra API calls or fancy data mapping are needed.
+- [ ] The pseduo-code for the "Processing Rules" page is a bit hard to read. But it is sort of structured. There are some IF and ELSE like statements. It would be good to reformat it for the user so it's easier to interpret; add some newlines, and indentations. The [Processing Rule Examples.csv](Processing%20Rule%20Examples.csv) and [Processing Rule Examples.xlsx](Processing%20Rule%20Examples.xlsx) file are a good reference for the structure.
 - [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
-- [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [x] Update the README and make sure it is up to date with the latest changes.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 - [x] Add a panel to the props/evars/events/listvar details pages (similar to the Related Processing Rules) named "Components", and lists Segments and Calculated Metrics that use that data dimension. The user should be able to click on the component name to view the details page for that component. See [autopsy 028](.docs/autopsies/028-components-panel.md).
+- [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
+
 
 ## Bugs
 
