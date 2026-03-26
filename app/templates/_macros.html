@@ -608,6 +608,90 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 {% endmacro %}
 
 
+{% macro components_section(components, segments_cached=true, calc_metrics_cached=true) %}
+{# Card listing segments and calculated metrics that reference the current dimension. #}
+{# components:           dict with 'segments' and 'calc_metrics' lists of {id, name}. #}
+{# segments_cached:      False when the segments cache key is absent (cold cache).     #}
+{# calc_metrics_cached:  False when the calculated_metrics cache key is absent.        #}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Components</h5>
+        {% if not segments_cached and not calc_metrics_cached %}
+        <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
+            <span style="font-size:1.1rem;">&#9888;</span>
+            <div>
+                <strong>Segments and Calculated Metrics data is not available.</strong>
+                <p class="mb-1 mt-1 small">Visit the <a href="/segments">Segments</a> or <a href="/calculated-metrics">Metrics</a> pages to warm the cache.</p>
+            </div>
+        </div>
+        {% else %}
+            {% set seg_count = components.segments | length %}
+            {% set cm_count = components.calc_metrics | length %}
+            {% if seg_count == 0 and cm_count == 0 %}
+            <p class="text-muted mb-0">No segments or calculated metrics reference this dimension.</p>
+            {% else %}
+            <p class="text-muted small mb-3">
+                {{ seg_count }} segment{{ 's' if seg_count != 1 else '' }}
+                and {{ cm_count }} calculated metric{{ 's' if cm_count != 1 else '' }}
+                reference this dimension.
+            </p>
+            <div class="accordion accordion-flush" id="componentsAccordion">
+                {% if seg_count > 0 %}
+                <div class="accordion-item border rounded mb-2">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed rounded" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#componentsSegments"
+                                aria-expanded="false" aria-controls="componentsSegments">
+                            <span class="badge bg-info text-dark me-2">S</span>
+                            Segments
+                            <span class="badge bg-secondary ms-2">{{ seg_count }}</span>
+                        </button>
+                    </h2>
+                    <div id="componentsSegments" class="accordion-collapse collapse">
+                        <div class="accordion-body pt-2 pb-3">
+                            <ul class="list-unstyled mb-0">
+                                {% for seg in components.segments %}
+                                <li class="mb-1">
+                                    <a href="/segments/{{ seg.id }}">{{ seg.name }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if cm_count > 0 %}
+                <div class="accordion-item border rounded mb-2">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed rounded" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#componentsMetrics"
+                                aria-expanded="false" aria-controls="componentsMetrics">
+                            <span class="badge bg-success me-2">M</span>
+                            Calculated Metrics
+                            <span class="badge bg-secondary ms-2">{{ cm_count }}</span>
+                        </button>
+                    </h2>
+                    <div id="componentsMetrics" class="accordion-collapse collapse">
+                        <div class="accordion-body pt-2 pb-3">
+                            <ul class="list-unstyled mb-0">
+                                {% for cm in components.calc_metrics %}
+                                <li class="mb-1">
+                                    <a href="/calculated-metrics/{{ cm.id }}">{{ cm.name }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
 {% macro related_processing_rules_section(related_rules, rules_available=true) %}
 {# Collapsible card listing processing rules that reference the current dimension.  #}
 {# related_rules:   list of rule dicts (ruleNum, title, rules, actions, comment).  #}

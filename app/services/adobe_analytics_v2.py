@@ -854,7 +854,7 @@ class AdobeAnalyticsV2Service:
                 params={
                     "rsids": rsid,
                     "includeType": "all",
-                    "expansion": "ownerFullName,modified,tags",
+                    "expansion": "ownerFullName,modified,tags,definition",
                     "limit": page_size,
                     "page": page,
                     "sortProperty": "name",
@@ -882,6 +882,7 @@ class AdobeAnalyticsV2Service:
                     "owner": owner_obj.get("name") or owner_obj.get("login", ""),
                     "modified": (cm.get("modified") or "")[:10],
                     "tags": tag_names,
+                    "definition": cm.get("definition"),
                 })
 
             total = data.get("totalElements", 0)
@@ -917,7 +918,7 @@ class AdobeAnalyticsV2Service:
                 params={
                     "rsids": rsid,
                     "includeType": "all",
-                    "expansion": "ownerFullName,modified,tags",
+                    "expansion": "ownerFullName,modified,tags,definition",
                     "limit": page_size,
                     "page": page,
                     "sortProperty": "name",
@@ -943,6 +944,7 @@ class AdobeAnalyticsV2Service:
                     "owner": owner_obj.get("name") or owner_obj.get("login", ""),
                     "modified": (seg.get("modified") or "")[:10],  # keep date only
                     "tags": tag_names,
+                    "definition": seg.get("definition"),
                 })
 
             total = result.get("totalElements", 0)
