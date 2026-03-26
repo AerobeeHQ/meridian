@@ -728,6 +728,25 @@ class AdobeAnalyticsV2Service:
 
         return {"dates": dates, "values": values, "stats": stats}
 
+    def get_segment(self, segment_id: str) -> dict:
+        """
+        Get full detail for a single segment.
+
+        Args:
+            segment_id: Segment ID (e.g. 's200000529_615bafc93a56e92d9dd2eaa0')
+
+        Returns:
+            Segment dict with all expanded fields, or empty dict if not found.
+        """
+        try:
+            return self._make_request(
+                f"segments/{segment_id}",
+                params={"expansion": "ownerFullName,modified,tags,definition,compatibility"},
+            )
+        except Exception:
+            logger.warning("Could not fetch segment %s", segment_id)
+            return {}
+
     def get_segments(self, rsid: str) -> list[dict]:
         """
         Get all segments for a report suite (all pages).
