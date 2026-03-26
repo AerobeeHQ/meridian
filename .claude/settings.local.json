@@ -10,7 +10,10 @@
       "Bash(python3:*)",
       "Bash(git pull:*)",
       "Bash(uv add:*)",
-      "Bash(wc -l /Users/joris/Workspace/Python/Codex/docs/autopsies/*.md)"
+      "Bash(wc -l /Users/joris/Workspace/Python/Codex/docs/autopsies/*.md)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh pr:*)"
     ]
   }
 }
