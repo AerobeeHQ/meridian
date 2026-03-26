@@ -1305,10 +1305,15 @@ def processing_rules():
         if row.get('Conditions'):
             row['Conditions'] = format_conditions(row['Conditions'])
 
-    return render_listing(
-        'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
-        preformatted_columns=['Conditions', 'Actions'],
-        cache_key='processing_rules'
+    return render_template(
+        'processing_rules.html',
+        title='Proc Rules',
+        data=data,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='processing-rules',
+        dimension_id=None,
+        cache_key='processing_rules',
     )
 
 

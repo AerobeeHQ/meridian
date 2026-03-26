@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Toolbar -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2 flex-grow-1">
+        <input id="ruleSearch" type="text" class="form-control form-control-sm"
+               placeholder="Search rules, conditions, or actions&hellip;"
+               style="max-width: 400px;" autocomplete="off">
+        <span id="ruleCount" class="text-muted small text-nowrap">
+            {{ data | length }} rule{{ 's' if data | length != 1 else '' }}
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <button id="expandAll"  class="btn btn-sm btn-outline-secondary">&#x25BC; Expand all</button>
+        <button id="collapseAll" class="btn btn-sm btn-outline-secondary">&#x25B2; Collapse all</button>
+        <a href="/processing-rules/export" class="btn btn-sm btn-outline-secondary">&#8595; Export CSV</a>
+        {% if cache_key %}
+        <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if data %}
+<div id="rulesContainer">
+    {% for row in data %}
+    <div class="rule-card border rounded mb-2" style="overflow: hidden;">
+
+        <!-- Rule header — click to toggle -->
+        <div class="d-flex align-items-center px-3 py-2 rule-header"
+             style="background: #f8f9fa; cursor: pointer; user-select: none;"
+             data-bs-toggle="collapse"
+             data-bs-target="#ruleBody{{ row['Rule'] }}"
+             aria-expanded="false">
+            <span class="badge bg-secondary me-2">#{{ row['Rule'] }}</span>
+            <span class="fw-semibold flex-grow-1">{{ row['Section'] or 'Untitled Rule' }}</span>
+            {% if row['Match Type'] %}
+            <span class="badge bg-light text-secondary border me-2" style="font-weight: normal;">{{ row['Match Type'] }}</span>
+            {% endif %}
+            <span class="text-muted ms-2" style="font-size: 0.75rem;">&#x25BC;</span>
+        </div>
+
+        <!-- Rule body -->
+        <div id="ruleBody{{ row['Rule'] }}" class="collapse">
+            <div class="px-3 py-3">
+
+                {% if row['Conditions'] %}
+                <p class="mb-1">
+                    <small class="text-muted fw-semibold" style="letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.7rem;">Conditions</small>
+                </p>
+                <pre class="monospace small bg-light rounded p-2 mb-3">{{ row['Conditions'] }}</pre>
+                {% endif %}
+
+                {% if row['Actions'] %}
+                <p class="mb-1">
+                    <small class="text-muted fw-semibold" style="letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.7rem;">Actions</small>
+                </p>
+                <pre class="monospace small bg-light rounded p-2 mb-3">{{ row['Actions'] }}</pre>
+                {% endif %}
+
+                {% if row['Comments'] %}
+                <p class="mb-1">
+                    <small class="text-muted fw-semibold" style="letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.7rem;">Notes</small>
+                </p>
+                <p class="small text-muted mb-0">{{ row['Comments'] }}</p>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">No processing rules available.</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const searchInput  = document.getElementById('ruleSearch');
+    const ruleCountEl  = document.getElementById('ruleCount');
+    const expandBtn    = document.getElementById('expandAll');
+    const collapseBtn  = document.getElementById('collapseAll');
+    const cards        = Array.from(document.querySelectorAll('.rule-card'));
+    const total        = cards.length;
+
+    function updateCount(visible) {
+        const q = searchInput.value.trim();
+        ruleCountEl.textContent = q
+            ? visible + ' of ' + total + ' rule' + (total !== 1 ? 's' : '')
+            : total + ' rule' + (total !== 1 ? 's' : '');
+    }
+
+    // Live search — show/hide cards that match the query
+    searchInput.addEventListener('input', function () {
+        const q = this.value.toLowerCase().trim();
+        let visible = 0;
+        cards.forEach(function (card) {
+            const match = !q || card.textContent.toLowerCase().includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        updateCount(visible);
+    });
+
+    // Expand / collapse all visible cards
+    expandBtn.addEventListener('click', function () {
+        cards.forEach(function (card) {
+            if (card.style.display === 'none') return;
+            const body = card.querySelector('.collapse');
+            if (body) bootstrap.Collapse.getOrCreateInstance(body).show();
+        });
+    });
+
+    collapseBtn.addEventListener('click', function () {
+        cards.forEach(function (card) {
+            const body = card.querySelector('.collapse');
+            if (body) bootstrap.Collapse.getOrCreateInstance(body).hide();
+        });
+    });
+
+    // Rotate the chevron on the header when a rule opens/closes
+    document.getElementById('rulesContainer').addEventListener('show.bs.collapse', function (e) {
+        const header = e.target.closest('.rule-card').querySelector('.rule-header');
+        if (header) {
+            header.setAttribute('aria-expanded', 'true');
+            const chevron = header.querySelector('span[style*="font-size"]');
+            if (chevron) chevron.textContent = '\u25B2';
+        }
+    });
+    document.getElementById('rulesContainer').addEventListener('hide.bs.collapse', function (e) {
+        const header = e.target.closest('.rule-card').querySelector('.rule-header');
+        if (header) {
+            header.setAttribute('aria-expanded', 'false');
+            const chevron = header.querySelector('span[style*="font-size"]');
+            if (chevron) chevron.textContent = '\u25BC';
+        }
+    });
+}());
+</script>
+{% endblock %}
