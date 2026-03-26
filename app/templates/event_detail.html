@@ -47,6 +47,13 @@
                             <td>{{ metric.serialization }}</td>
                         </tr>
                         {% endif %}
+                        {% set event_num = event_id | replace('event', '') | int %}
+                        {% if event_num > 0 %}
+                        <tr>
+                            <th>Data Feed Token</th>
+                            <td><code>post_event_list</code> token: <code>{{ 199 + event_num }}</code></td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <th>Description</th>
                             <td>{{ metric.description or 'N/A' }}</td>
