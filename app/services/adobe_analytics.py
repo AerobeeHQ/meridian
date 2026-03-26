@@ -132,7 +132,9 @@ class AdobeAnalyticsService:
                 logger.warning("API 1.4 endpoint %s unavailable (%s); trying next", endpoint, exc)
                 last_exc = exc
 
-        raise last_exc
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("All Adobe Analytics API 1.4 endpoints failed without a captured exception.")
 
     def _fetch_with_manual_decoding(self, url: str, params: dict, headers: dict) -> Any:
         """Retry the request while handling compression manually"""

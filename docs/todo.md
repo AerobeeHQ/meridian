@@ -15,7 +15,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Cleanup the display of monospace text on the Processing Rules pages. It's a bit smaller than other text, and other pages like Segment Details use a pink monospace font that looks a bit more at home in the app. So maybe use that style instead? **Fixed in [fix/processing-rules-monospace](.docs/autopsies/030-processing-rules-monospace.md)**
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See [autopsy 026](.docs/autopsies/026-channels-nav-dropdown.md).
 - [x] Display the Data Feed column name in the data dimensions's details as a new row in the Data Configuration table. Use this page as a reference for the column names: https://experienceleague.adobe.com/docs/analytics/components/reference/data-feeds/columns.html?lang=en This data is quite stable, never changes, so no extra API calls or fancy data mapping are needed.
-- [ ] The pseduo-code for the "Processing Rules" page is a bit hard to read. But it is sort of structured. There are some IF and ELSE like statements. It would be good to reformat it for the user so it's easier to interpret; add some newlines, and indentations. The [Processing Rule Examples.csv](Processing%20Rule%20Examples.csv) and [Processing Rule Examples.xlsx](Processing%20Rule%20Examples.xlsx) file are a good reference for the structure.
+- [x] The pseduo-code for the "Processing Rules" page is a bit hard to read. But it is sort of structured. There are some IF and ELSE like statements. It would be good to reformat it for the user so it's easier to interpret; add some newlines, and indentations. The [Processing Rule Examples.csv](Processing%20Rule%20Examples.csv) and [Processing Rule Examples.xlsx](Processing%20Rule%20Examples.xlsx) file are a good reference for the structure.
 - [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
 - [x] Update the README and make sure it is up to date with the latest changes.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
@@ -35,7 +35,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   ### Quick wins
 
-- [ ] **Item 1. Prop and eVar 30-day trend charts**
+- [ ] ~~**Item 1. Prop and eVar 30-day trend charts**~~
 
   get_dimension_trend() already exists in the API service and is fully wired for trend reporting, but it's never called from any route — Props and eVars have no trend chart on their detail pages. 
 
@@ -47,7 +47,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   A small dict or simple string format (post_evar{N} / post_prop{N} / post_event_list) is all that's needed. Very low risk.
 
-- [ ] **Item 3. Processing Rules condition/action formatting**
+- [x] **Item 3. Processing Rules condition/action formatting**
 
   The Processing Rules listing shows conditions and actions as compact strings (e.g. if user_server equals any of (...) ... overwrite value of ...). 
 
@@ -65,8 +65,10 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   The plan doc (v2-002) is already written and notes that a quick spike is needed first to confirm channel rules reference custom variables in a searchable way.
 
- - [ ] **Item 5. ListVar 30-day trend chart**                                                          
-     Same as suggestion #1 but for ListVar detail pages. get_dimension_trend() accepts any variable ID, so variables/listvar1 works. The listvar_detail.html template just needs the same right-column chart pattern as
+ - [ ] ~~**Item 5. ListVar 30-day trend chart**~~
+
+  Same as suggestion #1 but for ListVar detail pages. get_dimension_trend() accepts any variable ID, so variables/listvar1 works. The listvar_detail.html template just needs the same right-column chart pattern as
+
      event_detail.html.
 
  - [ ] **Item 6. Segment detail: human-readable container breakdown**                                                      
