@@ -10,6 +10,10 @@
 
 The Prop, eVar, and ListVar detail pages showed variable configuration (allocation, expiration, pathing, etc.) but did not show the corresponding Adobe Analytics Data Feed column name. Analysts who cross-reference raw data feed exports needed to look up these names externally.
 
+## Solution
+
+The official [Adobe Analytics Data Feed documentation](https://experienceleague.adobe.com/en/docs/analytics/export/analytics-data-feed/data-feed-contents/datafeeds-reference) lists the column names for each variable type, and the [Events.tsv](../event.tsv) file was used as the basis for the mapping.
+
 ---
 
 ## Mapping
