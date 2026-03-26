@@ -46,7 +46,7 @@
                 {% elif col in column_badges and row[col] and (row[col] | lower) in column_badges[col] %}
                     {{ column_badges[col][row[col] | lower] | safe }}
                 {% elif col in preformatted_columns %}
-                    <pre class="monospace small mb-0">{{ row[col] if row[col] is not none else '' }}</pre>
+                    <pre class="monospace small mb-0" style="white-space: pre-wrap; word-break: break-word;">{{ row[col] if row[col] is not none else '' }}</pre>
                 {% elif col in monospace_columns %}
                     <code>{{ row[col] if row[col] is not none else '' }}</code>
                 {% else %}

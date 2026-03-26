@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
 
 import requests
+from markupsafe import Markup, escape
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
@@ -233,14 +234,54 @@ def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
 
 
 def format_conditions(text: str) -> str:
-    """Format a processing rule conditions string for readability.
-
-    Replaces ' AND ' separators with newlines so each condition clause
-    appears on its own line when rendered in a <pre> block.
-    """
+    """Split a conditions string on ' AND ' so each clause is on its own line."""
     if not text:
         return text
     return text.replace(' AND ', '\nAND ')
+
+
+_VAR_RE = re.compile(r'\b(evar\d+|prop\d+|event\d+|listvar\d+|list\d+)\b', re.IGNORECASE)
+
+
+def _expand_bracket_list(text: str) -> str:
+    """Put each item in a bracketed list onto its own line when there are >3 items."""
+    def _replace(m):
+        items = [item.strip() for item in m.group(1).split(',')]
+        if len(items) <= 3:
+            return m.group(0)
+        return '(\n' + ',\n'.join('    ' + item for item in items) + '\n)'
+    return re.sub(r'\(([^)]+)\)', _replace, text)
+
+
+def format_rule_html(text: str) -> Markup:
+    """Format a processing rule conditions or actions string as safe HTML.
+
+    - Splits ' AND ' onto separate lines (conditions)
+    - Expands parenthesised lists with >3 items onto separate indented lines
+    - Bolds variable references (evarN, propN, eventN, listN, listvarN)
+    - Styles the --- ELSE --- separator
+    - HTML-escapes all other content
+    """
+    if not text:
+        return Markup('')
+
+    # Split on AND first (conditions pass-through for actions is a no-op)
+    text = format_conditions(text)
+
+    output: list[str] = []
+    for raw_line in text.split('\n'):
+        # Style the ELSE separator
+        if raw_line.strip() == '--- ELSE ---':
+            output.append('<span class="text-muted fst-italic">\u2014 else \u2014</span>')
+            continue
+        # Expand long bracket lists
+        expanded = _expand_bracket_list(raw_line)
+        for sub_line in expanded.split('\n'):
+            escaped = str(escape(sub_line))
+            bolded = _VAR_RE.sub(r'<strong>\1</strong>', escaped)
+            output.append(bolded)
+
+    return Markup('\n'.join(output))
 
 
 def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
@@ -1302,18 +1343,13 @@ def processing_rules():
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
     for row in data:
-        if row.get('Conditions'):
-            row['Conditions'] = format_conditions(row['Conditions'])
+        row['Conditions'] = format_rule_html(row.get('Conditions', ''))
+        row['Actions'] = format_rule_html(row.get('Actions', ''))
 
-    return render_template(
-        'processing_rules.html',
-        title='Proc Rules',
-        data=data,
-        rsid=rsid,
-        cache_info=get_cache_info(),
-        active_tab='processing-rules',
-        dimension_id=None,
-        cache_key='processing_rules',
+    return render_listing(
+        'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
+        preformatted_columns=['Conditions', 'Actions'],
+        cache_key='processing_rules'
     )
 
 
@@ -1766,7 +1802,9 @@ def api_related_rules(dimension_type: str, dimension_id: str):
         )
 
     formatted_rules = [
-        {**rule, 'rules': format_conditions(rule.get('rules', ''))}
+        {**rule,
+         'rules': format_rule_html(rule.get('rules', '')),
+         'actions': format_rule_html(rule.get('actions', ''))}
         for rule in related_rules
     ]
     return render_template(
