@@ -176,7 +176,7 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
-def render_listing(title, data, columns, active_tab, monospace_columns=None, **kwargs):
+def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, **kwargs):
     """Render listing.html with common context variables injected automatically.
 
     Args:
@@ -185,6 +185,7 @@ def render_listing(title, data, columns, active_tab, monospace_columns=None, **k
         columns: Ordered list of column header strings.
         active_tab: Nav-tab identifier used to highlight the current section.
         monospace_columns: Column names whose cells should be styled monospace.
+        column_styles: Dict mapping column names to inline CSS style strings.
         **kwargs: Extra variables forwarded to the template (e.g. cache_key).
     """
     return render_template(
@@ -196,6 +197,7 @@ def render_listing(title, data, columns, active_tab, monospace_columns=None, **k
         cache_info=get_cache_info(),
         active_tab=active_tab,
         monospace_columns=monospace_columns or [],
+        column_styles=column_styles or {},
         **kwargs
     )
 
@@ -255,6 +257,35 @@ def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
         if pattern.search(rule.get('rules', '') or '')
         or pattern.search(rule.get('actions', '') or '')
     ]
+
+
+def _parse_segment_schema(schema: list[str]) -> dict:
+    """Convert the flat compatibility schema list into readable grouped labels.
+
+    Schema entries look like:
+        'attribute_variables/evar22'  → eVar22 (attribute)
+        'event_metrics/event21'       → event21 (event)
+        'container_hits'              → hits (container scope)
+
+    Returns a dict with keys 'container', 'variables', and 'events'.
+    """
+    container = ''
+    variables = []
+    events = []
+
+    for entry in schema:
+        if entry.startswith('container_'):
+            container = entry.replace('container_', '')
+        elif '_variables/' in entry:
+            # e.g. 'attribute_variables/evar22' → 'evar22'
+            var_id = entry.split('/')[-1]
+            variables.append(var_id)
+        elif '_metrics/' in entry:
+            # e.g. 'event_metrics/event21' → 'event21'
+            metric_id = entry.split('/')[-1]
+            events.append(metric_id)
+
+    return {'container': container, 'variables': variables, 'events': events}
 
 
 # Column mappings matching server.R transformations
@@ -331,6 +362,14 @@ MKTRULES_COLUMNS = {
     'hit_query_param': 'Hit Query Param',
     'operator': 'Operator',
     'matches': 'Matches'
+}
+
+SEGMENTS_COLUMNS = {
+    'name': 'Name',
+    'owner': 'Owner',
+    'modified': 'Modified',
+    'tags': 'Tags',
+    'description': 'Description',
 }
 
 
@@ -418,12 +457,14 @@ def overview():
     _listvars_raw          = cache.get(rsid, 'listvars')
     _processing_rules_raw  = cache.get(rsid, 'processing_rules')
     _marketing_channels_raw = cache.get(rsid, 'marketing_channels')
+    _segments_raw          = cache.get(rsid, 'segments')
 
     dimensions         = _dimensions_raw or []
     raw_events         = _events_raw or []
     processing_rules   = _processing_rules_raw or []
     marketing_channels = _marketing_channels_raw or []
     listvars           = _listvars_raw or []
+    segments           = _segments_raw or []
 
     # Count configured eVars and props (exclude classifications which have a dot in the id)
     evars = [
@@ -442,6 +483,7 @@ def overview():
         'evars':    {'count': len(evars),             'total': 250,  'available': _dimensions_raw is not None},
         'events':   {'count': len(raw_events),        'total': 1000, 'available': _events_raw is not None},
         'listvars': {'count': len(listvars),          'total': 3,    'available': _listvars_raw is not None},
+        'segments': {'count': len(segments),          'available': _segments_raw is not None},
         'processing_rules':   {'count': len(processing_rules),   'available': _processing_rules_raw is not None},
         'marketing_channels': {'count': len(marketing_channels), 'available': _marketing_channels_raw is not None},
         'cache_populated': _dimensions_raw is not None,
@@ -1262,6 +1304,77 @@ def channel_rules_export():
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_channel_rules.csv')
+
+
+# =============================================================================
+# Segments Routes (API 2.0)
+# =============================================================================
+
+@main_bp.route('/segments')
+def segments():
+    """Display segments for the configured report suite (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data('segments', lambda: api.get_segments(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    data = transform_data(raw_data, SEGMENTS_COLUMNS)
+
+    # Attach the segment ID to each row so the template can build detail links.
+    # segment_id is not in SEGMENTS_COLUMNS so it never renders as a column.
+    for i, row in enumerate(data):
+        row['segment_id'] = raw_data[i]['id']
+
+    return render_listing(
+        'Segments', data, list(SEGMENTS_COLUMNS.values()), 'segments',
+        cache_key='segments',
+        column_styles={'Name': 'max-width:320px; white-space:normal; word-break:break-word;'},
+    )
+
+
+@main_bp.route('/segments/export')
+def segments_export():
+    """Export segments as CSV (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    raw_data = get_cached_data('segments', lambda: api.get_segments(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    data = transform_data(raw_data, SEGMENTS_COLUMNS)
+
+    return generate_csv(data, f'{rsid}_segments.csv')
+
+
+@main_bp.route('/segments/<segment_id>')
+def segment_detail(segment_id: str):
+    """Display detail page for a single segment (API 2.0)."""
+    api = get_api_service()
+    rsid = get_rsid()
+
+    segment = cache.get_or_set(
+        rsid, f'segment_detail_{segment_id}',
+        lambda: api.get_segment(segment_id),
+        ttl_hours=CONFIG_TTL_HOURS,
+    )
+
+    if not segment:
+        abort(404)
+
+    # Build a readable summary of what variables/events the segment references.
+    schema = (segment.get('compatibility') or {}).get('schema', [])
+    referenced = _parse_segment_schema(schema)
+
+    return render_template(
+        'segment_detail.html',
+        title=segment.get('name', segment_id),
+        segment=segment,
+        segment_id=segment_id,
+        referenced=referenced,
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        active_tab='segments',
+        back_url='/segments',
+        back_label='Back to Segments',
+        definition_json=json.dumps(segment.get('definition') or {}, indent=2),
+    )
 
 
 @main_bp.route('/report-suites')

@@ -154,7 +154,7 @@ class CacheService:
             'age_mins': None,
             'expired': True,
             'size_bytes': 0,
-            'keys': {},
+            'cache_keys': {},
         }
 
         metadata = self._load_metadata(cache_name)
@@ -184,7 +184,7 @@ class CacheService:
                 key_created = datetime.fromisoformat(key_meta['created'])
                 ttl_hours = key_meta.get('ttl_hours', DEFAULT_TTL_HOURS)
                 age_seconds = (datetime.now() - key_created).total_seconds()
-                info['keys'][key] = {
+                info['cache_keys'][key] = {
                     'created': key_meta['created'],
                     'age_mins': round(age_seconds / 60, 1),
                     'ttl_hours': ttl_hours,

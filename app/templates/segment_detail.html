@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ back_url }}" class="text-muted text-decoration-none" style="font-size: 13px;">&#8592; {{ back_label }}</a>
+        <h4 class="mb-0 mt-1">{{ segment.name or segment_id }}</h4>
+    </div>
+    <a href="/cache/refresh/segments" class="btn btn-sm btn-outline-secondary" title="Force refresh segments from API">&#x21ba; Refresh</a>
+</div>
+
+<div class="row">
+    <!-- Left column: configuration -->
+    <div class="col-md-6 mb-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Segment Configuration</h5>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th style="width:38%;">Segment ID</th>
+                            <td><code>{{ segment_id }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Name</th>
+                            <td>{{ segment.name or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ segment.description or '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Owner</th>
+                            <td>
+                                {% set owner = segment.owner or {} %}
+                                {{ owner.name or owner.login or '—' }}
+                                {% if owner.login and owner.name %}
+                                <span class="text-muted" style="font-size:12px;">({{ owner.login }})</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last Modified</th>
+                            <td>{{ (segment.modified or '')[:10] or '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Container Scope</th>
+                            <td>
+                                {% if referenced.container %}
+                                <span class="badge bg-secondary text-capitalize">{{ referenced.container }}</span>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Tags</th>
+                            <td>
+                                {% if segment.tags %}
+                                    {% for tag in segment.tags %}
+                                    <span class="badge bg-light text-dark border me-1">{{ tag.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>RSID</th>
+                            <td><code>{{ segment.rsid or rsid }}</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- References summary -->
+        {% if referenced.variables or referenced.events %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Referenced Dimensions &amp; Events</h5>
+                {% if referenced.variables %}
+                <p class="mb-1" style="font-size:13px;"><strong>Variables</strong></p>
+                <div class="mb-3">
+                    {% for v in referenced.variables %}
+                    {% if v.startswith('evar') %}
+                    <a href="/evars/{{ v }}" class="badge bg-light text-dark border me-1 text-decoration-none">{{ v }}</a>
+                    {% elif v.startswith('prop') %}
+                    <a href="/props/{{ v }}" class="badge bg-light text-dark border me-1 text-decoration-none">{{ v }}</a>
+                    {% else %}
+                    <span class="badge bg-light text-dark border me-1">{{ v }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if referenced.events %}
+                <p class="mb-1" style="font-size:13px;"><strong>Events</strong></p>
+                <div>
+                    {% for e in referenced.events %}
+                    <a href="/events/{{ e }}" class="badge bg-light text-dark border me-1 text-decoration-none">{{ e }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Compatibility -->
+        {% set compat = segment.compatibility or {} %}
+        {% if compat.supported_products %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Compatibility</h5>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <th style="width:38%;">Status</th>
+                            <td>
+                                {% if compat.status == 'valid' %}
+                                <span class="badge bg-success">Valid</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">{{ compat.status or 'Unknown' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Supported Products</th>
+                            <td>
+                                {% for p in compat.supported_products %}
+                                <span class="badge bg-light text-dark border me-1" style="font-size:11px;">{{ p | replace('_', ' ') | title }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right column: definition -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Segment Definition</h5>
+                <p class="text-muted mb-2" style="font-size:12px;">
+                    Raw JSON definition as returned by the Adobe Analytics 2.0 API.
+                </p>
+                <pre style="max-height:600px; overflow-y:auto; font-size:12px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; padding:12px;">{{ definition_json }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

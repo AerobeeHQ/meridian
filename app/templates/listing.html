@@ -27,8 +27,8 @@
         {% for row in data %}
         <tr>
             {% for col in columns %}
-            <td {% if col in monospace_columns %}class="monospace"{% endif %}>
-                {# Make Prop, eVar, Event, ListVar, and Core Dimension IDs clickable links to detail pages #}
+            <td {% if col in monospace_columns %}class="monospace"{% endif %}{% if column_styles[col] is defined %} style="{{ column_styles[col] }}"{% endif %}>
+                {# Make Prop, eVar, Event, ListVar, Core Dimension, and Segment Names clickable links to detail pages #}
                 {% if col == 'Dimension' and row[col] and active_tab == 'core' %}
                     <a href="/core/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'Prop' and row[col] %}
@@ -39,6 +39,8 @@
                     <a href="/events/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'ListVar' and row[col] %}
                     <a href="/listvars/{{ row[col] }}">{{ row[col] }}</a>
+                {% elif col == 'Name' and row.segment_id %}
+                    <a href="/segments/{{ row.segment_id }}">{{ row[col] }}</a>
                 {% else %}
                     {{ row[col] if row[col] is not none else '' }}
                 {% endif %}

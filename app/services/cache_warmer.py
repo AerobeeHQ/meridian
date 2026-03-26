@@ -21,6 +21,7 @@ CONFIG_CACHE_KEYS = {
     'channel_rules',
     'marketing_channels',
     'listvars',
+    'segments',
 }
 
 
@@ -64,6 +65,7 @@ def warm_cache_key(app, rsid, cache_key):
     fetch_map = {
         'dimensions':         lambda: api_v2.get_dimensions(rsid),
         'events':             lambda: api_v2.get_success_events(rsid),
+        'segments':           lambda: api_v2.get_segments(rsid),
         'processing_rules':   lambda: api_v14.get_processing_rules(rsid),
         'channel_rules':      lambda: api_v14.get_marketing_channel_rules(rsid),
         'marketing_channels': lambda: api_v14.get_marketing_channels(rsid),

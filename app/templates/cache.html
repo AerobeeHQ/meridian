@@ -51,7 +51,7 @@
     </div>
 </div>
 
-{% if cache_info.keys %}
+{% if cache_info.cache_keys %}
 <div class="card mt-4">
     <div class="card-header">
         <h5 class="mb-0">Per-Key Cache Status</h5>
@@ -69,7 +69,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for key, meta in cache_info.keys.items()|sort %}
+                {% for key, meta in cache_info.cache_keys.items()|sort %}
                 <tr>
                     <td><code>{{ key }}</code></td>
                     <td><code>{{ meta.created or 'N/A' }}</code></td>
