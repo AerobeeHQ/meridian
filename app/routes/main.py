@@ -1349,6 +1349,7 @@ def processing_rules():
     return render_listing(
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
         preformatted_columns=['Conditions', 'Actions'],
+        column_styles={'Comments': 'max-width: 180px; white-space: normal; overflow-wrap: break-word; font-size: 0.85em; color: #6c757d;'},
         cache_key='processing_rules'
     )
 
