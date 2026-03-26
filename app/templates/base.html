@@ -190,11 +190,13 @@
                     <li class="nav-item">
                         <a class="nav-link {% if active_tab == 'processing-rules' %}active{% endif %}" href="/processing-rules">Proc Rules</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/marketing-channels">Marketing Channels</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'channel-rules' %}active{% endif %}" href="/channel-rules">Channel Rules</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">Channels</a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header">Marketing Channels</h6></li>
+                            <li><a class="dropdown-item {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/marketing-channels">Channel Setup</a></li>
+                            <li><a class="dropdown-item {% if active_tab == 'channel-rules' %}active{% endif %}" href="/channel-rules">Channel Rules</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_tab == 'segments' %}active{% endif %}" href="/segments">Segments</a>
