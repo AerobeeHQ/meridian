@@ -169,31 +169,47 @@ class AdobeAnalyticsV2Service:
 
     def get_report_suites(self) -> list[dict]:
         """
-        Get list of report suites (via discovery endpoint)
+        Get all report suites accessible to this service account.
 
-        Uses the cached discovery response — no extra HTTP call is made
-        once ``_get_discovery_data`` has been called at least once.
+        Uses the ``reportsuites/collections/suites`` API 2.0 endpoint, which
+        returns both base and virtual report suites.  Results are sorted
+        alphabetically by name.
 
         Returns:
-            List of report suite dictionaries with rsid and name
+            List of dicts with rsid, name, type, currency, and timezone fields.
         """
-        global_company_id = self._get_global_company_id()
-        data = self._get_discovery_data()  # returns cached data; safe to call again
+        results: list[dict] = []
+        page = 0
+        page_size = 100
 
-        report_suites = []
-        for ims_org in data.get("imsOrgs", []):
-            for company in ims_org.get("companies", []):
-                if company.get("globalCompanyId") == global_company_id:
-                    # Note: Discovery doesn't list all RSIDs, we might need
-                    # to use a different approach or the reportSuites endpoint
-                    # For now, return company info
-                    report_suites.append({
-                        "rsid": company.get("companyName", ""),
-                        "company_name": company.get("companyName", ""),
-                        "global_company_id": company.get("globalCompanyId", "")
-                    })
+        while True:
+            data = self._make_request(
+                "reportsuites/collections/suites",
+                params={
+                    "limit": page_size,
+                    "page": page,
+                },
+            )
+            content = data.get("content", [])
+            if not isinstance(content, list):
+                break
 
-        return report_suites
+            for rs in content:
+                results.append({
+                    "rsid": rs.get("rsid", ""),
+                    "name": rs.get("name", ""),
+                    "type": rs.get("type", "base").capitalize(),
+                    "currency": rs.get("currency", ""),
+                    "timezone": rs.get("timezoneZoneInfo", ""),
+                })
+
+            total = data.get("totalElements", 0)
+            if len(results) >= total or not content:
+                break
+            page += 1
+
+        logger.debug("Found %s report suites", len(results))
+        return sorted(results, key=lambda x: x.get("name", "").lower())
 
     def get_report_suite_name(self, rsid: str) -> str:
         """

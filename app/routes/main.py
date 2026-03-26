@@ -1525,28 +1525,52 @@ def segment_detail(segment_id: str):
     )
 
 
+REPORT_SUITES_COLUMNS = {
+    'rsid':     'Report Suite ID',
+    'name':     'Name',
+    'type':     'Type',
+    'currency': 'Currency',
+    'timezone': 'Timezone',
+}
+
 @main_bp.route('/report-suites')
 def report_suites():
-    """Display report suites"""
+    """Display all report suites accessible to this service account (API 2.0)."""
     api = get_api_service()
+    current_rsid = get_rsid()
 
-    raw_data = get_cached_data('report_suites', lambda: api.get_report_suites())
+    raw_data = get_cached_data(
+        'report_suites', lambda: api.get_report_suites(), ttl_hours=CONFIG_TTL_HOURS
+    )
+    data = transform_data(raw_data, REPORT_SUITES_COLUMNS)
 
-    # Report suites have variable structure, just use as-is
-    columns = list(raw_data[0].keys()) if raw_data else []
+    # Find the configured suite's name for the page note
+    configured_name = next(
+        (row['Name'] for row in data if row.get('Report Suite ID') == current_rsid),
+        current_rsid,
+    )
 
-    return render_listing('Report Suites', raw_data, columns, 'report-suites')
+    return render_listing(
+        'Report Suites',
+        data,
+        list(REPORT_SUITES_COLUMNS.values()),
+        'report-suites',
+        cache_key='report_suites',
+        monospace_columns=['Report Suite ID'],
+        page_note=f'Currently configured report suite: {configured_name} ({current_rsid})',
+    )
 
 
 @main_bp.route('/report-suites/export')
 def report_suites_export():
-    """Export report suites as CSV"""
+    """Export report suites as CSV (API 2.0)."""
     api = get_api_service()
-    rsid = get_rsid()
 
-    raw_data = get_cached_data('report_suites', lambda: api.get_report_suites())
-
-    return generate_csv(raw_data, 'report_suites.csv')
+    raw_data = get_cached_data(
+        'report_suites', lambda: api.get_report_suites(), ttl_hours=CONFIG_TTL_HOURS
+    )
+    data = transform_data(raw_data, REPORT_SUITES_COLUMNS)
+    return generate_csv(data, 'report_suites.csv')
 
 
 @main_bp.route('/cache')
