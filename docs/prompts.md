@@ -14,6 +14,10 @@ Summarise your approach and changes in a new markdown document in the  docs/auto
 
 Limit yourself to using API 2.0 features
 
+### Suggested Improvements
+
+
+
 ### Code Review
 
 Please review the code you are about to merge, looking for bugs, and opportunities to simplify the code, cleanup dead end logic, or out of date comments, or out of data documentation. Do not edit old autopsies or old plans.

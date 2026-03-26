@@ -25,8 +25,64 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
 ## Bugs
 
-- [x] Merchandising eVar expiration data shown on the details page is not correct. A MerchVar with purchase event set as expiration, will actually display 1 Days for the expiration value. Checked with eVar39 in Coles Global Prod report suite. **Fixed in PR #26 ([autopsies 016 & 017](.docs/autopsies/016-evar-allocation-expiration-fix.md), [.docs/autopsies/017-merchandising-evar-expiration-bug.md))**
+- [x] Merchandising eVar expiration data shown on the details page is not correct. A MerchVar with purchase event set as expiration, will actually display 1 Days for the expiration value. Checked with eVar39 in Coles Global Prod report suite. **Fixed in PR #26 ([autopsies 016 & 017](.docs/autopsies/016-evar-allocation-expiration-fix.md), [017-merchandising-evar-expiration-bug.md](.docs/autopsies/017-merchandising-evar-expiration-bug.md))**
 - [x] Adobe is deprecating the 1.4 version of the Analtytics api. It's not supposed to happen until August 2026, but already we am seeing times (usually for a few hours at a time) where the api.omniture.com endpoints become unresponsive, or the dns won't resolve, or the servers don't answer. Need to find a way to:
   1. Try alternative API domains. Alternative API endpoint domains will be on o: api2.omniture.com, api3.omniture.com, api4.omniture.com
   2. Display a fallback error message. Still show the global navigation, footer, body styling, but replace with a user friendly error message advising the API is not responding, and the data is not available, and to try again later.
 - [x] The prop and eVar detail pages don't display any calculated metrics; but it does work for events. I think it is because a calc metric will never have the prop or evar at the top level of logic. Those data dimensions will always be nested inside a segment inside of a calculated metric. **Fixed in [fix/components-calc-metrics-transitive](.docs/autopsies/029-components-calc-metrics-transitive.md)**
+
+  ## Suggested Improvements
+
+  ### Quick wins
+
+- [ ] **Item 1. Prop and eVar 30-day trend charts**
+
+  get_dimension_trend() already exists in the API service and is fully wired for trend reporting, but it's never called from any route — Props and eVars have no trend chart on their detail pages. 
+
+  Events and Calculated Metrics both have them. Adding this is a template + route change only, reusing the existing trend_chart_js macro and Chart.js pattern. Estimated effort: ~1–2 hours.
+
+-[ ] **Item 2. Data Feed column name on dimension detail pages**
+
+  The todo asks for the data feed column name (e.g. post_evar5, post_prop3) to appear in the dimension's config table. This data never changes and requires no API call — it's a deterministic mapping from the variable ID.
+
+  A small dict or simple string format (post_evar{N} / post_prop{N} / post_event_list) is all that's needed. Very low risk.
+
+- [ ] **Item 3. Processing Rules condition/action formatting**
+
+  The Processing Rules listing shows conditions and actions as compact strings (e.g. if user_server equals any of (...) ... overwrite value of ...). 
+
+  The Processing Rule Examples.csv in docs/ shows the expected structure: a Rule, Section, Conditions, Match Type, Actions pattern. 
+
+  A small formatter that adds newlines before each if/else clause and indents actions under their conditions would make the pseudo-code much more readable. Could be done in Jinja2 or a Python helper.
+
+  ---
+
+  ### Medium effort
+
+ - [ ] **Item 4. Marketing Channel Rules cross-linking (Roadmap v2-002)**
+
+  On each Prop/eVar/Event/ListVar detail page, show which Marketing Channel rules reference that dimension — the exact same pattern as the existing Related Processing Rules section. The channel rules data is already cached.
+
+  The plan doc (v2-002) is already written and notes that a quick spike is needed first to confirm channel rules reference custom variables in a searchable way.
+
+ - [ ] **Item 5. ListVar 30-day trend chart**                                                          
+     Same as suggestion #1 but for ListVar detail pages. get_dimension_trend() accepts any variable ID, so variables/listvar1 works. The listvar_detail.html template just needs the same right-column chart pattern as
+     event_detail.html.
+
+ - [ ] **Item 6. Segment detail: human-readable container breakdown**                                                      
+     The Segment Detail page currently just shows raw JSON for the definition. The same recursive walker used for Calculated Metrics (which produces a "Referenced Metrics / Segments" list) could be adapted for segments — parsing
+     container logic into an indented summary showing hit/visit/visitor containers, rules (dimension / operator / value), and nesting. Higher value for complex multi-container segments.
+
+### Larger features
+
+ - [ ] **Item 7. Adobe Launch integration (Roadmap v2-003)**                 
+     Show which Adobe Launch (Tags) rules set each variable on the detail pages. Requires a new API client for the Reactor API and new OAuth scopes. High effort but high value — Launch is where most variables are actually set.
+
+- [ ] **Item 8. User OAuth login (Roadmap v2-004)**
+
+    Replace the server-to-server credential with per-user Adobe IMS login. Enables proper access control and makes Codex deployable for a broader audience. The largest architectural change on the roadmap.
+
+- [ ] **Item 9. Interactive API debug page**
+
+  The Swagger JSON files (`adobe_analytics_api_1.4_swagger.json`, `adobe_analytics_api_2.0_swagger.json`) are already in docs/. A Swagger UI embed or a simple custom form page built from the parsed spec would let you call any    
+     endpoint directly from the browser — useful for exploring the API and debugging. 
