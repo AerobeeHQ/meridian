@@ -177,7 +177,7 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
-def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, **kwargs):
+def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, preformatted_columns=None, **kwargs):
     """Render listing.html with common context variables injected automatically.
 
     Args:
@@ -201,6 +201,7 @@ def render_listing(title, data, columns, active_tab, monospace_columns=None, col
         column_styles=column_styles or {},
         dt_order=dt_order or [],
         column_badges=column_badges or {},
+        preformatted_columns=preformatted_columns or [],
         **kwargs
     )
 
@@ -229,6 +230,17 @@ def safe_extract_dimension_number(dim_id: str, prefix: str) -> int:
         return int(cleaned) if cleaned else 999
     except (ValueError, AttributeError):
         return 999
+
+
+def format_conditions(text: str) -> str:
+    """Format a processing rule conditions string for readability.
+
+    Replaces ' AND ' separators with newlines so each condition clause
+    appears on its own line when rendered in a <pre> block.
+    """
+    if not text:
+        return text
+    return text.replace(' AND ', '\nAND ')
 
 
 def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
@@ -1289,10 +1301,14 @@ def processing_rules():
 
     raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
+    for row in data:
+        if row.get('Conditions'):
+            row['Conditions'] = format_conditions(row['Conditions'])
 
     return render_listing(
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
-        monospace_columns=['Actions', 'Conditions'],
+        monospace_columns=['Actions'],
+        preformatted_columns=['Conditions'],
         cache_key='processing_rules'
     )
 
@@ -1745,9 +1761,13 @@ def api_related_rules(dimension_type: str, dimension_id: str):
             _cached_rules_raw or [], dimension_id
         )
 
+    formatted_rules = [
+        {**rule, 'rules': format_conditions(rule.get('rules', ''))}
+        for rule in related_rules
+    ]
     return render_template(
         '_fragment_related_rules.html',
-        related_rules=related_rules,
+        related_rules=formatted_rules,
         processing_rules_cached=processing_rules_cached,
     )
 

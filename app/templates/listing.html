@@ -27,7 +27,7 @@
         {% for row in data %}
         <tr>
             {% for col in columns %}
-            <td {% if col in monospace_columns %}class="monospace"{% endif %}{% if column_styles[col] is defined %} style="{{ column_styles[col] }}"{% endif %}>
+            <td {% if col in monospace_columns %}class="monospace"{% endif %}{% if col in preformatted_columns %} style="vertical-align: top"{% endif %}{% if column_styles[col] is defined %} style="{{ column_styles[col] }}"{% endif %}>
                 {# Make Prop, eVar, Event, ListVar, Core Dimension, and Segment Names clickable links to detail pages #}
                 {% if col == 'Dimension' and row[col] and active_tab == 'core' %}
                     <a href="/core/{{ row[col] }}">{{ row[col] }}</a>
@@ -45,6 +45,8 @@
                     <a href="/calculated-metrics/{{ row.cm_id }}">{{ row[col] }}</a>
                 {% elif col in column_badges and row[col] and (row[col] | lower) in column_badges[col] %}
                     {{ column_badges[col][row[col] | lower] | safe }}
+                {% elif col in preformatted_columns %}
+                    <pre class="monospace small mb-0">{{ row[col] if row[col] is not none else '' }}</pre>
                 {% elif col in monospace_columns %}
                     <code>{{ row[col] if row[col] is not none else '' }}</code>
                 {% else %}
