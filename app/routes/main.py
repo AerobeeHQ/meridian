@@ -178,7 +178,7 @@ def get_cache_info() -> dict:
     return cache.get_info(rsid)
 
 
-def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, preformatted_columns=None, **kwargs):
+def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, preformatted_columns=None, dt_column_widths=None, **kwargs):
     """Render listing.html with common context variables injected automatically.
 
     Args:
@@ -203,6 +203,11 @@ def render_listing(title, data, columns, active_tab, monospace_columns=None, col
         dt_order=dt_order or [],
         column_badges=column_badges or {},
         preformatted_columns=preformatted_columns or [],
+        dt_column_defs=[
+            {'width': w, 'targets': i}
+            for i, w in enumerate(dt_column_widths or [])
+            if w is not None
+        ],
         **kwargs
     )
 
@@ -1349,7 +1354,8 @@ def processing_rules():
     return render_listing(
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
         preformatted_columns=['Conditions', 'Actions'],
-        column_styles={'Comments': 'max-width: 180px; white-space: normal; overflow-wrap: break-word; font-size: 0.85em; color: #6c757d;'},
+        #                Rule, Section, Conditions, Match Type, Actions, Comments
+        dt_column_widths=['3%', '20%', '25%',       '5%',       '2%',   '20%'],
         cache_key='processing_rules'
     )
 
