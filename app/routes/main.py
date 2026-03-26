@@ -1602,10 +1602,20 @@ def cache_refresh(cache_key):
 def _find_components(rsid: str, variable_id: str) -> dict:
     """Find segments and calculated metrics whose definitions reference a variable.
 
-    Searches the cached listing data (which includes `definition` fields) for
-    any occurrence of the exact variable_id string inside each item's definition
-    JSON.  Exact matching is done by searching for the quoted string
-    ``'"<variable_id>"'`` to avoid false substring matches (e.g. prop1 vs prop10).
+    Searches the cached listing data (which includes ``definition`` fields).
+    Exact matching uses the quoted form ``'"<variable_id>"'`` to prevent false
+    substring matches (e.g. ``prop1`` matching ``prop10``).
+
+    Calculated metrics can reference a prop or eVar **transitively** — the CM
+    formula never references the variable directly; instead it references a
+    segment (via a ``segment-ref`` node) whose own definition references the
+    variable.  A two-pass approach handles both cases:
+
+    1. Find every segment whose definition contains the variable_id.
+    2. Find every CM whose definition either:
+       (a) directly contains the variable_id (works for events/metrics), or
+       (b) references the ID of any segment found in step 1 (works for
+           props/evars that are embedded inside segment filters).
 
     Args:
         rsid:        Report suite ID (used to key the cache lookup).
@@ -1620,16 +1630,26 @@ def _find_components(rsid: str, variable_id: str) -> dict:
     calc_metrics_raw = cache.get(rsid, 'calculated_metrics') or []
     needle = f'"{variable_id}"'
 
+    # Pass 1: segments that directly reference this variable
     matching_segments = []
+    matched_segment_ids: set[str] = set()
     for seg in segments_raw:
         definition = seg.get('definition')
         if definition and needle in json.dumps(definition):
             matching_segments.append({'id': seg['id'], 'name': seg.get('name', seg['id'])})
+            matched_segment_ids.add(seg['id'])
 
+    # Pass 2: calculated metrics that reference the variable directly OR
+    # via one of the matched segments (transitive look-through)
     matching_metrics = []
     for cm in calc_metrics_raw:
         definition = cm.get('definition')
-        if definition and needle in json.dumps(definition):
+        if not definition:
+            continue
+        definition_str = json.dumps(definition)
+        direct = needle in definition_str
+        transitive = any(f'"{seg_id}"' in definition_str for seg_id in matched_segment_ids)
+        if direct or transitive:
             matching_metrics.append({'id': cm['id'], 'name': cm.get('name', cm['id'])})
 
     return {'segments': matching_segments, 'calc_metrics': matching_metrics}
