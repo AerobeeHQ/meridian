@@ -11,7 +11,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
   - [adobe_analytics_api_1.4_swagger.json](adobe_analytics_api_1.4_swagger.json)
   - [adobe_analytics_api_2.0_swagger.json](adobe_analytics_api_2.0_swagger.json)
-- [ ] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date).
+- [x] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date). **Fixed in feature/report-suites-page (autopsy 031)**
 - [x] Cleanup the display of monospace text on the Processing Rules pages. It's a bit smaller than other text, and other pages like Segment Details use a pink monospace font that looks a bit more at home in the app. So maybe use that style instead? **Fixed in fix/processing-rules-monospace (autopsy 030)**
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See autopsy 026.
 - [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
