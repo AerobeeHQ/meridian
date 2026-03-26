@@ -13,7 +13,9 @@
       "Bash(wc -l /Users/joris/Workspace/Python/Codex/docs/autopsies/*.md)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(ls /Users/joris/Workspace/Python/Codex/*.csv)",
+      "Bash(ls /Users/joris/Workspace/Python/Codex/Processing*)"
     ]
   }
 }
