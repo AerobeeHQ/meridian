@@ -10,16 +10,20 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 
 ## Features
 
+- **Report Suite Overview** — Landing page with configuration health stats and cache status
 - **Conversion Variables (eVars)** — View all eVars with allocation, expiration, and descriptions
 - **Traffic Variables (Props)** — Browse props with pathing and list support settings
 - **Success Events** — List all events with type, serialisation, and descriptions
 - **List Variables** — View ListVar configurations and delimiters
+- **Segments** — Browse all segments defined in the report suite (API 2.0)
+- **Calculated Metrics** — View all calculated metrics with formula cross-references and 30-day trend data (API 2.0)
 - **Processing Rules** — Display all processing rules with conditions and actions (API 1.4)
-- **Marketing Channels** — Browse channel definitions and settings
-- **Channel Rules** — View marketing channel classification rules
-- **Detail Views** — Drill into individual dimensions/events for full configuration details
+- **Marketing Channels** — Browse channel definitions and settings (API 1.4)
+- **Channel Rules** — View marketing channel classification rules (API 1.4)
+- **Detail Views** — Drill into individual dimensions, events, segments, and metrics for full configuration details
+- **Dimension Notes** — Annotate any dimension or event with plain-English descriptions and technical context
 - **CSV Export** — Export any configuration table for documentation or audits
-- **Caching** — JSON file-based caching (hourly expiry) to reduce API calls
+- **Background Pre-Caching** — Configuration data is pre-warmed at startup and refreshed every 24 hours
 
 ---
 
@@ -116,9 +120,9 @@ Create a `config.json` file in the project root (use `config.dist.json` as a tem
 
 Codex uses a **hybrid API approach**:
 
-- **API 2.0 (OAuth2)** — Primary method for most endpoints (eVars, Props, Events, ListVars, Marketing Channels). OAuth2 credentials are obtained from the [Adobe I/O Console](https://console.adobe.io/).
+- **API 2.0 (OAuth2)** — Primary method for most endpoints (eVars, Props, Events, ListVars, Segments, Calculated Metrics). OAuth2 credentials are obtained from the [Adobe I/O Console](https://console.adobe.io/).
 
-- **API 1.4 (WSSE)** — Legacy method required for endpoints not yet available in API 2.0 (Processing Rules). WSSE credentials can be obtained from Admin → User Management → Users in Adobe Analytics.
+- **API 1.4 (WSSE)** — Legacy method required for endpoints not yet available in API 2.0 (Processing Rules, Marketing Channels, Channel Rules). WSSE credentials can be obtained from Admin → User Management → Users in Adobe Analytics.
 
 ---
 
@@ -146,7 +150,9 @@ Codex/
 │   │   ├── adobe_analytics_v2.py   # API 2.0 client (OAuth2)
 │   │   ├── adobe_analytics.py      # API 1.4 client (WSSE)
 │   │   ├── adobe_auth.py           # OAuth2 token management
-│   │   └── cache.py                # JSON file-based caching
+│   │   ├── cache.py                # JSON file-based caching
+│   │   ├── cache_warmer.py         # Background cache pre-warming (APScheduler)
+│   │   └── notes.py                # Dimension annotation storage
 │   └── templates/       # Jinja2 HTML templates
 ├── cache/               # Cached API responses (git-ignored)
 ├── exports/             # CSV exports directory
@@ -177,13 +183,20 @@ Codex/
 
 See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan with complexity assessments and implementation details.
 
+### Completed in v1.0
 
-* [ ] Integrate with Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
-* [ ] Integrate with Marketing Channel Processing Rules so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
-* [ ] Integrate with Adobe Launch so that when viewing a Prop, eVar, Event, or ListVar, the user can see which Processing Rule sets or alters that data dimension
-* [ ] Enable User Oauth login instead of using Server to Server
-* [ ] Download and cache data dimension configuration data in the background so that we aren't fetching it when the user wants to first looks at it. The goal is to make the app feel a lot faster by pre-caching settings that rarely change. Cache the data for 1 day, and add a button the the listing and details pages to force a refresh.
-* [ ] Add a report suite summary overview page so the user can get a quick snapshot of the state of the Report Suite.
+* [x] Report Suite Overview page
+* [x] Background pre-caching (24-hour refresh, force-refresh button)
+* [x] Processing Rules cross-linking on dimension detail pages
+* [x] Segments listing and detail pages (API 2.0)
+* [x] Calculated Metrics listing and detail pages (API 2.0)
+* [x] Dimension Notes / annotations
+
+### Planned for v2.0
+
+* [ ] Marketing Channel Rules cross-linking on dimension detail pages
+* [ ] Adobe Launch (Tags) integration — show which Launch rules set each variable
+* [ ] User OAuth login — replace server-to-server with per-user Adobe IMS login
 
 ## License
 

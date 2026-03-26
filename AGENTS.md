@@ -53,6 +53,9 @@
 - `app/routes/main.py`: Core application logic.
 - `app/services/adobe_analytics_v2.py`: API 2.0 wrapper.
 - `app/services/adobe_analytics.py`: API 1.4 wrapper.
-- `app/services/adobe_auth.py`: OAuth2 auth/token management.
+- `app/services/adobe_auth.py`: OAuth2 token management.
+- `app/services/cache.py`: JSON file-based caching with per-key TTL.
+- `app/services/cache_warmer.py`: Background cache pre-warming via APScheduler (24h interval).
+- `app/services/notes.py`: User-provided dimension annotation storage (JSON file-based).
 - `verify_setup.py`: Local setup and configuration checks.
 - `notebooks/`: Exploratory scripts.

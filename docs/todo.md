@@ -16,7 +16,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See autopsy 026.
 - [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
-- [ ] Update the README and make sure it is up to date with the latest changes.
+- [x] Update the README and make sure it is up to date with the latest changes.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 
 ## Bugs

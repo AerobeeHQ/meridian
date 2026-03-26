@@ -16,4 +16,4 @@ Please review the code you are about to merge, looking for bugs, and opportuniti
 
 ### Documentation Review
 
-Please review the documentation you are about to merge, looking for inconsistencies, outdated information, or opportunities to improve clarity and readability. Ensure that the documentation aligns with the code changes and provides accurate information for users.
+Please review the documentation in this project, looking for inconsistencies, outdated information, or opportunities to improve clarity and readability. Ensure that the documentation aligns with the code changes and provides accurate information for users.

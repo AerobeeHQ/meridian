@@ -14,6 +14,8 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | 4 | [User OAuth Login](#4-user-oauth-login) | High | Planned | [v2-004](plans/v2-004-user-oauth-login.md) |
 | 5 | [Background Pre-Caching](#5-background-pre-caching) | Medium | **Done** | [v2-005](plans/v2-005-background-precaching.md) |
 | 6 | [Report Suite Overview Page](#6-report-suite-overview-page) | Low–Medium | **Done** | [v2-006](plans/v2-006-report-suite-overview.md) |
+| 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments.md) |
+| 8 | [Calculated Metrics](#8-calculated-metrics) | Medium | **Done** | [autopsy 027](autopsies/027-calculated-metrics.md) |
 
 ---
 
@@ -24,9 +26,11 @@ Start with low-risk, high-value additions before architectural changes:
 1. ~~**Overview page** (v2-006) — New page only, no risk to existing features.~~ **Done**
 2. ~~**Background pre-caching** (v2-005) — Makes the whole app feel faster; improves UX for all users.~~ **Done**
 3. ~~**Processing Rules integration** (v2-001) — Data already cached; adds cross-linking to detail pages.~~ **Done**
-4. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
-5. **Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.
-6. **User OAuth login** (v2-004) — Largest architectural change; do last.
+4. ~~**Segments** (v2-007) — Listing and detail pages via API 2.0.~~ **Done**
+5. ~~**Calculated Metrics** (v2-008) — Listing, detail pages, formula cross-references, and trend charts via API 2.0.~~ **Done**
+6. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
+7. **Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.
+8. **User OAuth login** (v2-004) — Largest architectural change; do last.
 
 ---
 
@@ -101,3 +105,27 @@ Start with low-risk, high-value additions before architectural changes:
 **How:** New `/overview` route + template. Uses already-cached data — no new API calls. Aggregate counts, utilisation bars, mini cache status panel.
 
 **Complexity: Low–Medium** — new page only; all data already exists in the cache. Lowest risk item in v2.
+
+---
+
+### 7. Segments
+
+**Goal:** List all segments defined in the report suite and provide a detail page showing segment definition, containers, and referenced dimensions.
+
+**Why:** Segments are a core building block in Adobe Analytics. Documenting them alongside variable configurations gives a more complete picture of the implementation.
+
+**How:** Uses the API 2.0 `/segments` endpoint with `includeType=all` (required to return segments owned by the service account). Recursive formula walker parses container trees into human-readable cross-references.
+
+**Complexity: Low–Medium** — straightforward API 2.0 endpoint; complexity is in parsing the nested segment definition JSON.
+
+---
+
+### 8. Calculated Metrics
+
+**Goal:** List all calculated metrics with type, owner, and tags. Detail page shows formula cross-references, a 30-day trend chart, and the raw formula JSON.
+
+**Why:** Calculated metrics built on top of standard events are often poorly documented. Surfacing their formula components alongside the referenced events and segments closes a common knowledge gap.
+
+**How:** Uses the API 2.0 `/calculatedmetrics` endpoint with `includeType=all`. Formula is parsed by a recursive tree walker to extract referenced `metrics/` and `segment-ref` nodes. Trend data is fetched via the Reporting API.
+
+**Complexity: Medium** — formula parsing requires recursive traversal of an arbitrary-depth JSON tree; trend chart reuses the existing Chart.js pattern from Events.
