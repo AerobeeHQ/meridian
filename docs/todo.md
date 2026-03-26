@@ -14,7 +14,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date). **Fixed in [feature/report-suites-page](.docs/autopsies/031-report-suites-page.md)**
 - [x] Cleanup the display of monospace text on the Processing Rules pages. It's a bit smaller than other text, and other pages like Segment Details use a pink monospace font that looks a bit more at home in the app. So maybe use that style instead? **Fixed in [fix/processing-rules-monospace](.docs/autopsies/030-processing-rules-monospace.md)**
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See [autopsy 026](.docs/autopsies/026-channels-nav-dropdown.md).
-- [ ] Display the Data Feed column name in the data dimensions's details as a new row in the Data Configuration table. Use this page as a reference for the column names: https://experienceleague.adobe.com/docs/analytics/components/reference/data-feeds/columns.html?lang=en This data is quite stable, never changes, so no extra API calls or fancy data mapping are needed.
+- [x] Display the Data Feed column name in the data dimensions's details as a new row in the Data Configuration table. Use this page as a reference for the column names: https://experienceleague.adobe.com/docs/analytics/components/reference/data-feeds/columns.html?lang=en This data is quite stable, never changes, so no extra API calls or fancy data mapping are needed.
 - [ ] The pseduo-code for the "Processing Rules" page is a bit hard to read. But it is sort of structured. There are some IF and ELSE like statements. It would be good to reformat it for the user so it's easier to interpret; add some newlines, and indentations. The [Processing Rule Examples.csv](Processing%20Rule%20Examples.csv) and [Processing Rule Examples.xlsx](Processing%20Rule%20Examples.xlsx) file are a good reference for the structure.
 - [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
 - [x] Update the README and make sure it is up to date with the latest changes.
@@ -41,7 +41,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   Events and Calculated Metrics both have them. Adding this is a template + route change only, reusing the existing trend_chart_js macro and Chart.js pattern. Estimated effort: ~1–2 hours.
 
--[ ] **Item 2. Data Feed column name on dimension detail pages**
+- [x] **Item 2. Data Feed column name on dimension detail pages**
 
   The todo asks for the data feed column name (e.g. post_evar5, post_prop3) to appear in the dimension's config table. This data never changes and requires no API call — it's a deterministic mapping from the variable ID.
 
