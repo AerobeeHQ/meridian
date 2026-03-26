@@ -1,8 +1,12 @@
 # Personal Prompts Scratchpad
 
-### Find something to do
+### Review the todo lists and suggest improvements
 
-Please look for a todo or bug and try to address it. You can start with either items lists in todo.md, version-2-roadmap.md, or search the codebase, and find something yourself. :)
+Please look for a todo or bug and provide a list of suggested improvements. You can find ideas in todo.md, version-2-roadmap.md, or search the codebase, and find something yourself.
+
+### Find something to do and do it
+
+Please look for a todo or bug and try to address it. You can start with either items in todo.md, version-2-roadmap.md, or search the codebase, and find something yourself. :)
 
 Before modifying any files, create a new branch with prefix `feature/` or `fix/`
 
