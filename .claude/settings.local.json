@@ -18,7 +18,9 @@
       "Bash(ls /Users/joris/Workspace/Python/Codex/Processing*)",
       "Bash(git cherry-pick:*)",
       "Bash(ls /Users/joris/Workspace/Python/Codex/docs/*.json)",
-      "Bash(ls /Users/joris/Workspace/Python/Codex/docs/*.yaml)"
+      "Bash(ls /Users/joris/Workspace/Python/Codex/docs/*.yaml)",
+      "Bash(git stash:*)",
+      "Bash(git rebase:*)"
     ]
   }
 }

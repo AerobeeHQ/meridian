@@ -1355,7 +1355,7 @@ def processing_rules():
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
         preformatted_columns=['Conditions', 'Actions'],
         #                Rule, Section, Conditions, Match Type, Actions, Comments
-        dt_column_widths=['3%', '20%', '25%',       '5%',       '2%',   '20%'],
+        dt_column_widths=['3%', '20%', '25%',       '5%',       '27%',   '20%'],
         cache_key='processing_rules'
     )
 

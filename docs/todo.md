@@ -83,8 +83,3 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] **Item 8. User OAuth login (Roadmap v2-004)**
 
     Replace the server-to-server credential with per-user Adobe IMS login. Enables proper access control and makes Codex deployable for a broader audience. The largest architectural change on the roadmap.
-
-- [ ] **Item 9. Interactive API debug page**
-
-  The Swagger JSON files (`adobe_analytics_api_1.4_swagger.json`, `adobe_analytics_api_2.0_swagger.json`) are already in docs/. A Swagger UI embed or a simple custom form page built from the parsed spec would let you call any    
-     endpoint directly from the browser — useful for exploring the API and debugging. 
