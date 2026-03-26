@@ -7,7 +7,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Add the allocation and expiration data to the data dimensions listing page. The data is visible on the details page, but not the listing pages
 - [x] Change the data dimensions listing page template name. Renamed `table.html` → `listing.html` (autopsy 019)
 - [x] Add a Segments listing page (API 2.0 `/segments` endpoint). See autopsy 025.
-- [ ] Add a Metrics listing page (API 2.0 `/metrics` endpoint).
+- [x] Add a Calculated Metrics listing and detail page (API 2.0 `/calculatedmetrics` endpoint). See autopsy 027.
 - [ ] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
   - [adobe_analytics_api_1.4_swagger.json](adobe_analytics_api_1.4_swagger.json)
   - [adobe_analytics_api_2.0_swagger.json](adobe_analytics_api_2.0_swagger.json)

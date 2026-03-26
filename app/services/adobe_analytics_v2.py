@@ -595,6 +595,70 @@ class AdobeAnalyticsV2Service:
 
         return {"dates": dates, "values": values, "stats": stats}
 
+    def get_metric_trend(
+        self,
+        rsid: str,
+        metric_id: str,
+        days: int = 30
+    ) -> dict:
+        """
+        Get daily trend data for a calculated metric.
+
+        Args:
+            rsid: Report suite ID
+            metric_id: Calculated metric ID (e.g., 'cm200000529_abc') — used as-is,
+                       no 'metrics/' prefix added
+            days: Number of days to look back
+
+        Returns:
+            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+        """
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        request_body = {
+            "rsid": rsid,
+            "globalFilters": [
+                {
+                    "type": "dateRange",
+                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                }
+            ],
+            "metricContainer": {
+                "metrics": [{"id": metric_id}]
+            },
+            "dimension": "variables/daterangeday",
+            "settings": {
+                "dimensionSort": "asc",
+                "limit": days + 1
+            }
+        }
+
+        result = self._make_request("reports", method="POST", json_data=request_body)
+
+        dates = []
+        values = []
+
+        for row in result.get("rows", []):
+            date_str = row.get("value", "")
+            dates.append(date_str)
+            row_data = row.get("data", [0])
+            value = row_data[0] if row_data else 0
+            values.append(value)
+
+        stats = {}
+        if values:
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                stats = {
+                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
+                    "median": round(statistics.median(numeric_values), 1),
+                    "max": max(numeric_values),
+                    "min": min(numeric_values)
+                }
+
+        return {"dates": dates, "values": values, "stats": stats}
+
     def get_top_items(
         self,
         rsid: str,
@@ -746,6 +810,87 @@ class AdobeAnalyticsV2Service:
         except Exception:
             logger.warning("Could not fetch segment %s", segment_id)
             return {}
+
+    def get_calculated_metric(self, cm_id: str) -> dict:
+        """
+        Get full detail for a single calculated metric.
+
+        Args:
+            cm_id: Calculated metric ID (e.g. 'cm200000529_...')
+
+        Returns:
+            Calculated metric dict with all expanded fields, or empty dict.
+        """
+        try:
+            return self._make_request(
+                f"calculatedmetrics/{cm_id}",
+                params={"expansion": "ownerFullName,modified,tags,definition"},
+            )
+        except Exception:
+            logger.warning("Could not fetch calculated metric %s", cm_id)
+            return {}
+
+    def get_calculated_metrics(self, rsid: str) -> list[dict]:
+        """
+        Get all calculated metrics for a report suite (all pages).
+
+        Uses includeType=all so company-level calculated metrics (which have no
+        owner RSID binding) are included alongside RSID-specific ones.
+
+        Args:
+            rsid: Report suite ID
+
+        Returns:
+            List of calculated metric dicts with id, name, description, type,
+            polarity, precision, owner, modified, and tags fields.
+        """
+        results: list[dict] = []
+        page = 0
+        page_size = 1000
+
+        while True:
+            data = self._make_request(
+                "calculatedmetrics",
+                params={
+                    "rsids": rsid,
+                    "includeType": "all",
+                    "expansion": "ownerFullName,modified,tags",
+                    "limit": page_size,
+                    "page": page,
+                    "sortProperty": "name",
+                    "sortDirection": "ASC",
+                },
+            )
+
+            content = data.get("content", [])
+            if not isinstance(content, list):
+                break
+
+            for cm in content:
+                owner_obj = cm.get("owner") or {}
+                tags_list = cm.get("tags") or []
+                tag_names = ", ".join(
+                    t.get("name", "") for t in tags_list if t.get("name")
+                )
+                results.append({
+                    "id": cm.get("id", ""),
+                    "name": cm.get("name", ""),
+                    "description": cm.get("description", ""),
+                    "type": cm.get("type", ""),
+                    "polarity": cm.get("polarity", ""),
+                    "precision": cm.get("precision", ""),
+                    "owner": owner_obj.get("name") or owner_obj.get("login", ""),
+                    "modified": (cm.get("modified") or "")[:10],
+                    "tags": tag_names,
+                })
+
+            total = data.get("totalElements", 0)
+            if len(results) >= total or not content:
+                break
+            page += 1
+
+        logger.debug("Found %s calculated metrics for %s", len(results), rsid)
+        return results
 
     def get_segments(self, rsid: str) -> list[dict]:
         """

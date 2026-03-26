@@ -135,6 +135,30 @@
 
 </div>
 
+<!-- Third row: analyst-defined components -->
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6">
+        <a href="/calculated-metrics" class="text-decoration-none">
+            <div class="card h-100 shadow-sm overview-card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.calc_metrics.available else '#d6dade' }};">
+                        {{ stats.calc_metrics.count if stats.calc_metrics.available else '–' }}
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Calculated Metrics</div>
+                        <div class="text-muted" style="font-size: 12px;">user-defined formulas</div>
+                    </div>
+                    {% if not stats.calc_metrics.available %}
+                    <span class="badge ms-auto" style="background-color: #d6dade; color: #888; font-size: 11px;">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    </div>
+
+</div>
+
 <!-- Bottom row: recent notes + cache status -->
 <div class="row g-3">
 

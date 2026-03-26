@@ -41,6 +41,10 @@
                     <a href="/listvars/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'Name' and row.segment_id %}
                     <a href="/segments/{{ row.segment_id }}">{{ row[col] }}</a>
+                {% elif col == 'Name' and row.cm_id %}
+                    <a href="/calculated-metrics/{{ row.cm_id }}">{{ row[col] }}</a>
+                {% elif col in column_badges and row[col] and (row[col] | lower) in column_badges[col] %}
+                    {{ column_badges[col][row[col] | lower] | safe }}
                 {% else %}
                     {{ row[col] if row[col] is not none else '' }}
                 {% endif %}
@@ -74,7 +78,7 @@ $(document).ready(function() {
         ],
         colReorder: true,
         searchHighlight: true,
-        order: [],
+        order: {{ dt_order | default([]) | tojson }},
         language: {
             search: "Filter:",
             info: "Showing _TOTAL_ entries"
