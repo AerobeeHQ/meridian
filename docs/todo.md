@@ -87,7 +87,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
 ### Larger features
 
- - [ ] **Item 7. Adobe Launch integration (Roadmap v2-003)**                 
+ - [x] **Item 7. Adobe Launch integration (Roadmap v2-003)**
      Show which Adobe Launch (Tags) rules set each variable on the detail pages. Requires a new API client for the Reactor API and new OAuth scopes. High effort but high value — Launch is where most variables are actually set.
 
 - [ ] **Item 8. User OAuth login (Roadmap v2-004)**

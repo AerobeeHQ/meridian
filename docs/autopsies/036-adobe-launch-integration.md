@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-27
 **Branch:** `feature/v2-003-adobe-launch-integration`
-**Status:** Complete — PR pending
+**Status:** Complete — merged
 
 ---
 
@@ -49,7 +49,17 @@ Same async fragment pattern as processing rules:
 
 ### Auth: separate `OAuth2Auth` instance
 
-The Reactor API requires an additional OAuth2 scope (`https://ims-na1.adobelogin.com/s/ent_reactor_admin_sdk`) beyond the Analytics scopes. A dedicated `OAuth2Auth` instance is created at startup with this scope appended, keeping the Analytics service's token cache separate.
+The Reactor API requires broader IMS scopes than Analytics alone. A dedicated `OAuth2Auth` instance is created at startup so the narrower Analytics token cache is not affected.
+
+**Required scopes** (matched to what launchpy uses successfully):
+```
+AdobeID, openid, read_organizations, additional_info.job_function,
+additional_info.projectedProductContext, additional_info.roles
+```
+
+These can be overridden with the `LAUNCH_SCOPES` config field.
+
+**Adobe Developer Console prerequisite:** The **Experience Platform Launch API** must be explicitly added to the project, with a product profile that grants property access (e.g. *Launch — All Properties*). Projects that only have Adobe Analytics configured will receive 403 on all Reactor API calls, even if the credentials are otherwise valid. This is the most common setup error.
 
 ---
 
