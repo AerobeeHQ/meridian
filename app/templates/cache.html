@@ -93,6 +93,52 @@
 </div>
 {% endif %}
 
+{% if launch_info %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Adobe Launch</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-sm mb-3">
+            <tbody>
+                <tr>
+                    <th style="width: 180px;">Property ID</th>
+                    <td>
+                        {% if launch_info.launchpad_url and launch_info.property_id %}
+                        <a href="{{ launch_info.launchpad_url }}/property/{{ launch_info.property_id }}" target="_blank" rel="noopener"><code>{{ launch_info.property_id }}</code></a>
+                        {% else %}
+                        <code>{{ launch_info.property_id or 'Not configured' }}</code>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Launchpad URL</th>
+                    <td>
+                        {% if launch_info.launchpad_url %}
+                        <code>{{ launch_info.launchpad_url }}</code>
+                        {% else %}
+                        <span class="text-muted">Not configured — deep links disabled</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Cached Actions</th>
+                    <td>
+                        {% if launch_info.action_count is none %}
+                        <span class="badge bg-secondary">Not cached yet</span>
+                        {% else %}
+                        <span class="badge bg-success">{{ launch_info.action_count }} Analytics Set Variables action{{ 's' if launch_info.action_count != 1 else '' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <a href="/cache/refresh/launch_rules" class="btn btn-sm btn-outline-secondary">&#x21ba; Refresh Launch Rules</a>
+        <small class="text-muted ms-2">Re-fetches Analytics Set Variables actions from the production library.</small>
+    </div>
+</div>
+{% endif %}
+
 <div class="card mt-4">
     <div class="card-header">
         <h5 class="mb-0">Cache Behavior</h5>

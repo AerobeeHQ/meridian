@@ -52,6 +52,8 @@ def create_app():
     # Adobe Launch (Tags) integration - Roadmap v2-003
     app.config['LAUNCH_ENABLED'] = config.get('LAUNCH_ENABLED', False)
     app.config['LAUNCH_PROPERTY_ID'] = config.get('LAUNCH_PROPERTY_ID')
+    app.config['LAUNCHPAD_URL'] = config.get('LAUNCHPAD_URL', '')
+    app.config['LAUNCH_SCOPES'] = config.get('LAUNCH_SCOPES')  # None = use default
 
     # Auth mode - Roadmap v2-004
     # 'server' = service account OAuth2 (default, current behaviour)
@@ -92,6 +94,30 @@ def create_app():
         secret=app.config['AW_SECRET'],
         request_timeout=app.config.get('API_V14_TIMEOUT', 5.0),
     )
+
+    # Adobe Launch (Tags) service — only when LAUNCH_ENABLED and API 2.0
+    if app.config['LAUNCH_ENABLED'] and app.config.get('LAUNCH_PROPERTY_ID'):
+        if app.config['API_VERSION'] == '2.0':
+            from app.services.adobe_launch import AdobeLaunchService
+            # The Reactor API requires broader IMS scopes than Analytics alone.
+            # Specifically, read_organizations and additional_info.roles are needed.
+            # These match the scopes launchpy uses for successful Reactor API access.
+            # A dedicated OAuth2Auth instance is created so the narrower Analytics
+            # token is not affected.
+            _launch_scopes = app.config.get('LAUNCH_SCOPES') or (
+                'AdobeID, openid, read_organizations, '
+                'additional_info.job_function, '
+                'additional_info.projectedProductContext, additional_info.roles'
+            )
+            _launch_auth = OAuth2Auth(
+                client_id=app.config['CLIENT_ID'],
+                client_secret=app.config['CLIENT_SECRET'],
+                scopes=_launch_scopes,
+            )
+            app.codex_launch_service = AdobeLaunchService(
+                auth_service=_launch_auth,
+                org_id=app.config['ORGANIZATION_ID'],
+            )
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     from app.routes.main import main_bp
