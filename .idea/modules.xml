@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Codex.iml" filepath="$PROJECT_DIR$/.idea/Codex.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Launchpad/Launchpad.iml" filepath="$PROJECT_DIR$/../Launchpad/Launchpad.iml" />
     </modules>
   </component>
 </project>

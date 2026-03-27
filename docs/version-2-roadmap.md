@@ -72,6 +72,10 @@ Start with low-risk, high-value additions before architectural changes:
 
 **Complexity: High** — new API integration from scratch; requires a spike notebook to understand data shape; may require additional OAuth2 scopes.
 
+See also this Github repo: https://github.com/maxisdigital/launchpad 
+
+Let me know if you need access.
+
 ---
 
 ### 4. User OAuth Login

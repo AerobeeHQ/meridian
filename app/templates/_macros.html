@@ -753,36 +753,46 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
 
 {% macro related_launch_rules_section(related_rules, launch_available=True, launchpad_url='', property_id='') %}
-{# Card listing Adobe Launch rules that set the current dimension.             #}
+{# Card listing Adobe Launch entries that set the current dimension.           #}
 {# related_rules:   list of action dicts from AdobeLaunchService.             #}
 {# launch_available: False when the launch_rules cache key is absent.          #}
 {# launchpad_url:   Base URL for deep-linking into the Launchpad app.         #}
 {# property_id:     Launch property ID used to build deep links.              #}
+{# Each entry has source='extension' or source='rule'.                         #}
 <div class="card mb-4">
     <div class="card-body">
-        <h5 class="card-title">Adobe Launch Rules</h5>
+        <h5 class="card-title">Adobe Launch</h5>
         {% if not launch_available %}
         <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
             <span style="font-size:1.1rem;">&#9888;</span>
             <div>
-                <strong>Launch rules data is not available.</strong>
+                <strong>Launch data is not available.</strong>
                 <p class="mb-1 mt-1 small">The Launch cache has not been populated yet. It will be populated on the next cache warm cycle.</p>
             </div>
         </div>
         {% elif related_rules %}
         <p class="text-muted small mb-3">
-            {{ related_rules | length }} rule{{ 's' if related_rules | length != 1 else '' }}
+            {{ related_rules | length }} source{{ 's' if related_rules | length != 1 else '' }}
             set{{ '' if related_rules | length != 1 else 's' }} this dimension.
         </p>
         <ul class="list-unstyled mb-0">
-            {% for rule in related_rules %}
+            {% for entry in related_rules %}
             <li class="mb-2 d-flex align-items-center gap-2">
-                {% if launchpad_url and property_id %}
-                <a href="{{ launchpad_url }}/property/{{ property_id }}/rules/{{ rule.rule_id }}" target="_blank" rel="noopener">{{ rule.rule_name }}</a>
+                {% if entry.source == 'extension' %}
+                    <span class="badge bg-info text-dark">Global</span>
+                    {% if launchpad_url and property_id and entry.source_id %}
+                    <a href="{{ launchpad_url }}/property/{{ property_id }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                    {% else %}
+                    {{ entry.rule_name }}
+                    {% endif %}
                 {% else %}
-                {{ rule.rule_name }}
+                    {% if launchpad_url and property_id and entry.rule_id %}
+                    <a href="{{ launchpad_url }}/property/{{ property_id }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                    {% else %}
+                    {{ entry.rule_name }}
+                    {% endif %}
                 {% endif %}
-                {% if not rule.rule_enabled %}
+                {% if not entry.rule_enabled %}
                 <span class="badge bg-secondary">Disabled</span>
                 {% endif %}
             </li>

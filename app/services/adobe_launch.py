@@ -1,12 +1,17 @@
 """
 Adobe Experience Platform Tags (Reactor) API client.
 
-Fetches rules and their Analytics Set Variables actions for cross-referencing
-with Codex dimension detail pages. Only Analytics Set Variables actions are
-fetched; custom-code actions are excluded.
+Fetches two sources of Analytics variable assignments from the production library:
 
-Reactor API quirk: the `settings` field on rule components is a JSON *string*,
-not a parsed object — always json.loads() before use.
+1. **Extension configuration** — variables set globally in the Adobe Analytics
+   extension (trackerProperties.eVars / props / events). These are applied on
+   every hit, regardless of which rules fire.
+
+2. **Rule Set Variables actions** — per-rule analytics actions that conditionally
+   set variables when a rule fires (delegate_descriptor_id contains "setVariables").
+
+Reactor API quirk: the `settings` field on extensions and rule components is a
+JSON *string*, not a parsed object — always json.loads() before use.
 """
 import json
 import logging
@@ -19,8 +24,18 @@ from app.services.adobe_auth import OAuth2Auth
 logger = logging.getLogger(__name__)
 
 REACTOR_BASE_URL = "https://reactor.adobe.io"
-_ANALYTICS_EXTENSION_PREFIX = "adobe-analytics"
+_ANALYTICS_EXTENSION_NAME = "adobe-analytics"
 _SET_VARIABLES_ACTION = "setVariables"
+
+
+def _parse_settings(raw) -> dict:
+    """Parse a settings value that may be a JSON string or an already-parsed dict."""
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    return raw or {}
 
 
 def _extract_names(items: list) -> list:
@@ -28,15 +43,16 @@ def _extract_names(items: list) -> list:
     return [item["name"] for item in items if isinstance(item, dict) and item.get("name")]
 
 
-def _parse_variable_names(settings: dict) -> tuple:
+def _parse_tracker_properties(settings: dict) -> tuple:
     """
-    Extract eVar, prop, event, and list variable names from setVariables settings.
+    Extract eVar, prop, event, and list variable names from an Analytics
+    settings dict.
 
     Handles two known formats:
     - Modern: {"trackerProperties": {"eVars": [...], "props": [...], "events": [...]}}
     - Legacy:  {"eVars": [...], "props": [...], "events": [...]}
 
-    Variable name casing follows Adobe conventions:
+    Adobe Analytics variable name casing:
     - eVars: "eVar1", "eVar2", … (capital V)
     - props:  "prop1", "prop2", …
     - events: "event1", "event2", …
@@ -54,8 +70,9 @@ class AdobeLaunchService:
     """
     Client for the Adobe Experience Platform Reactor (Tags) API.
 
-    Fetches all Analytics Set Variables rule actions for a property and
+    Fetches Analytics variable assignments from the production library and
     returns a compact, cacheable list for cross-referencing in Codex.
+    Each entry has a 'source' field of either 'extension' or 'rule'.
     """
 
     def __init__(self, auth_service: OAuth2Auth, org_id: str):
@@ -96,6 +113,11 @@ class AdobeLaunchService:
             return None
         return max(libraries, key=lambda lib: lib.get("attributes", {}).get("updated_at", ""))
 
+    def get_library_extensions(self, library_id: str) -> list:
+        """Return the full extension objects included in a library."""
+        url = f"{REACTOR_BASE_URL}/libraries/{library_id}/extensions"
+        return self._get_all_pages(url, params={"page[size]": 100})
+
     def get_library_rules(self, library_id: str) -> list:
         """Return the full rule objects included in a library."""
         url = f"{REACTOR_BASE_URL}/libraries/{library_id}/rules"
@@ -108,24 +130,35 @@ class AdobeLaunchService:
 
     def get_analytics_actions(self, property_id: str) -> list:
         """
-        Return all Analytics Set Variables actions from the production library.
+        Return all Analytics variable assignments from the production library.
 
-        Only rules in the most recently published library are inspected —
-        Development and Staging library contents are deliberately excluded.
+        Includes two source types, returned in a single flat list:
 
-        Each item in the returned list is a compact dict:
+        Extension entry (source='extension'):
         {
-            "rule_id":      str,   # Reactor rule ID (RL...)
-            "rule_name":    str,   # Human-readable rule name
-            "rule_enabled": bool,  # Whether the rule is active
-            "evars":        list,  # ["eVar1", "eVar5", ...]
-            "props":        list,  # ["prop1", ...]
-            "events":       list,  # ["event2", ...]
-            "lists":        list,  # ["list1", ...]
+            "source":       "extension",
+            "source_id":    str,   # Extension ID for Launchpad deep linking
+            "rule_id":      None,
+            "rule_name":    "Adobe Analytics Extension",
+            "rule_enabled": bool,
+            "evars":        list,
+            "props":        list,
+            "events":       list,
+            "lists":        list,
         }
 
-        Rule components are fetched in parallel (8 workers) to keep total
-        fetch time reasonable for properties with many rules.
+        Rule entry (source='rule'):
+        {
+            "source":       "rule",
+            "source_id":    None,
+            "rule_id":      str,   # Rule ID for Launchpad deep linking
+            "rule_name":    str,
+            "rule_enabled": bool,
+            "evars":        list,
+            "props":        list,
+            "events":       list,
+            "lists":        list,
+        }
         """
         # Scope to the production library only
         library = self.get_production_library(property_id)
@@ -140,9 +173,46 @@ class AdobeLaunchService:
         library_name = library.get("attributes", {}).get("name", "Unknown")
         logger.info("Using production library '%s' (%s)", library_name, library_id)
 
-        rules = self.get_library_rules(library_id)
+        # Fetch extensions and rules in parallel
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            ext_future  = executor.submit(self.get_library_extensions, library_id)
+            rule_future = executor.submit(self.get_library_rules, library_id)
+            extensions  = ext_future.result()
+            rules       = rule_future.result()
+
+        actions = []
+
+        # ── Extension-level global variables ─────────────────────────────────
+        for ext in extensions:
+            attrs = ext.get("attributes", {})
+            if attrs.get("name") != _ANALYTICS_EXTENSION_NAME:
+                continue
+
+            settings = _parse_settings(attrs.get("settings", "{}"))
+            evars, props, events, lists = _parse_tracker_properties(settings)
+
+            if not any([evars, props, events, lists]):
+                continue
+
+            actions.append({
+                "source":       "extension",
+                "source_id":    ext["id"],
+                "rule_id":      None,
+                "rule_name":    "Adobe Analytics Extension",
+                "rule_enabled": attrs.get("enabled", True),
+                "evars":        evars,
+                "props":        props,
+                "events":       events,
+                "lists":        lists,
+            })
+
+        # ── Rule Set Variables actions ────────────────────────────────────────
         if not rules:
-            return []
+            logger.info(
+                "Fetched %d entry from extension config, 0 rules in library '%s'",
+                len(actions), library_name,
+            )
+            return actions
 
         rule_meta = {
             r["id"]: {
@@ -152,7 +222,7 @@ class AdobeLaunchService:
             for r in rules
         }
 
-        # Fetch rule components in parallel to reduce total wait time
+        # Fetch rule components in parallel
         components_by_rule: dict = {}
         with ThreadPoolExecutor(max_workers=8) as executor:
             futures = {
@@ -167,34 +237,27 @@ class AdobeLaunchService:
                     logger.warning("Failed to fetch components for rule %s", rule_id)
                     components_by_rule[rule_id] = []
 
-        actions = []
+        rule_count = 0
         for rule_id, components in components_by_rule.items():
             for comp in components:
                 attrs = comp.get("attributes", {})
                 ddid = attrs.get("delegate_descriptor_id", "")
 
-                # Only interested in Analytics extension Set Variables actions
-                if _ANALYTICS_EXTENSION_PREFIX not in ddid:
+                if _ANALYTICS_EXTENSION_NAME not in ddid:
                     continue
                 if _SET_VARIABLES_ACTION not in ddid:
                     continue
 
-                # The Reactor API returns settings as a JSON string, not a dict
-                raw = attrs.get("settings", "{}")
-                if isinstance(raw, str):
-                    try:
-                        settings = json.loads(raw)
-                    except (json.JSONDecodeError, TypeError):
-                        settings = {}
-                else:
-                    settings = raw or {}
+                settings = _parse_settings(attrs.get("settings", "{}"))
+                evars, props, events, lists = _parse_tracker_properties(settings)
 
-                evars, props, events, lists = _parse_variable_names(settings)
                 if not any([evars, props, events, lists]):
-                    continue  # Skip actions that set no recognisable variables
+                    continue
 
                 meta = rule_meta.get(rule_id, {})
                 actions.append({
+                    "source":       "rule",
+                    "source_id":    None,
                     "rule_id":      rule_id,
                     "rule_name":    meta.get("name", "Unknown"),
                     "rule_enabled": meta.get("enabled", True),
@@ -203,9 +266,14 @@ class AdobeLaunchService:
                     "events":       events,
                     "lists":        lists,
                 })
+                rule_count += 1
 
         logger.info(
-            "Fetched %d Analytics Set Variables actions from %d rules in library '%s' for property %s",
-            len(actions), len(rules), library_name, property_id,
+            "Fetched %d entries (%d extension + %d rule actions) from library '%s' for property %s",
+            len(actions),
+            len(actions) - rule_count,
+            rule_count,
+            library_name,
+            property_id,
         )
         return actions
