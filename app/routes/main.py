@@ -1892,7 +1892,6 @@ _DOCS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     'docs',
 )
-_DEBUG_ENDPOINTS_CACHE = None
 
 
 def _load_debug_endpoints() -> list[dict]:
