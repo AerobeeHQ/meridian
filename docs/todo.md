@@ -21,6 +21,11 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] In preparation for working on **Item 7. Adobe Launch integration (Roadmap v2-003)** and **Item 8. User OAuth login (Roadmap v2-004)**, we should do a review and cleanup of the app's code and assess if the architecture is correct. If there are simple changes or refactoring that can be made, we should do them.
 - [x] Work on all of the recommendations in [035 — Pre-Launch Architecture Review](docs/autopsies/035-pre-launch-architecture-review.md).
 - [x] The new API Debug page has a dependency on the swagger files in the docs folder. Initially the Dockerfile didn't include the docs folder, but this has since been fixed. But it raises an important point that assets such as the swagger files should be moved to a more appropriate location, perhaps a new `assets/` folder in the root of the project, to avoid confusion and ensure they are included in the Docker image. **Fixed: moved to `assets/swagger/`; Dockerfile updated to `COPY assets/ assets/`.**
+- [ ] In the Components panel on prop/evar/event/listvar detail pages, use the pill style already being used on the Segment/Metric details page instead of the plain hyperlink. 
+- [ ] Hyperlink the segmentId and metricId shown on their respective detail pages the Adobe Analytics equivalent. 
+  For example, 
+  * segmentId `s200001582_5df07b97e0a67a0e926c94e1` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/segments/edit/s200001582_5df07b97e0a67a0e926c94e1
+  * metricId `cm200001582_69c1d1263db7d8215a55df17` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/calculatedMetrics/edit/cm200001582_69c1d1263db7d8215a55df17
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
@@ -32,7 +37,10 @@ This document is a list of smaller todo items and bugs found while using the Cod
   1. Try alternative API domains. Alternative API endpoint domains will be on o: api2.omniture.com, api3.omniture.com, api4.omniture.com
   2. Display a fallback error message. Still show the global navigation, footer, body styling, but replace with a user friendly error message advising the API is not responding, and the data is not available, and to try again later.
 - [x] The prop and eVar detail pages don't display any calculated metrics; but it does work for events. I think it is because a calc metric will never have the prop or evar at the top level of logic. Those data dimensions will always be nested inside a segment inside of a calculated metric. **Fixed in [fix/components-calc-metrics-transitive](.docs/autopsies/029-components-calc-metrics-transitive.md)**
-
+- [ ] Processing Rules section can be hidden from the classified props and evars screens because you can't set a sub-classification using a proc rule.
+- [ ] The Data Feed Column for a classified value should just show the parent data dimension. For example `http://127.0.0.1:5010/evars/evar8.suburb` should show `evar8` as the column name, instead of `evar8.suburb`.
+- [ ] We block the API debug page from sending an POST requests, but some (or all, who really knows) can't actually change any data. That's just how you make a read only call to those endpoints. How do we safely allow those, while still ensuring that no one can ever update data in a report suite?
+ 
   ## Suggested Improvements
 
   ### Quick wins
