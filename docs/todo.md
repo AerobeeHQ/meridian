@@ -8,7 +8,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Change the data dimensions listing page template name. Renamed `table.html` → `listing.html` ([autopsy 019](.docs/autopsies/019-rename-table-template.md))
 - [x] Add a Segments listing page (API 2.0 `/segments` endpoint). See [autopsy 025](.docs/autopsies/025-segments-listing.md).
 - [x] Add a Calculated Metrics listing and detail page (API 2.0 `/calculatedmetrics` endpoint). See [autopsy 027](.docs/autopsies/027-calculated-metrics.md).
-- [ ] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
+- [x] Create a debug page where I can interact with all of the API 1.4 and API 2.0 endpoints described in:
   - [adobe_analytics_api_1.4_swagger.json](adobe_analytics_api_1.4_swagger.json)
   - [adobe_analytics_api_2.0_swagger.json](adobe_analytics_api_2.0_swagger.json)
 - [x] Update the "Report Suites" page and shows all the report suites in the authenticated Adobe Analytics company, and key summary data about each one (e.g., which report suite has the most eVars, or which report suite has the most recent change date). **Fixed in [feature/report-suites-page](.docs/autopsies/031-report-suites-page.md)**
@@ -16,14 +16,14 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] Consolidate the Marketing Channels and Channel Rules into one dropdown to save space on the global navigation. See [autopsy 026](.docs/autopsies/026-channels-nav-dropdown.md).
 - [x] Display the Data Feed column name in the data dimensions's details as a new row in the Data Configuration table. Use this page as a reference for the column names: https://experienceleague.adobe.com/docs/analytics/components/reference/data-feeds/columns.html?lang=en This data is quite stable, never changes, so no extra API calls or fancy data mapping are needed.
 - [x] The pseduo-code for the "Processing Rules" page is a bit hard to read. But it is sort of structured. There are some IF and ELSE like statements. It would be good to reformat it for the user so it's easier to interpret; add some newlines, and indentations. The [Processing Rule Examples.csv](Processing%20Rule%20Examples.csv) and [Processing Rule Examples.xlsx](Processing%20Rule%20Examples.xlsx) file are a good reference for the structure.
-- [ ] Consolidate this todo.md file into the version-2-roadmap.md file.
 - [x] Update the README and make sure it is up to date with the latest changes.
-- [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 - [x] Add a panel to the props/evars/events/listvar details pages (similar to the Related Processing Rules) named "Components", and lists Segments and Calculated Metrics that use that data dimension. The user should be able to click on the component name to view the details page for that component. See [autopsy 028](.docs/autopsies/028-components-panel.md).
+- [x] In preparation for working on **Item 7. Adobe Launch integration (Roadmap v2-003)** and **Item 8. User OAuth login (Roadmap v2-004)**, we should do a review and cleanup of the app's code and assess if the architecture is correct. If there are simple changes or refactoring that can be made, we should do them.
+- [ ] Work on all of the recommendations in [035 — Pre-Launch Architecture Review](docs/autopsies/035-pre-launch-architecture-review.md).
+- [ ] The new API Debug page has a dependency on the swagger files in the docs folder. Initially the Dockerfile didn't include the docs folder, but this has since been fixed. But it raises an important point that assets such as the swagger files should be moved to a more appropriate location, perhaps a new `assets/` folder in the root of the project, to avoid confusion and ensure they are included in the Docker image.
+- [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
-- [ ] The new API Debug page has a dependency on the swagger files in the docs folder. Initially the Dockerfile didn't include the docs folder, but this has since been fixed. But it raises an important point that assets such as the swagger files should be moved to a more appropriate location, perhaps a new `assets/` folder in the root of the project, to avoid confusion and ensure they are included in the Docker image. 
-- [ ] In preparation for working on **Item 7. Adobe Launch integration (Roadmap v2-003)** and **Item 8. User OAuth login (Roadmap v2-004)**, we should do a review and cleanup of the app's code and assess if the architecture is correct. If there are simple changes or refactoring that can be made, we should do them.
-
+- [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 
 ## Bugs
 
