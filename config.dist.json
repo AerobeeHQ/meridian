@@ -17,5 +17,14 @@
     "AW_SECRET":               "<WSSE SECRET>",
 
     "_comment_api14_timeout":  "Timeout in seconds for API 1.4 HTTP requests. Increase if you see spurious timeouts on slow connections. 500ms (0.5) is possible but aggressive; 5 is a safe default for cross-Pacific calls.",
-    "API_V14_TIMEOUT":         5
+    "API_V14_TIMEOUT":         5,
+
+    "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
+    "LAUNCH_ENABLED":          false,
+    "LAUNCH_PROPERTY_ID":      "<YOUR_LAUNCH_PROPERTY_ID (e.g. PRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)>",
+
+    "_comment_auth":           "Authentication mode (Roadmap v2-004). AUTH_MODE 'server' (default) uses the OAuth2 CLIENT_ID/CLIENT_SECRET above as a service account — no user login required. AUTH_MODE 'user' enables per-user Adobe IMS login via OAuth Authorization Code flow; requires OAUTH_REDIRECT_URI and SESSION_SECRET.",
+    "AUTH_MODE":               "server",
+    "OAUTH_REDIRECT_URI":      "http://localhost:5010/auth/callback",
+    "SESSION_SECRET":          "<RANDOM_SECRET_STRING — generate with: python -c \"import secrets; print(secrets.token_hex(32))\">"
 }
