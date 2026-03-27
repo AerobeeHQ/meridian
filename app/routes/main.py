@@ -17,6 +17,7 @@ import requests
 from markupsafe import Markup, escape
 
 from app.services.adobe_analytics import AdobeAnalyticsService
+from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
 from app.services.cache import CacheService, CONFIG_TTL_HOURS
 from app.services import notes as notes_service
 
