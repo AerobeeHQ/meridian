@@ -2003,14 +2003,24 @@ def api_debug_call():
         else:
             if get_api_version() != '2.0':
                 return jsonify({'success': False, 'error': 'API 2.0 is not configured for this Codex instance'})
-            svc = get_api_service()
             http_method = payload.get('http_method', 'GET')
-            path = payload.get('path', '')
-            body = payload.get('body') or {}
+            if http_method not in ('GET',):
+                return jsonify({'success': False, 'error': f'{http_method} requests are disabled in the API debug page'})
+            svc = get_api_service()
+            path_template = payload.get('path', '')
+            body = dict(payload.get('body') or {})
+
+            # Substitute {paramName} placeholders from the body into the path,
+            # so path params don't end up URL-encoded in the query string.
+            resolved_path = path_template
+            for param_name in re.findall(r'\{(\w+)\}', path_template):
+                if param_name in body:
+                    resolved_path = resolved_path.replace(f'{{{param_name}}}', str(body.pop(param_name)))
+
             if http_method == 'GET':
-                result = svc._make_request(path, 'GET', params=body or None)
+                result = svc._make_request(resolved_path, 'GET', params=body or None)
             else:
-                result = svc._make_request(path, http_method, json_data=body or None)
+                result = svc._make_request(resolved_path, http_method, json_data=body or None)
 
         return jsonify({'success': True, 'data': result})
 

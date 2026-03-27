@@ -112,6 +112,10 @@ function epKey(ep) {
     return ep.api === '1.4' ? `1.4:${ep.method}` : `2.0:${ep.http_method}:${ep.path}`;
 }
 
+function isReadOnly(ep) {
+    return ep.api === '1.4' || ep.http_method === 'GET';
+}
+
 // Build a starter JSON body from an endpoint descriptor
 function buildTemplate(ep) {
     if (ep.api === '1.4') {
@@ -218,6 +222,14 @@ function selectEp(ep) {
     document.getElementById('endpointPanel').style.display = 'block';
     document.getElementById('responseSection').style.display = 'none';
 
+    // Disable Send for write methods
+    const btn = document.getElementById('sendBtn');
+    const readonly = isReadOnly(ep);
+    btn.disabled = !readonly;
+    btn.title = readonly ? '' : 'Read-only mode: POST, PUT, DELETE and PATCH are disabled';
+    btn.classList.toggle('btn-primary', readonly);
+    btn.classList.toggle('btn-secondary', !readonly);
+
     // Title
     const titleEl = document.getElementById('epTitle');
     if (ep.api === '1.4') {
@@ -277,7 +289,7 @@ function selectEp(ep) {
 
 // ── Send request ───────────────────────────────────────────────────────────
 async function sendRequest() {
-    if (!selectedEp) return;
+    if (!selectedEp || !isReadOnly(selectedEp)) return;
 
     const bodyText = document.getElementById('requestBody').value.trim();
     let body = {};
@@ -358,7 +370,7 @@ document.getElementById('endpointSearch').addEventListener('input', renderList);
 
 // Keyboard shortcut: Ctrl/Cmd+Enter sends the request
 document.getElementById('requestBody').addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') sendRequest();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && selectedEp && isReadOnly(selectedEp)) sendRequest();
 });
 
 // Initial render
