@@ -1,7 +1,7 @@
 # 035 — Pre-Launch Architecture Review
 
 **Date:** 2026-03-27
-**Status:** Review Complete — Awaiting Approval
+**Status:** Complete — merged in PR #46 (`refactor/pre-launch-cleanup`)
 **Scope:** Full codebase review in preparation for v2-003 (Adobe Launch Integration) and v2-004 (User OAuth Login)
 
 ---
@@ -208,6 +208,73 @@ The detail page pattern (Related Processing Rules section) already exists as a m
 | `verify_setup.py` | — | Needs additions for new features |
 | `Dockerfile` | — | Already copies `docs/`; swagger move needed |
 | `pyproject.toml` | — | No new deps needed at this stage |
+
+## Implementation
+
+All Group A and Group B items were implemented in a single PR on branch `refactor/pre-launch-cleanup` (PR #46). Group C remains deferred.
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `03edf68` | Main refactor — all Group A and B changes |
+| `137c7be` | Bug fix: restore `AdobeAnalyticsV2Service` import removed during B3 (still needed for `parse_description_metadata` static method in `evar_detail`) |
+| `511c9c0` | Bug fix: coerce non-numeric API values (`"N/A"`) to `0` in `get_metric_trend()` and `get_event_trend()` — fixing `TypeError` on Calculated Metrics detail pages |
+
+### What was done
+
+**A1 — Config fields added (`config.dist.json`)**
+
+Five new fields added with `_comment_` documentation:
+- `LAUNCH_ENABLED` / `LAUNCH_PROPERTY_ID` — for v2-003 (Adobe Launch)
+- `AUTH_MODE` / `OAUTH_REDIRECT_URI` / `SESSION_SECRET` — for v2-004 (User OAuth)
+
+**A2 — Swagger files moved to `assets/swagger/`**
+
+- `docs/adobe_analytics_api_1.4_swagger.json` → `assets/swagger/`
+- `docs/adobe_analytics_api_2.0_swagger.json` → `assets/swagger/`
+- `main.py`: `_DOCS_DIR` constant renamed to `_ASSETS_DIR`; swagger paths updated
+- `Dockerfile`: `COPY docs/ docs/` replaced with `COPY assets/ assets/`
+
+**A3 — Traceback gated behind `app.debug`**
+
+`_render_api_error()` now passes `traceback_text=None` in production. Full traceback only included when `app.debug is True`.
+
+**A4 — `todo.md` updated**
+
+Completed items ticked off; swagger move item marked done.
+
+**B1 — `app/routes/auth.py` created**
+
+New Blueprint stub with three placeholder routes registered in `create_app()`:
+- `GET /auth/login` — will redirect to Adobe IMS
+- `GET /auth/callback` — will handle code exchange
+- `GET /auth/logout` — will clear session
+
+**B2 — Navbar user menu added (`base.html`)**
+
+- Left nav given `me-auto` class
+- Right-side `<ul class="navbar-nav ms-auto">` added, rendered only when `config.AUTH_MODE == 'user'`
+- Shows login link when no session, user email + logout dropdown when session present
+
+**B3 — Service instantiation centralised (`app/__init__.py`)**
+
+`create_app()` now owns all service creation:
+- `AdobeAnalyticsV2Service` (when `API_VERSION == '2.0'`)
+- `AdobeAnalyticsService` (always, for processing rules)
+- `app.secret_key` set from `SESSION_SECRET` if present
+
+`get_api_service()` and `get_api_service_v14()` in `main.py` reduced to single-line attribute accessors. `cache_warmer.py` duplicate `_get_api_service_v2/_v14` helpers removed; fetch-map guards against `api_v2` being `None` in 1.4-only mode.
+
+### What remains deferred (Group C)
+
+| Item | When to revisit |
+|------|----------------|
+| Consolidate detail page templates | After v2-003 adds a "Related Launch Rules" section to all three — do it as part of that PR |
+| Split `main.py` into blueprints | After v2-004 adds `auth.py` and the pattern is established |
+| Extract inline CSS to `static/css/style.css` | Any quiet period; purely cosmetic |
+
+---
 
 ## Brain farts
 
