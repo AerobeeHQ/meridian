@@ -24,6 +24,7 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 - **Dimension Notes** — Annotate any dimension or event with plain-English descriptions and technical context
 - **CSV Export** — Export any configuration table for documentation or audits
 - **Background Pre-Caching** — Configuration data is pre-warmed at startup and refreshed every 24 hours
+- **API Debug** — Interactive browser-based explorer for all Adobe Analytics API 1.4 and 2.0 endpoints; browse, inspect parameters, and send read-only requests proxied securely through the server
 
 ---
 
@@ -191,6 +192,7 @@ See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan 
 * [x] Segments listing and detail pages (API 2.0)
 * [x] Calculated Metrics listing and detail pages (API 2.0)
 * [x] Dimension Notes / annotations
+* [x] API Debug page — interactive explorer for all 1.4 and 2.0 endpoints
 
 ### Planned for v2.0
 

@@ -16,6 +16,7 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | 6 | [Report Suite Overview Page](#6-report-suite-overview-page) | Low–Medium | **Done** | [v2-006](plans/v2-006-report-suite-overview.md) |
 | 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments.md) |
 | 8 | [Calculated Metrics](#8-calculated-metrics) | Medium | **Done** | [autopsy 027](autopsies/027-calculated-metrics.md) |
+| 9 | [Interactive API Debug Page](#9-interactive-api-debug-page) | Medium | **Done** | [autopsy 034](autopsies/034-api-debug-page.md) |
 
 ---
 
@@ -28,9 +29,10 @@ Start with low-risk, high-value additions before architectural changes:
 3. ~~**Processing Rules integration** (v2-001) — Data already cached; adds cross-linking to detail pages.~~ **Done**
 4. ~~**Segments** (v2-007) — Listing and detail pages via API 2.0.~~ **Done**
 5. ~~**Calculated Metrics** (v2-008) — Listing, detail pages, formula cross-references, and trend charts via API 2.0.~~ **Done**
-6. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
-7. **Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.
-8. **User OAuth login** (v2-004) — Largest architectural change; do last.
+6. ~~**Interactive API debug page** (v2-009) — Browser-based explorer for all 1.4 and 2.0 endpoints, proxied through the server.~~ **Done**
+7. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
+8. **Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.
+9. **User OAuth login** (v2-004) — Largest architectural change; do last.
 
 ---
 
@@ -129,3 +131,16 @@ Start with low-risk, high-value additions before architectural changes:
 **How:** Uses the API 2.0 `/calculatedmetrics` endpoint with `includeType=all`. Formula is parsed by a recursive tree walker to extract referenced `metrics/` and `segment-ref` nodes. Trend data is fetched via the Reporting API.
 
 **Complexity: Medium** — formula parsing requires recursive traversal of an arbitrary-depth JSON tree; trend chart reuses the existing Chart.js pattern from Events.
+
+
+### 9. Interactive API Debug Page
+
+**Goal:** A browser-based explorer for all Adobe Analytics API 1.4 and 2.0 endpoints, accessible at `/debug`. Users can browse endpoints by tag, inspect parameters, and execute read-only requests without leaving the app.
+
+**Why:** Debugging API calls or exploring what an endpoint returns previously required switching to Postman or a Jupyter notebook and re-entering credentials. Having this capability built into the app accelerates development and gives analysts direct visibility into the raw API data.
+
+**How:** Both Swagger specs bundled in `docs/` are parsed at startup into a flat list of endpoint descriptors. The debug page receives this list as inline JSON and renders a two-panel layout — endpoint browser on the left, request/response editor on the right. All API calls are proxied through a `/debug/call` Flask endpoint, keeping credentials server-side and avoiding CORS. Write methods (POST, PUT, DELETE, PATCH) are disabled both in the UI and at the server layer.
+
+**Complexity: Medium** — no new API client needed; effort is in the Swagger parsing (including `$ref` resolution for 1.4) and the single-page JS UI.
+
+**See:** [autopsy 034](autopsies/034-api-debug-page.md)
