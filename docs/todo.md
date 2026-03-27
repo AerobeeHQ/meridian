@@ -21,6 +21,8 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
 - [x] Add a panel to the props/evars/events/listvar details pages (similar to the Related Processing Rules) named "Components", and lists Segments and Calculated Metrics that use that data dimension. The user should be able to click on the component name to view the details page for that component. See [autopsy 028](.docs/autopsies/028-components-panel.md).
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
+- [ ] The new API Debug page has a dependency on the swagger files in the docs folder. Initially the Dockerfile didn't include the docs folder, but this has since been fixed. But it raises an important point that assets such as the swagger files should be moved to a more appropriate location, perhaps a new `assets/` folder in the root of the project, to avoid confusion and ensure they are included in the Docker image. 
+- [ ] In preparation for working on **Item 7. Adobe Launch integration (Roadmap v2-003)** and **Item 8. User OAuth login (Roadmap v2-004)**, we should do a review and cleanup of the app's code and assess if the architecture is correct. If there are simple changes or refactoring that can be made, we should do them.
 
 
 ## Bugs
@@ -71,7 +73,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
      event_detail.html.
 
- - [ ] **Item 6. Segment detail: human-readable container breakdown**                                                      
+ - [ ] **Item 6. Segment detail: human-readable container breakdown**                                                
      The Segment Detail page currently just shows raw JSON for the definition. The same recursive walker used for Calculated Metrics (which produces a "Referenced Metrics / Segments" list) could be adapted for segments — parsing
      container logic into an indented summary showing hit/visit/visitor containers, rules (dimension / operator / value), and nesting. Higher value for complex multi-container segments.
 
