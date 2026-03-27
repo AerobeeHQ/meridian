@@ -7,6 +7,9 @@
     "API_VERSION":             "2.0",
 
     "_comment_oauth2":         "OAuth2 credentials from Adobe I/O Console (API 2.0)",
+
+    "AODBE_PROJECT_NAME":      "<NAME OF THE PROJECT IN ADOBE I/O CONSOLE>",
+    "ADOBE_PROJECT_URL":       "<URL OF THE PROJECT IN ADOBE I/O CONSOLE>",
     "CLIENT_ID":               "<YOUR_CLIENT_ID>",
     "CLIENT_SECRET":           "<YOUR_CLIENT_SECRET>",
     "SCOPES":                  "openid, AdobeID, additional_info.projectedProductContext",
@@ -19,9 +22,10 @@
     "_comment_api14_timeout":  "Timeout in seconds for API 1.4 HTTP requests. Increase if you see spurious timeouts on slow connections. 500ms (0.5) is possible but aggressive; 5 is a safe default for cross-Pacific calls.",
     "API_V14_TIMEOUT":         5,
 
-    "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
+    "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. Requires API_VERSION 2.0 and the Reactor API scope added to your Adobe I/O project. LAUNCHPAD_URL enables deep-links from Codex to the Launchpad app (leave blank to show rule names without links). The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
     "LAUNCH_ENABLED":          false,
     "LAUNCH_PROPERTY_ID":      "<YOUR_LAUNCH_PROPERTY_ID (e.g. PRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)>",
+    "LAUNCHPAD_URL":           "<YOUR_LAUNCHPAD_URL (e.g. http://localhost:5000, or blank to disable deep links)>",
 
     "_comment_auth":           "Authentication mode (Roadmap v2-004). AUTH_MODE 'server' (default) uses the OAuth2 CLIENT_ID/CLIENT_SECRET above as a service account — no user login required. AUTH_MODE 'user' enables per-user Adobe IMS login via OAuth Authorization Code flow; requires OAUTH_REDIRECT_URI and SESSION_SECRET.",
     "AUTH_MODE":               "server",

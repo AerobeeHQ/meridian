@@ -264,6 +264,45 @@ def format_rule_html(text: str) -> Markup:
     return Markup('\n'.join(output))
 
 
+def find_related_launch_rules(actions: list, dimension_type: str, dimension_id: str) -> list:
+    """Return Launch analytics actions that set the given dimension.
+
+    Args:
+        actions:        Cached list from AdobeLaunchService.get_analytics_actions().
+                        Each dict has 'rule_id', 'rule_name', 'rule_enabled',
+                        'evars', 'props', 'events', 'lists'.
+        dimension_type: 'evar', 'prop', 'event', or 'listvar'.
+        dimension_id:   Full dimension ID (e.g. 'evar5') or just the number ('5').
+
+    Returns:
+        Subset of actions that reference the given dimension.
+    """
+    if not actions or not dimension_type or not dimension_id:
+        return []
+
+    # Strip any alphabetic prefix to get the numeric suffix
+    num_str = re.sub(r'^[a-zA-Z]+', '', str(dimension_id))
+    if not num_str:
+        return []
+
+    if dimension_type == 'evar':
+        target, key = f'eVar{num_str}', 'evars'   # Adobe Analytics uses capital V
+    elif dimension_type == 'prop':
+        target, key = f'prop{num_str}', 'props'
+    elif dimension_type == 'event':
+        target, key = f'event{num_str}', 'events'
+    elif dimension_type == 'listvar':
+        target, key = f'list{num_str}', 'lists'
+    else:
+        return []
+
+    target_lower = target.lower()
+    return [
+        action for action in actions
+        if target_lower in [v.lower() for v in action.get(key, [])]
+    ]
+
+
 def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
     """Return processing rules whose conditions or actions reference any of the
     given dimension terms.
@@ -1793,6 +1832,38 @@ def api_related_rules(dimension_type: str, dimension_id: str):
         '_fragment_related_rules.html',
         related_rules=formatted_rules,
         processing_rules_cached=processing_rules_cached,
+    )
+
+
+@main_bp.route('/api/related-launch-rules/<dimension_type>/<dimension_id>')
+def api_related_launch_rules(dimension_type: str, dimension_id: str):
+    """Return the 'Adobe Launch Rules' card as an HTML fragment.
+
+    Called asynchronously from detail pages after initial render.
+    Returns 204 No Content when Launch is not enabled so the placeholder
+    can be removed without rendering an empty card.
+
+    Args:
+        dimension_type: 'prop', 'evar', 'event', or 'listvar'
+        dimension_id:   Full dimension ID (e.g. 'evar5') or listvar number ('1').
+    """
+    if not current_app.config.get('LAUNCH_ENABLED'):
+        return '', 204
+
+    rsid = get_rsid()
+    _cached_actions = cache.get(rsid, 'launch_rules')
+    launch_available = _cached_actions is not None
+
+    related_rules = find_related_launch_rules(
+        _cached_actions or [], dimension_type, dimension_id
+    )
+
+    return render_template(
+        '_fragment_related_launch_rules.html',
+        related_rules=related_rules,
+        launch_available=launch_available,
+        launchpad_url=current_app.config.get('LAUNCHPAD_URL', ''),
+        property_id=current_app.config.get('LAUNCH_PROPERTY_ID', ''),
     )
 
 

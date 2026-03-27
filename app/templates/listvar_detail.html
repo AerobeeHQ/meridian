@@ -80,6 +80,19 @@
             </div>
         </div>
 
+        {% if config.LAUNCH_ENABLED %}
+        <!-- Adobe Launch Rules (loaded asynchronously) -->
+        <div id="related-launch-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Adobe Launch Rules</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Components (loaded asynchronously) -->
         <div id="components-placeholder" class="card mb-4">
             <div class="card-body">
@@ -227,6 +240,29 @@
                 '<p class="text-muted mb-0">Could not load processing rules data.</p>';
         });
 }());
+
+{% if config.LAUNCH_ENABLED %}
+// Async: load Adobe Launch Rules after page render
+(function () {
+    var placeholder = document.getElementById('related-launch-rules-placeholder');
+    if (!placeholder) return;
+    fetch('/api/related-launch-rules/listvar/{{ listvar_num }}')
+        .then(function (r) {
+            if (r.status === 204) { placeholder.remove(); return ''; }
+            return r.text();
+        })
+        .then(function (html) {
+            if (!html) return;
+            placeholder.insertAdjacentHTML('afterend', html);
+            placeholder.remove();
+        })
+        .catch(function () {
+            placeholder.querySelector('.card-body').innerHTML =
+                '<h5 class="card-title">Adobe Launch Rules</h5>' +
+                '<p class="text-muted mb-0">Could not load Launch rules data.</p>';
+        });
+}());
+{% endif %}
 
 // Async: load Components after page render
 (function () {

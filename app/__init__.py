@@ -52,6 +52,7 @@ def create_app():
     # Adobe Launch (Tags) integration - Roadmap v2-003
     app.config['LAUNCH_ENABLED'] = config.get('LAUNCH_ENABLED', False)
     app.config['LAUNCH_PROPERTY_ID'] = config.get('LAUNCH_PROPERTY_ID')
+    app.config['LAUNCHPAD_URL'] = config.get('LAUNCHPAD_URL', '')
 
     # Auth mode - Roadmap v2-004
     # 'server' = service account OAuth2 (default, current behaviour)
@@ -92,6 +93,24 @@ def create_app():
         secret=app.config['AW_SECRET'],
         request_timeout=app.config.get('API_V14_TIMEOUT', 5.0),
     )
+
+    # Adobe Launch (Tags) service — only when LAUNCH_ENABLED and API 2.0
+    if app.config['LAUNCH_ENABLED'] and app.config.get('LAUNCH_PROPERTY_ID'):
+        if app.config['API_VERSION'] == '2.0':
+            from app.services.adobe_launch import AdobeLaunchService
+            # Reactor API requires the ent_reactor_admin_sdk scope in addition to
+            # the base Analytics scopes — create a dedicated auth instance.
+            _base_scopes = app.config.get('SCOPES') or 'openid, AdobeID, additional_info.projectedProductContext'
+            _launch_scopes = _base_scopes.rstrip(', ') + ', https://ims-na1.adobelogin.com/s/ent_reactor_admin_sdk'
+            _launch_auth = OAuth2Auth(
+                client_id=app.config['CLIENT_ID'],
+                client_secret=app.config['CLIENT_SECRET'],
+                scopes=_launch_scopes,
+            )
+            app.codex_launch_service = AdobeLaunchService(
+                auth_service=_launch_auth,
+                org_id=app.config['ORGANIZATION_ID'],
+            )
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     from app.routes.main import main_bp
