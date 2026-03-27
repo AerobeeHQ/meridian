@@ -14,7 +14,7 @@ Route summary:
     GET /auth/callback — Handle the IMS redirect; exchange code for token
     GET /auth/logout   — Clear the user session and redirect to /auth/login
 """
-from flask import Blueprint, current_app, redirect, url_for
+from flask import Blueprint, redirect, url_for
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
