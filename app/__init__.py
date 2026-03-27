@@ -106,6 +106,7 @@ def create_app():
             # token is not affected.
             _launch_scopes = app.config.get('LAUNCH_SCOPES') or (
                 'AdobeID, openid, read_organizations, '
+                'additional_info.job_function, '
                 'additional_info.projectedProductContext, additional_info.roles'
             )
             _launch_auth = OAuth2Auth(

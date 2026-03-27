@@ -92,6 +92,11 @@ class AdobeLaunchService:
         results = []
         while url:
             resp = requests.get(url, headers=self._headers(), params=params)
+            if not resp.ok:
+                logger.error(
+                    "Reactor API error %s %s — response: %s",
+                    resp.status_code, resp.reason, resp.text[:500],
+                )
             resp.raise_for_status()
             body = resp.json()
             results.extend(body.get("data", []))
