@@ -82,9 +82,23 @@ class AdobeLaunchService:
             params = None  # Subsequent pages use the full URL from links.next
         return results
 
-    def get_rules(self, property_id: str) -> list:
-        """Fetch all rules for a Tag property."""
-        url = f"{REACTOR_BASE_URL}/properties/{property_id}/rules"
+    def get_production_library(self, property_id: str) -> dict | None:
+        """Return the most recently updated published library for a property.
+
+        Returns None if no published library exists.
+        """
+        url = f"{REACTOR_BASE_URL}/properties/{property_id}/libraries"
+        libraries = self._get_all_pages(url, params={
+            "filter[state]": "EQ published",
+            "page[size]": 100,
+        })
+        if not libraries:
+            return None
+        return max(libraries, key=lambda lib: lib.get("attributes", {}).get("updated_at", ""))
+
+    def get_library_rules(self, library_id: str) -> list:
+        """Return the full rule objects included in a library."""
+        url = f"{REACTOR_BASE_URL}/libraries/{library_id}/rules"
         return self._get_all_pages(url, params={"page[size]": 100})
 
     def get_rule_components(self, rule_id: str) -> list:
@@ -94,7 +108,10 @@ class AdobeLaunchService:
 
     def get_analytics_actions(self, property_id: str) -> list:
         """
-        Return all Analytics Set Variables actions across all rules.
+        Return all Analytics Set Variables actions from the production library.
+
+        Only rules in the most recently published library are inspected —
+        Development and Staging library contents are deliberately excluded.
 
         Each item in the returned list is a compact dict:
         {
@@ -110,7 +127,20 @@ class AdobeLaunchService:
         Rule components are fetched in parallel (8 workers) to keep total
         fetch time reasonable for properties with many rules.
         """
-        rules = self.get_rules(property_id)
+        # Scope to the production library only
+        library = self.get_production_library(property_id)
+        if library is None:
+            logger.warning(
+                "No published library found for property %s — Launch cache will be empty",
+                property_id,
+            )
+            return []
+
+        library_id = library["id"]
+        library_name = library.get("attributes", {}).get("name", "Unknown")
+        logger.info("Using production library '%s' (%s)", library_name, library_id)
+
+        rules = self.get_library_rules(library_id)
         if not rules:
             return []
 
@@ -175,7 +205,7 @@ class AdobeLaunchService:
                 })
 
         logger.info(
-            "Fetched %d Analytics Set Variables actions from %d rules for property %s",
-            len(actions), len(rules), property_id,
+            "Fetched %d Analytics Set Variables actions from %d rules in library '%s' for property %s",
+            len(actions), len(rules), library_name, property_id,
         )
         return actions

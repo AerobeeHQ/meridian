@@ -98,17 +98,12 @@ def create_app():
     if app.config['LAUNCH_ENABLED'] and app.config.get('LAUNCH_PROPERTY_ID'):
         if app.config['API_VERSION'] == '2.0':
             from app.services.adobe_launch import AdobeLaunchService
-            # Reactor API requires the ent_reactor_admin_sdk scope in addition to
-            # the base Analytics scopes — create a dedicated auth instance.
-            _base_scopes = app.config.get('SCOPES') or 'openid, AdobeID, additional_info.projectedProductContext'
-            _launch_scopes = _base_scopes.rstrip(', ') + ', https://ims-na1.adobelogin.com/s/ent_reactor_admin_sdk'
-            _launch_auth = OAuth2Auth(
-                client_id=app.config['CLIENT_ID'],
-                client_secret=app.config['CLIENT_SECRET'],
-                scopes=_launch_scopes,
-            )
+            # Reuse the existing OAuth2Auth instance — for OAuthV2 server-to-server
+            # credentials, Reactor API access is controlled by the Adobe I/O Console
+            # credential configuration (which products are added), not by extra token
+            # scopes. Using the same auth instance also shares the token cache.
             app.codex_launch_service = AdobeLaunchService(
-                auth_service=_launch_auth,
+                auth_service=auth,
                 org_id=app.config['ORGANIZATION_ID'],
             )
 

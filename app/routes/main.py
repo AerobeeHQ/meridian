@@ -1656,12 +1656,23 @@ def cache_view():
     rsid = get_rsid()
     cache_info = get_cache_info()
 
+    # Build Launch section data when the feature is enabled
+    launch_info = None
+    if current_app.config.get('LAUNCH_ENABLED'):
+        _cached_actions = cache.get(rsid, 'launch_rules')
+        launch_info = {
+            'property_id':   current_app.config.get('LAUNCH_PROPERTY_ID', ''),
+            'launchpad_url': current_app.config.get('LAUNCHPAD_URL', ''),
+            'action_count':  len(_cached_actions) if _cached_actions is not None else None,
+        }
+
     return render_template(
         'cache.html',
         title='Cache',
         cache_info=cache_info,
         rsid=rsid,
-        active_tab='cache'
+        active_tab='cache',
+        launch_info=launch_info,
     )
 
 
