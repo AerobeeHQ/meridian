@@ -1355,7 +1355,7 @@ def processing_rules():
         'Proc Rules', data, list(PROCRULES_COLUMNS.values()), 'processing-rules',
         preformatted_columns=['Conditions', 'Actions'],
         #                Rule, Section, Conditions, Match Type, Actions, Comments
-        dt_column_widths=['3%', '20%', '25%',       '5%',       '2%',   '20%'],
+        dt_column_widths=['3%', '20%', '25%',       '5%',       '27%',   '20%'],
         cache_key='processing_rules'
     )
 
@@ -1882,6 +1882,151 @@ def delete_note(dimension_type: str, dimension_id: str):
     rsid = get_rsid()
     deleted = notes_service.delete(rsid, dimension_type, dimension_id)
     return jsonify({'deleted': deleted})
+
+
+# =============================================================================
+# API Debug Page
+# =============================================================================
+
+_DOCS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    'docs',
+)
+
+
+def _load_debug_endpoints() -> list[dict]:
+    """Parse both Swagger specs and return a flat list of endpoint descriptors.
+
+    Results are cached in a module-level variable since the specs are static
+    files that never change at runtime.
+    """
+    # Use a function-level cache attribute instead of a separate global.
+    if hasattr(_load_debug_endpoints, "_cache"):
+        return _load_debug_endpoints._cache  # type: ignore[attr-defined]
+
+    endpoints: list[dict] = []
+
+    # ── API 1.4 ──────────────────────────────────────────────────────────────
+    path14 = os.path.join(_DOCS_DIR, 'adobe_analytics_api_1.4_swagger.json')
+    if os.path.exists(path14):
+        with open(path14) as fh:
+            spec14 = json.load(fh)
+        all_schemas = spec14.get('components', {}).get('schemas', {})
+
+        def _resolve(schema: dict, depth: int = 0) -> dict:
+            if depth > 4:
+                return {'type': 'any'}
+            if '$ref' in schema:
+                name = schema['$ref'].split('/')[-1]
+                return _resolve(all_schemas.get(name, {}), depth + 1)
+            t = schema.get('type', 'object')
+            if t == 'array':
+                return {'type': 'array', 'items': _resolve(schema.get('items', {}), depth + 1)}
+            props = schema.get('properties', {})
+            if props:
+                return {'type': 'object', 'properties': {k: _resolve(v, depth + 1) for k, v in props.items()}}
+            return {'type': t}
+
+        for path, methods in spec14.get('paths', {}).items():
+            method_name = path.split('method=')[-1] if 'method=' in path else path
+            for _http_m, ep_spec in methods.items():
+                params: dict[str, str] = {}
+                for _ct, sw in ep_spec.get('requestBody', {}).get('content', {}).items():
+                    resolved = _resolve(sw.get('schema', {}))
+                    params = {k: v.get('type', 'string') for k, v in resolved.get('properties', {}).items()}
+                endpoints.append({
+                    'api': '1.4',
+                    'tag': ep_spec.get('tags', ['Other'])[0],
+                    'method': method_name,
+                    'summary': ep_spec.get('summary', ''),
+                    'params': params,
+                })
+
+    # ── API 2.0 ──────────────────────────────────────────────────────────────
+    path20 = os.path.join(_DOCS_DIR, 'adobe_analytics_api_2.0_swagger.json')
+    if os.path.exists(path20):
+        with open(path20) as fh:
+            spec20 = json.load(fh)
+        for path, methods in spec20.get('paths', {}).items():
+            display_path = path.replace('/{globalCompanyId}', '')
+            for http_m, ep_spec in methods.items():
+                params = [
+                    {
+                        'name': p['name'],
+                        'in': p.get('in', 'query'),
+                        'type': p.get('type', p.get('schema', {}).get('type', 'string')),
+                        'required': bool(p.get('required', False)),
+                        'description': p.get('description', ''),
+                    }
+                    for p in ep_spec.get('parameters', [])
+                    if p.get('name') and p.get('name') != 'globalCompanyId'
+                ]
+                endpoints.append({
+                    'api': '2.0',
+                    'tag': ep_spec.get('tags', ['Other'])[0],
+                    'http_method': http_m.upper(),
+                    'path': display_path,
+                    'summary': ep_spec.get('summary', ''),
+                    'params': params,
+                })
+
+    _load_debug_endpoints._cache = endpoints  # type: ignore[attr-defined]
+    return endpoints
+
+
+@main_bp.route('/debug')
+def api_debug():
+    """Interactive debug page for exploring Adobe Analytics API 1.4 and 2.0 endpoints."""
+    endpoints = _load_debug_endpoints()
+    rsid = get_rsid()
+    return render_template(
+        'api_debug.html',
+        title='API Debug',
+        active_tab='debug',
+        rsid=rsid,
+        cache_info=get_cache_info(),
+        endpoints_json=json.dumps(endpoints),
+        configured_api_version=get_api_version(),
+    )
+
+
+@main_bp.route('/debug/call', methods=['POST'])
+def api_debug_call():
+    """Proxy a raw API call from the debug page and return the JSON response."""
+    payload = request.json or {}
+    api_ver = payload.get('api')
+
+    try:
+        if api_ver == '1.4':
+            svc = get_api_service_v14()
+            result = svc._make_request(payload['method'], payload.get('body') or {})
+        else:
+            if get_api_version() != '2.0':
+                return jsonify({'success': False, 'error': 'API 2.0 is not configured for this Codex instance'})
+            http_method = payload.get('http_method', 'GET')
+            if http_method not in ('GET',):
+                return jsonify({'success': False, 'error': f'{http_method} requests are disabled in the API debug page'})
+            svc = get_api_service()
+            path_template = payload.get('path', '')
+            body = dict(payload.get('body') or {})
+
+            # Substitute {paramName} placeholders from the body into the path,
+            # so path params don't end up URL-encoded in the query string.
+            resolved_path = path_template
+            for param_name in re.findall(r'\{(\w+)\}', path_template):
+                if param_name in body:
+                    resolved_path = resolved_path.replace(f'{{{param_name}}}', str(body.pop(param_name)))
+
+            if http_method == 'GET':
+                result = svc._make_request(resolved_path, 'GET', params=body or None)
+            else:
+                result = svc._make_request(resolved_path, http_method, json_data=body or None)
+
+        return jsonify({'success': True, 'data': result})
+
+    except Exception as exc:
+        logger.warning("API debug call failed: %s", exc)
+        return jsonify({'success': False, 'error': str(exc), 'error_type': type(exc).__name__})
 
 
 @main_bp.route('/api/notes/options/<dimension_type>')

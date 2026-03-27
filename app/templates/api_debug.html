@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row g-0" style="min-height: 75vh;">
+
+    {# ── Left panel: endpoint browser ──────────────────────────────────────── #}
+    <div class="col-md-4 border-end pe-0" style="overflow-y: auto;">
+        <div class="p-3">
+
+            {# API version selector #}
+            <div class="btn-group w-100 mb-2" role="group" aria-label="API version">
+                <input type="radio" class="btn-check" name="apiVersion" id="apiV14" value="1.4"
+                    {% if configured_api_version != '2.0' %}checked{% endif %}>
+                <label class="btn btn-outline-secondary btn-sm" for="apiV14">API 1.4</label>
+                <input type="radio" class="btn-check" name="apiVersion" id="apiV20" value="2.0"
+                    {% if configured_api_version == '2.0' %}checked{% endif %}>
+                <label class="btn btn-outline-secondary btn-sm" for="apiV20">API 2.0</label>
+            </div>
+
+            <input type="search" class="form-control form-control-sm mb-2"
+                id="endpointSearch" placeholder="Search endpoints…" autocomplete="off">
+
+            <div id="endpointList" style="font-size:0.8em;"></div>
+        </div>
+    </div>
+
+    {# ── Right panel: request + response ───────────────────────────────────── #}
+    <div class="col-md-8">
+        <div class="p-3">
+
+            <div id="noSelection" class="text-muted mt-4 text-center">
+                <p class="fs-5">&#x1F50D; Select an endpoint from the left panel.</p>
+                <p class="small">Requests are proxied through the Codex server using the configured credentials.</p>
+            </div>
+
+            <div id="endpointPanel" style="display:none;">
+
+                {# Title + send button #}
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div>
+                        <h6 class="mb-0 font-monospace" id="epTitle" style="font-size:0.95em;"></h6>
+                        <small class="text-muted" id="epSummary"></small>
+                    </div>
+                    <button class="btn btn-primary btn-sm ms-3 flex-shrink-0" id="sendBtn"
+                            onclick="sendRequest()">Send &#9654;</button>
+                </div>
+
+                {# Parameters reference table #}
+                <div id="paramsSection" class="mb-3">
+                    <p class="text-muted fw-semibold mb-1" style="font-size:0.8em;">PARAMETERS</p>
+                    <div id="paramsList"></div>
+                </div>
+
+                {# Request body editor #}
+                <div class="mb-3">
+                    <p class="text-muted fw-semibold mb-1" style="font-size:0.8em;">
+                        REQUEST BODY / PARAMS <span class="text-muted fw-normal">(JSON)</span>
+                    </p>
+                    <textarea id="requestBody" class="form-control font-monospace"
+                              rows="10" spellcheck="false"
+                              style="font-size:0.8em; resize:vertical;"></textarea>
+                    <div id="bodyError" class="text-danger small mt-1" style="display:none;"></div>
+                </div>
+
+                {# Response viewer #}
+                <div id="responseSection" style="display:none;">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <p class="text-muted fw-semibold mb-0" style="font-size:0.8em;">RESPONSE</p>
+                        <div>
+                            <span id="responseStatus" class="badge me-2"></span>
+                            <button class="btn btn-outline-secondary btn-sm py-0"
+                                    style="font-size:0.75em;"
+                                    onclick="copyResponse()">Copy</button>
+                        </div>
+                    </div>
+                    <pre id="responseBody" class="pre-code p-3 rounded mb-0"
+                         style="background:#f8f9fa; max-height:450px; overflow-y:auto; font-size:0.78em; white-space:pre-wrap; word-break:break-all;"></pre>
+                </div>
+
+            </div>{# /endpointPanel #}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+const ENDPOINTS = {{ endpoints_json | safe }};
+const DEFAULT_RSID = {{ rsid | tojson }};
+const CONFIGURED_API = {{ configured_api_version | tojson }};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let selectedEp = null;
+let currentApi = CONFIGURED_API === '2.0' ? '2.0' : '1.4';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function methodBadge(m) {
+    const colors = {GET:'#198754',POST:'#0d6efd',PUT:'#ffc107',DELETE:'#dc3545',PATCH:'#0dcaf0'};
+    const c = colors[m] || '#6c757d';
+    return `<span class="badge me-1" style="background:${c};font-size:0.7em;">${m}</span>`;
+}
+
+function epKey(ep) {
+    return ep.api === '1.4' ? `1.4:${ep.method}` : `2.0:${ep.http_method}:${ep.path}`;
+}
+
+function isReadOnly(ep) {
+    return ep.api === '1.4' || ep.http_method === 'GET';
+}
+
+// Build a starter JSON body from an endpoint descriptor
+function buildTemplate(ep) {
+    if (ep.api === '1.4') {
+        const body = {};
+        for (const [name, type] of Object.entries(ep.params || {})) {
+            if (name.toLowerCase().includes('rsid')) {
+                body[name] = (type === 'array') ? [DEFAULT_RSID] : DEFAULT_RSID;
+            } else if (type === 'array')   { body[name] = []; }
+            else if (type === 'boolean')   { body[name] = false; }
+            else if (type === 'integer')   { body[name] = 0; }
+            else                           { body[name] = ''; }
+        }
+        return JSON.stringify(body, null, 2);
+    } else {
+        const body = {};
+        for (const p of (ep.params || [])) {
+            if (p.in !== 'path' && p.in !== 'query') continue;
+            if (!p.required && !p.name.toLowerCase().includes('rsid')) continue;
+            body[p.name] = p.name.toLowerCase().includes('rsid') ? DEFAULT_RSID : '';
+        }
+        return JSON.stringify(body, null, 2);
+    }
+}
+
+// ── Endpoint list rendering ────────────────────────────────────────────────
+function renderList() {
+    const search = document.getElementById('endpointSearch').value.trim().toLowerCase();
+
+    const filtered = ENDPOINTS.filter(ep => {
+        if (ep.api !== currentApi) return false;
+        if (!search) return true;
+        const hay = [ep.method, ep.path, ep.summary, ep.tag, ep.http_method]
+            .filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(search);
+    });
+
+    // Group by tag
+    const groups = {};
+    for (const ep of filtered) {
+        (groups[ep.tag || 'Other'] = groups[ep.tag || 'Other'] || []).push(ep);
+    }
+
+    const selKey = selectedEp ? epKey(selectedEp) : null;
+    const hasSearch = search.length > 0;
+    const container = document.getElementById('endpointList');
+
+    if (Object.keys(groups).length === 0) {
+        container.innerHTML = '<div class="text-muted small p-2">No endpoints match.</div>';
+        return;
+    }
+
+    const html = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([tag, eps]) => {
+        const isOpenTag = hasSearch || eps.some(e => epKey(e) === selKey);
+        const btnRows = eps.map(ep => {
+            const key = epKey(ep);
+            const label = ep.api === '1.4'
+                ? esc(ep.method)
+                : methodBadge(ep.http_method) + esc(ep.path);
+            const active = key === selKey ? ' active' : '';
+            return `<button class="ep-btn list-group-item list-group-item-action py-1 px-2 border-0 text-start${active}"
+                            style="font-size:0.8em; line-height:1.4;"
+                            data-key="${esc(key)}">${label}</button>`;
+        }).join('');
+
+        return `<div class="mb-1">
+            <button class="tag-toggle btn btn-link btn-sm text-start p-0 ps-1 text-decoration-none text-dark w-100 fw-semibold"
+                    style="font-size:0.8em;" data-open="${isOpenTag}">
+                <span class="toggle-icon">${isOpenTag ? '▾' : '▸'}</span>
+                ${esc(tag)} <span class="text-muted fw-normal">(${eps.length})</span>
+            </button>
+            <div class="tag-eps ${isOpenTag ? '' : 'd-none'}">
+                <div class="list-group list-group-flush border rounded-1 mb-1">${btnRows}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+
+    // Tag toggle handler
+    container.querySelectorAll('.tag-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const isOpen = btn.dataset.open === 'true';
+            btn.dataset.open = !isOpen;
+            btn.querySelector('.toggle-icon').textContent = !isOpen ? '▾' : '▸';
+            btn.nextElementSibling.classList.toggle('d-none', isOpen);
+        });
+    });
+
+    // Endpoint select handler
+    container.querySelectorAll('.ep-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.key;
+            const ep = ENDPOINTS.find(e => epKey(e) === key);
+            if (ep) selectEp(ep);
+        });
+    });
+}
+
+// ── Endpoint selection ─────────────────────────────────────────────────────
+function selectEp(ep) {
+    selectedEp = ep;
+
+    document.getElementById('noSelection').style.display = 'none';
+    document.getElementById('endpointPanel').style.display = 'block';
+    document.getElementById('responseSection').style.display = 'none';
+
+    // Disable Send for write methods
+    const btn = document.getElementById('sendBtn');
+    const readonly = isReadOnly(ep);
+    btn.disabled = !readonly;
+    btn.title = readonly ? '' : 'Read-only mode: POST, PUT, DELETE and PATCH are disabled';
+    btn.classList.toggle('btn-primary', readonly);
+    btn.classList.toggle('btn-secondary', !readonly);
+
+    // Title
+    const titleEl = document.getElementById('epTitle');
+    if (ep.api === '1.4') {
+        titleEl.textContent = ep.method;
+    } else {
+        titleEl.innerHTML = methodBadge(ep.http_method) + esc(ep.path);
+    }
+    document.getElementById('epSummary').textContent = ep.summary || '';
+
+    // Params table
+    const paramsEl = document.getElementById('paramsList');
+    const params = ep.params;
+    if (ep.api === '1.4') {
+        if (Object.keys(params || {}).length === 0) {
+            paramsEl.innerHTML = '<p class="text-muted small mb-0">No parameters.</p>';
+        } else {
+            const rows = Object.entries(params).map(([name, type]) =>
+                `<tr><td class="font-monospace small py-1 pe-3">${esc(name)}</td>
+                     <td class="small text-muted py-1">${esc(type)}</td></tr>`
+            ).join('');
+            paramsEl.innerHTML = `<table class="table table-sm mb-0" style="font-size:0.8em;"><tbody>${rows}</tbody></table>`;
+        }
+    } else {
+        const pArr = params || [];
+        if (pArr.length === 0) {
+            paramsEl.innerHTML = '<p class="text-muted small mb-0">No parameters.</p>';
+        } else {
+            const rows = pArr.map(p =>
+                `<tr>
+                    <td class="font-monospace small py-1 pe-2">${esc(p.name)}</td>
+                    <td class="small text-muted py-1 pe-2">${esc(p.in)}</td>
+                    <td class="small text-muted py-1 pe-2">${esc(p.type || '')}</td>
+                    <td class="small py-1">${p.required ? '<span class="text-danger">required</span>' : ''}</td>
+                    <td class="small text-muted py-1" style="max-width:200px;white-space:normal;">${esc(p.description || '')}</td>
+                 </tr>`
+            ).join('');
+            paramsEl.innerHTML = `<table class="table table-sm mb-0" style="font-size:0.8em;">
+                <thead><tr>
+                    <th class="py-1">Name</th><th class="py-1">In</th>
+                    <th class="py-1">Type</th><th class="py-1"></th>
+                    <th class="py-1">Description</th>
+                </tr></thead>
+                <tbody>${rows}</tbody></table>`;
+        }
+    }
+
+    // Request body textarea
+    document.getElementById('requestBody').value = buildTemplate(ep);
+    document.getElementById('bodyError').style.display = 'none';
+
+    // Re-render list to show active state
+    renderList();
+
+    // Scroll right panel to top
+    document.getElementById('endpointPanel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── Send request ───────────────────────────────────────────────────────────
+async function sendRequest() {
+    if (!selectedEp || !isReadOnly(selectedEp)) return;
+
+    const bodyText = document.getElementById('requestBody').value.trim();
+    let body = {};
+    if (bodyText) {
+        try {
+            body = JSON.parse(bodyText);
+        } catch(e) {
+            const errEl = document.getElementById('bodyError');
+            errEl.textContent = 'Invalid JSON: ' + e.message;
+            errEl.style.display = 'block';
+            return;
+        }
+    }
+    document.getElementById('bodyError').style.display = 'none';
+
+    const payload = selectedEp.api === '1.4'
+        ? { api: '1.4', method: selectedEp.method, body }
+        : { api: '2.0', http_method: selectedEp.http_method, path: selectedEp.path, body };
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const tStart = Date.now();
+    try {
+        const res = await fetch('/debug/call', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+        const elapsed = ((Date.now() - tStart) / 1000).toFixed(2);
+
+        const sec = document.getElementById('responseSection');
+        const pre = document.getElementById('responseBody');
+        const badge = document.getElementById('responseStatus');
+        sec.style.display = 'block';
+
+        if (result.success) {
+            badge.textContent = `200 OK · ${elapsed}s`;
+            badge.className = 'badge bg-success me-2';
+            pre.textContent = JSON.stringify(result.data, null, 2);
+        } else {
+            badge.textContent = `Error · ${elapsed}s`;
+            badge.className = 'badge bg-danger me-2';
+            pre.textContent = `${result.error_type || 'Error'}: ${result.error}`;
+        }
+        sec.scrollIntoView({behavior:'smooth', block:'nearest'});
+    } catch(e) {
+        const badge = document.getElementById('responseStatus');
+        badge.textContent = 'Network Error';
+        badge.className = 'badge bg-danger me-2';
+        document.getElementById('responseBody').textContent = String(e);
+        document.getElementById('responseSection').style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Send &#9654;';
+    }
+}
+
+function copyResponse() {
+    const text = document.getElementById('responseBody').textContent;
+    navigator.clipboard.writeText(text).catch(() => {});
+}
+
+// ── Wire up controls ───────────────────────────────────────────────────────
+document.querySelectorAll('input[name="apiVersion"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        currentApi = radio.value;
+        selectedEp = null;
+        document.getElementById('noSelection').style.display = 'block';
+        document.getElementById('endpointPanel').style.display = 'none';
+        renderList();
+    });
+});
+
+document.getElementById('endpointSearch').addEventListener('input', renderList);
+
+// Keyboard shortcut: Ctrl/Cmd+Enter sends the request
+document.getElementById('requestBody').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && selectedEp && isReadOnly(selectedEp)) sendRequest();
+});
+
+// Initial render
+renderList();
+</script>
+{% endblock %}
