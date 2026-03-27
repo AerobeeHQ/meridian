@@ -17,8 +17,6 @@ import requests
 from markupsafe import Markup, escape
 
 from app.services.adobe_analytics import AdobeAnalyticsService
-from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
-from app.services.adobe_auth import OAuth2Auth
 from app.services.cache import CacheService, CONFIG_TTL_HOURS
 from app.services import notes as notes_service
 
@@ -32,13 +30,16 @@ cache = CacheService()
 
 
 def _render_api_error(exc: Exception, status: int = 503):
-    """Render the API 1.4 error page with full traceback available for debugging.
+    """Render the API error page.
+
+    Full Python traceback is included only when the app is running in debug
+    mode, so it is never exposed in production or client deployments.
 
     Args:
         exc:    The exception that caused the failure.
         status: HTTP status code to return (default 503 Service Unavailable).
     """
-    tb_text = _traceback.format_exc()
+    tb_text = _traceback.format_exc() if current_app.debug else None
     return render_template(
         '_api_error.html',
         title='API Unavailable',
@@ -102,54 +103,27 @@ def get_api_version() -> str:
 
 def get_api_service():
     """
-    Get configured Adobe Analytics service based on API_VERSION config.
+    Get the configured Adobe Analytics service based on API_VERSION.
 
-    Service instances are stored on the Flask app object so each
-    ``create_app()`` call gets its own instance (avoids stale state
-    when the factory is called multiple times, e.g. in tests).
+    Services are initialised once at startup in create_app() and stored on
+    the Flask app object. This function is just a thin accessor.
 
     Returns:
         AdobeAnalyticsV2Service for API 2.0, or AdobeAnalyticsService for 1.4
     """
-    app = current_app._get_current_object()
-    api_version = get_api_version()
-
-    if api_version == '2.0':
-        if not hasattr(app, 'codex_api_service_v2'):
-            auth = OAuth2Auth(
-                client_id=current_app.config['CLIENT_ID'],
-                client_secret=current_app.config['CLIENT_SECRET'],
-                scopes=current_app.config.get('SCOPES')
-            )
-            app.codex_api_service_v2 = AdobeAnalyticsV2Service(
-                auth_service=auth,
-                client_id=current_app.config['CLIENT_ID'],
-                org_id=current_app.config['ORGANIZATION_ID']
-            )
-        return app.codex_api_service_v2
-    else:
-        # API 1.4 (legacy)
-        return get_api_service_v14()
+    if get_api_version() == '2.0':
+        return current_app.codex_api_service_v2
+    return current_app.codex_api_service_v14
 
 
 def get_api_service_v14() -> AdobeAnalyticsService:
     """
-    Get API 1.4 service (used for processing rules which aren't in 2.0).
-
-    Stored on the app instance for the same reason as ``get_api_service``.
+    Get the API 1.4 service (used for processing rules which aren't in 2.0).
 
     Returns:
         AdobeAnalyticsService configured for API 1.4
     """
-    app = current_app._get_current_object()
-
-    if not hasattr(app, 'codex_api_service_v14'):
-        app.codex_api_service_v14 = AdobeAnalyticsService(
-            username=current_app.config['AW_USERNAME'],
-            secret=current_app.config['AW_SECRET'],
-            request_timeout=current_app.config.get('API_V14_TIMEOUT', 5.0),
-        )
-    return app.codex_api_service_v14
+    return current_app.codex_api_service_v14
 
 
 def get_rsid() -> str:
@@ -1888,9 +1862,9 @@ def delete_note(dimension_type: str, dimension_id: str):
 # API Debug Page
 # =============================================================================
 
-_DOCS_DIR = os.path.join(
+_ASSETS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    'docs',
+    'assets',
 )
 
 
@@ -1907,7 +1881,7 @@ def _load_debug_endpoints() -> list[dict]:
     endpoints: list[dict] = []
 
     # ── API 1.4 ──────────────────────────────────────────────────────────────
-    path14 = os.path.join(_DOCS_DIR, 'adobe_analytics_api_1.4_swagger.json')
+    path14 = os.path.join(_ASSETS_DIR, 'swagger', 'adobe_analytics_api_1.4_swagger.json')
     if os.path.exists(path14):
         with open(path14) as fh:
             spec14 = json.load(fh)
@@ -1943,7 +1917,7 @@ def _load_debug_endpoints() -> list[dict]:
                 })
 
     # ── API 2.0 ──────────────────────────────────────────────────────────────
-    path20 = os.path.join(_DOCS_DIR, 'adobe_analytics_api_2.0_swagger.json')
+    path20 = os.path.join(_ASSETS_DIR, 'swagger', 'adobe_analytics_api_2.0_swagger.json')
     if os.path.exists(path20):
         with open(path20) as fh:
             spec20 = json.load(fh)

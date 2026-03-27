@@ -6,7 +6,6 @@ import json
 import os
 from flask import Flask
 
-from app.services.cache import CacheService
 from app.services.git_info import get_git_info
 
 
@@ -50,16 +49,58 @@ def create_app():
     # API 1.4 request timeout (seconds); see config.dist.json for guidance
     app.config['API_V14_TIMEOUT'] = config.get('API_V14_TIMEOUT', 5.0)
 
+    # Adobe Launch (Tags) integration - Roadmap v2-003
+    app.config['LAUNCH_ENABLED'] = config.get('LAUNCH_ENABLED', False)
+    app.config['LAUNCH_PROPERTY_ID'] = config.get('LAUNCH_PROPERTY_ID')
+
+    # Auth mode - Roadmap v2-004
+    # 'server' = service account OAuth2 (default, current behaviour)
+    # 'user'   = per-user Adobe IMS login via Authorization Code flow
+    app.config['AUTH_MODE'] = config.get('AUTH_MODE', 'server')
+    app.config['OAUTH_REDIRECT_URI'] = config.get('OAUTH_REDIRECT_URI')
+    if config.get('SESSION_SECRET'):
+        app.secret_key = config['SESSION_SECRET']
+
     # Git info for footer display
     git_info = get_git_info()
     app.config['GIT_BRANCH'] = git_info.get('branch')
     app.config['GIT_COMMIT'] = git_info.get('commit')
 
-    # Register blueprints
+    # ── Service instantiation ─────────────────────────────────────────────────
+    # Services are created once here and stored on the app object so every part
+    # of the codebase (routes, cache warmer) shares the same instances without
+    # each having to re-implement the init logic.
+
+    from app.services.adobe_auth import OAuth2Auth
+    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
+    from app.services.adobe_analytics import AdobeAnalyticsService
+
+    if app.config['API_VERSION'] == '2.0':
+        auth = OAuth2Auth(
+            client_id=app.config['CLIENT_ID'],
+            client_secret=app.config['CLIENT_SECRET'],
+            scopes=app.config.get('SCOPES'),
+        )
+        app.codex_api_service_v2 = AdobeAnalyticsV2Service(
+            auth_service=auth,
+            client_id=app.config['CLIENT_ID'],
+            org_id=app.config['ORGANIZATION_ID'],
+        )
+
+    app.codex_api_service_v14 = AdobeAnalyticsService(
+        username=app.config['AW_USERNAME'],
+        secret=app.config['AW_SECRET'],
+        request_timeout=app.config.get('API_V14_TIMEOUT', 5.0),
+    )
+
+    # ── Blueprints ────────────────────────────────────────────────────────────
     from app.routes.main import main_bp
     app.register_blueprint(main_bp)
 
-    # Start background cache warmer (warms at startup + every 24h)
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp)
+
+    # ── Background cache warmer ───────────────────────────────────────────────
     from app.services.cache_warmer import start_scheduler
     app.cache_scheduler = start_scheduler(app)
 

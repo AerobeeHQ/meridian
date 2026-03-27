@@ -182,7 +182,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link {% if active_tab == 'core' %}active{% endif %}" href="/core" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Out of the box dimensions">Core</a>
                     </li>
@@ -225,6 +225,26 @@
                         </ul>
                     </li>
                 </ul>
+
+                {# User menu — only rendered when AUTH_MODE is 'user' (v2-004) #}
+                {% if config.AUTH_MODE == 'user' %}
+                <ul class="navbar-nav ms-auto">
+                    {% if session.get('user_email') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            {{ session.get('user_email') }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login with Adobe</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
             </div>
         </div>
     </nav>

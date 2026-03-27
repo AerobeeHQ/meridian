@@ -26,53 +26,25 @@ CONFIG_CACHE_KEYS = {
 }
 
 
-def _get_api_service_v2(app):
-    """Build or retrieve the API 2.0 service for a given app instance"""
-    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
-    from app.services.adobe_auth import OAuth2Auth
-
-    if not hasattr(app, 'codex_api_service_v2'):
-        auth = OAuth2Auth(
-            client_id=app.config['CLIENT_ID'],
-            client_secret=app.config['CLIENT_SECRET'],
-            scopes=app.config.get('SCOPES'),
-        )
-        app.codex_api_service_v2 = AdobeAnalyticsV2Service(
-            auth_service=auth,
-            client_id=app.config['CLIENT_ID'],
-            org_id=app.config['ORGANIZATION_ID'],
-        )
-    return app.codex_api_service_v2
-
-
-def _get_api_service_v14(app):
-    """Build or retrieve the API 1.4 service for a given app instance"""
-    from app.services.adobe_analytics import AdobeAnalyticsService
-
-    if not hasattr(app, 'codex_api_service_v14'):
-        app.codex_api_service_v14 = AdobeAnalyticsService(
-            username=app.config['AW_USERNAME'],
-            secret=app.config['AW_SECRET'],
-        )
-    return app.codex_api_service_v14
-
-
 def warm_cache_key(app, rsid, cache_key):
     """Fetch and cache a single configuration key."""
     cache = CacheService()
-    api_v2 = _get_api_service_v2(app)
-    api_v14 = _get_api_service_v14(app)
+    api_v2 = getattr(app, 'codex_api_service_v2', None)
+    api_v14 = app.codex_api_service_v14
 
     fetch_map = {
-        'dimensions':          lambda: api_v2.get_dimensions(rsid),
-        'events':              lambda: api_v2.get_success_events(rsid),
-        'segments':            lambda: api_v2.get_segments(rsid),
-        'calculated_metrics':  lambda: api_v2.get_calculated_metrics(rsid),
         'processing_rules':    lambda: api_v14.get_processing_rules(rsid),
         'channel_rules':       lambda: api_v14.get_marketing_channel_rules(rsid),
         'marketing_channels':  lambda: api_v14.get_marketing_channels(rsid),
         'listvars':            lambda: api_v14.get_list_variables(rsid),
     }
+    if api_v2 is not None:
+        fetch_map.update({
+            'dimensions':         lambda: api_v2.get_dimensions(rsid),
+            'events':             lambda: api_v2.get_success_events(rsid),
+            'segments':           lambda: api_v2.get_segments(rsid),
+            'calculated_metrics': lambda: api_v2.get_calculated_metrics(rsid),
+        })
 
     fetch_func = fetch_map.get(cache_key)
     if not fetch_func:
