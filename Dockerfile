@@ -19,6 +19,7 @@ RUN uv sync --frozen --no-dev --no-cache
 
 # Copy application code
 COPY app/ app/
+COPY docs/ docs/
 COPY exports/ exports/
 COPY config.json config.json
 COPY run.py run.py
