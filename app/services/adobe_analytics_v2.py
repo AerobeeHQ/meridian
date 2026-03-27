@@ -594,20 +594,20 @@ class AdobeAnalyticsV2Service:
 
             # Get the metric value (first metric in our request)
             row_data = row.get("data", [0])
-            value = row_data[0] if row_data else 0
+            raw = row_data[0] if row_data else 0
+            # The API can return strings ("N/A") for some metrics; coerce to float.
+            value = raw if isinstance(raw, (int, float)) else 0
             values.append(value)
 
         # Calculate statistics
         stats = {}
         if values:
-            numeric_values = [v for v in values if isinstance(v, (int, float))]
-            if numeric_values:
-                stats = {
-                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
-                    "median": round(statistics.median(numeric_values), 1),
-                    "max": max(numeric_values),
-                    "min": min(numeric_values)
-                }
+            stats = {
+                "avg": round(sum(values) / len(values), 1),
+                "median": round(statistics.median(values), 1),
+                "max": max(values),
+                "min": min(values)
+            }
 
         return {"dates": dates, "values": values, "stats": stats}
 
@@ -659,19 +659,19 @@ class AdobeAnalyticsV2Service:
             date_str = row.get("value", "")
             dates.append(date_str)
             row_data = row.get("data", [0])
-            value = row_data[0] if row_data else 0
+            raw = row_data[0] if row_data else 0
+            # The API can return strings ("N/A") for some metrics; coerce to float.
+            value = raw if isinstance(raw, (int, float)) else 0
             values.append(value)
 
         stats = {}
         if values:
-            numeric_values = [v for v in values if isinstance(v, (int, float))]
-            if numeric_values:
-                stats = {
-                    "avg": round(sum(numeric_values) / len(numeric_values), 1),
-                    "median": round(statistics.median(numeric_values), 1),
-                    "max": max(numeric_values),
-                    "min": min(numeric_values)
-                }
+            stats = {
+                "avg": round(sum(values) / len(values), 1),
+                "median": round(statistics.median(values), 1),
+                "max": max(values),
+                "min": min(values)
+            }
 
         return {"dates": dates, "values": values, "stats": stats}
 
