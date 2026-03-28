@@ -40,7 +40,7 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 
 ```bash
 # Clone the repository
-git clone https://github.com/Brontojoris/Codex.git
+git clone https://github.com/maxisdigital/codex.git
 cd Codex
 
 # Install dependencies
