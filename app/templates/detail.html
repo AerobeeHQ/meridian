@@ -167,6 +167,17 @@
         </div>
         {% endif %}
 
+        <!-- Related Channel Rules (loaded asynchronously) -->
+        <div id="related-channel-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Related Channel Rules</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+
         <!-- Components (loaded asynchronously) -->
         <div id="components-placeholder" class="card mb-4">
             <div class="card-body">
@@ -336,6 +347,23 @@
         });
 }());
 {% endif %}
+
+// Async: load Related Channel Rules after page render
+(function () {
+    var placeholder = document.getElementById('related-channel-rules-placeholder');
+    if (!placeholder) return;
+    fetch('/api/related-channel-rules/{{ dimension_type }}/{{ dimension_id }}')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            placeholder.insertAdjacentHTML('afterend', html);
+            placeholder.remove();
+        })
+        .catch(function () {
+            placeholder.querySelector('.card-body').innerHTML =
+                '<h5 class="card-title">Related Channel Rules</h5>' +
+                '<p class="text-muted mb-0">Could not load channel rules data.</p>';
+        });
+}());
 
 // Async: load Components after page render
 (function () {

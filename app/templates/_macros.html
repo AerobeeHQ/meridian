@@ -805,3 +805,54 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 </div>
 {% endmacro %}
 
+
+{% macro related_channel_rules_section(related_rules, rules_available=true) %}
+{# Collapsible card listing marketing channel rules that reference the current dimension. #}
+{# related_rules:   list of channel rule dicts (ruleset, channel_id, type,               #}
+{#                  hit_attribute, operator, matches, junction).                          #}
+{# rules_available: False when the channel_rules cache key is absent (cold cache          #}
+{#                  or API 1.4 unavailable) — shows a distinct "not loaded" notice.       #}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Related Channel Rules</h5>
+        {% if not rules_available %}
+        <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
+            <span style="font-size:1.1rem;">&#9888;</span>
+            <div>
+                <strong>Channel rules data is not available.</strong>
+                <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
+                <a href="/channel-rules" class="btn btn-sm btn-outline-warning mt-1">Load Channel Rules</a>
+            </div>
+        </div>
+        {% elif related_rules %}
+        <p class="text-muted small mb-3">
+            {{ related_rules | length }} channel rule condition{{ 's' if related_rules | length != 1 else '' }}
+            reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
+        </p>
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Channel</th>
+                    <th>Hit Attribute</th>
+                    <th>Operator</th>
+                    <th>Matches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in related_rules %}
+                <tr>
+                    <td>{{ rule.ruleset or rule.channel_id or '—' }}</td>
+                    <td><code class="text-danger-emphasis">{{ rule.hit_attribute or '—' }}</code></td>
+                    <td>{{ rule.operator or '—' }}</td>
+                    <td><code class="small">{{ rule.matches or '—' }}</code></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No marketing channel rules reference this dimension.</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+

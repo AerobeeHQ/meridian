@@ -334,6 +334,37 @@ def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
     ]
 
 
+def find_related_channel_rules(rules: list[dict], *terms: str) -> list[dict]:
+    """Return marketing channel rule rows whose hit_attribute references any of
+    the given dimension terms.
+
+    Each row in the channel rules list represents a single condition within a
+    channel rule.  The ``hit_attribute`` field holds the custom variable name
+    (e.g. ``'evar5'``, ``'prop3'``) when the condition type is ``'hit_attr'``.
+
+    Args:
+        rules: Cached list of channel rule dicts from ``get_marketing_channel_rules()``.
+        *terms: One or more dimension identifiers to search for
+                (e.g. ``'evar5'``, or ``'list1', 'listvar1'``).
+
+    Returns:
+        Subset of ``rules`` that reference at least one of the given terms.
+    """
+    if not rules or not terms:
+        return []
+    safe_terms = [t for t in terms if t]
+    if not safe_terms:
+        return []
+    pattern = re.compile(
+        r'\b(' + '|'.join(re.escape(t) for t in safe_terms) + r')\b',
+        re.IGNORECASE,
+    )
+    return [
+        rule for rule in rules
+        if pattern.search(rule.get('hit_attribute', '') or '')
+    ]
+
+
 def _parse_segment_schema(schema: list[str]) -> dict:
     """Convert the flat compatibility schema list into readable grouped labels.
 
@@ -1875,6 +1906,40 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
         launch_available=launch_available,
         launchpad_url=current_app.config.get('LAUNCHPAD_URL', ''),
         property_id=current_app.config.get('LAUNCH_PROPERTY_ID', ''),
+    )
+
+
+@main_bp.route('/api/related-channel-rules/<dimension_type>/<dimension_id>')
+def api_related_channel_rules(dimension_type: str, dimension_id: str):
+    """Return the "Related Channel Rules" card as an HTML fragment.
+
+    Called asynchronously by detail pages after initial render so that a cold
+    or unavailable channel-rules cache doesn't block page load.
+
+    Args:
+        dimension_type: 'prop', 'evar', 'event', or 'listvar'
+        dimension_id:   The dimension's display ID (e.g. 'prop3', 'evar5',
+                        'event2') or listvar number (e.g. '1').
+    """
+    rsid = get_rsid()
+    _cached_rules_raw = cache.get(rsid, 'channel_rules')
+    channel_rules_cached = _cached_rules_raw is not None
+
+    if dimension_type == 'listvar':
+        related_rules = find_related_channel_rules(
+            _cached_rules_raw or [],
+            f'list{dimension_id}',
+            f'listvar{dimension_id}',
+        )
+    else:
+        related_rules = find_related_channel_rules(
+            _cached_rules_raw or [], dimension_id
+        )
+
+    return render_template(
+        '_fragment_related_channel_rules.html',
+        related_rules=related_rules,
+        channel_rules_cached=channel_rules_cached,
     )
 
 
