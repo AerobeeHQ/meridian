@@ -69,11 +69,9 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   ### Medium effort
 
- - [ ] **Item 4. Marketing Channel Rules cross-linking (Roadmap v2-002)**
+ - [x] **Item 4. Marketing Channel Rules cross-linking (Roadmap v2-002)**
 
   On each Prop/eVar/Event/ListVar detail page, show which Marketing Channel rules reference that dimension — the exact same pattern as the existing Related Processing Rules section. The channel rules data is already cached.
-
-  The plan doc (v2-002) is already written and notes that a quick spike is needed first to confirm channel rules reference custom variables in a searchable way.
 
  - [ ] ~~**Item 5. ListVar 30-day trend chart**~~
 

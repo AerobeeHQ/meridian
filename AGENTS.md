@@ -49,7 +49,28 @@
 - **Security**:
   - Never log credentials. Ensure `exports/` is writable.
 
-## 6. Key Files
+## 6. Review & Preview
+
+After completing a feature implementation, or whenever the user needs to review changes visually:
+
+1. **Check if the app is already running** on port 5010:
+   ```bash
+   curl -s http://127.0.0.1:5010 > /dev/null && echo "running" || echo "stopped"
+   ```
+2. **If not running**, start it bound to all interfaces so it's reachable over Tailscale:
+   ```bash
+   HOST=0.0.0.0 uv run run.py > /tmp/codex.log 2>&1 &
+   sleep 3 && curl -s http://127.0.0.1:5010 > /dev/null && echo "UP"
+   ```
+3. **Always present the review link** as a clickable markdown hyperlink:
+   ```
+   [http://100.78.114.119:5010](http://100.78.114.119:5010)
+   ```
+
+**Tailscale IP**: `100.78.114.119` — this container's stable Tailscale address.
+The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
+
+## 7. Key Files
 - `app/routes/main.py`: Core application logic.
 - `app/services/adobe_analytics_v2.py`: API 2.0 wrapper.
 - `app/services/adobe_analytics.py`: API 1.4 wrapper.

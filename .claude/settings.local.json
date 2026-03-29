@@ -24,7 +24,9 @@
       "Bash(grep -r \"route\\\\|@.*\\\\.route\" ~/Workspace/Python/Launchpad/app/routes/*.py)",
       "Bash(grep -r \"base_url\\\\|domain\\\\|host\" ~/Workspace/Python/Launchpad/app/*.py ~/Workspace/Python/Launchpad/run.py)",
       "Bash(grep -A 20 \"adobe.analytics\\\\|eVar\\\\|prop\\\\|event\" ~/Workspace/Python/Launchpad/docs/autopsies/*.md)",
-      "Bash(find /Users/joris/Workspace/Python/Launchpad -name *.py -path */launchpy/*)"
+      "Bash(find /Users/joris/Workspace/Python/Launchpad -name *.py -path */launchpy/*)",
+      "Bash(curl -s http://127.0.0.1:5010)",
+      "Bash(pkill -f \"run.py\")"
     ]
   }
 }

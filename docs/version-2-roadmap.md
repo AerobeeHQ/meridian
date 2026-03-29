@@ -9,7 +9,7 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | # | Feature | Complexity | Status | Plan |
 |---|---------|------------|--------|------|
 | 1 | [Processing Rules Integration](#1-processing-rules-integration) | Medium | **Done** | [v2-001](plans/v2-001-processing-rules-integration.md) |
-| 2 | [Marketing Channel Rules Integration](#2-marketing-channel-rules-integration) | Medium | Planned | [v2-002](plans/v2-002-marketing-channel-rules-integration.md) |
+| 2 | [Marketing Channel Rules Integration](#2-marketing-channel-rules-integration) | Medium | **Done** | [v2-002](plans/v2-002-marketing-channel-rules-integration.md) |
 | 3 | [Adobe Launch Integration](#3-adobe-launch-integration) | High | **Done** | [autopsy 036](autopsies/036-adobe-launch-integration.md) |
 | 4 | [User OAuth Login](#4-user-oauth-login) | High | Planned | [v2-004](plans/v2-004-user-oauth-login.md) |
 | 5 | [Background Pre-Caching](#5-background-pre-caching) | Medium | **Done** | [v2-005](plans/v2-005-background-precaching.md) |
@@ -30,7 +30,7 @@ Start with low-risk, high-value additions before architectural changes:
 4. ~~**Segments** (v2-007) — Listing and detail pages via API 2.0.~~ **Done**
 5. ~~**Calculated Metrics** (v2-008) — Listing, detail pages, formula cross-references, and trend charts via API 2.0.~~ **Done**
 6. ~~**Interactive API debug page** (v2-009) — Browser-based explorer for all 1.4 and 2.0 endpoints, proxied through the server.~~ **Done**
-7. **Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.
+7. ~~**Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.~~ **Done**
 8. ~~**Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.~~ **Done**
 9. **User OAuth login** (v2-004) — Largest architectural change; do last.
 
