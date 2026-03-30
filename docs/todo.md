@@ -21,6 +21,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [x] In preparation for working on **Item 7. Adobe Launch integration (Roadmap v2-003)** and **Item 8. User OAuth login (Roadmap v2-004)**, we should do a review and cleanup of the app's code and assess if the architecture is correct. If there are simple changes or refactoring that can be made, we should do them.
 - [x] Work on all of the recommendations in [035 — Pre-Launch Architecture Review](docs/autopsies/035-pre-launch-architecture-review.md).
 - [x] The new API Debug page has a dependency on the swagger files in the docs folder. Initially the Dockerfile didn't include the docs folder, but this has since been fixed. But it raises an important point that assets such as the swagger files should be moved to a more appropriate location, perhaps a new `assets/` folder in the root of the project, to avoid confusion and ensure they are included in the Docker image. **Fixed: moved to `assets/swagger/`; Dockerfile updated to `COPY assets/ assets/`.**
+- [ ] Add another Debug page for the Adobe Launch Reactor APIs. A copy of the swagger can be found in `assets/swagger/reactor-api-swagger.json`.
 - [ ] In the Components panel on prop/evar/event/listvar detail pages, use the pill style already being used on the Segment/Metric details page instead of the plain hyperlink. 
 - [ ] Hyperlink the segmentId and metricId shown on their respective detail pages the Adobe Analytics equivalent. 
   For example, 
