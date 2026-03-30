@@ -648,13 +648,10 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     </h2>
                     <div id="componentsSegments" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
-                            <ul class="list-unstyled mb-0">
-                                {% for seg in components.segments %}
-                                <li class="mb-1">
-                                    <a href="/segments/{{ seg.id }}">{{ seg.name }}</a>
-                                </li>
-                                {% endfor %}
-                            </ul>
+                            {% for seg in components.segments %}
+                            <a href="/segments/{{ seg.id }}"
+                               class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ seg.name }}</a>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -671,13 +668,10 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     </h2>
                     <div id="componentsMetrics" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
-                            <ul class="list-unstyled mb-0">
-                                {% for cm in components.calc_metrics %}
-                                <li class="mb-1">
-                                    <a href="/calculated-metrics/{{ cm.id }}">{{ cm.name }}</a>
-                                </li>
-                                {% endfor %}
-                            </ul>
+                            {% for cm in components.calc_metrics %}
+                            <a href="/calculated-metrics/{{ cm.id }}"
+                               class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ cm.name }}</a>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
