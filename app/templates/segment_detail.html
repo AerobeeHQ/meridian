@@ -140,13 +140,52 @@
 
     <!-- Right column: definition -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100">
+        <!-- Human-readable breakdown -->
+        <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Segment Definition</h5>
-                <p class="text-muted mb-2" style="font-size:12px;">
-                    Raw JSON definition as returned by the Adobe Analytics 2.0 API.
-                </p>
-                <pre style="max-height:600px; overflow-y:auto; font-size:12px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; padding:12px;">{{ definition_json }}</pre>
+                {% if breakdown %}
+                <div style="font-size:13px; line-height:1.7;">
+                    {% for row in breakdown %}
+                    <div style="padding-left:{{ row.depth * 20 }}px;">
+                        {% if row.kind == 'container' %}
+                        <span class="badge bg-secondary text-capitalize">{{ row.text }}</span>
+                        {% elif row.kind == 'operator' %}
+                        <span class="text-primary fw-bold" style="font-size:11px;">{{ row.text }}</span>
+                        {% elif row.kind == 'time' %}
+                        <span class="text-muted fst-italic" style="font-size:12px;">{{ row.text }}</span>
+                        {% else %}
+                        <code style="font-size:12px;">{{ row.text }}</code>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Unable to parse segment definition.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Raw JSON (collapsible) -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="rawJsonAccordion">
+                    <div class="accordion-item border-0">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#rawJsonBody"
+                                    aria-expanded="false" aria-controls="rawJsonBody"
+                                    style="font-size:14px;">
+                                Raw JSON Definition
+                            </button>
+                        </h2>
+                        <div id="rawJsonBody" class="accordion-collapse collapse">
+                            <div class="accordion-body pt-0">
+                                <pre style="max-height:600px; overflow-y:auto; font-size:12px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; padding:12px; margin-bottom:0;">{{ definition_json }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

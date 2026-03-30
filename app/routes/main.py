@@ -394,6 +394,166 @@ def _parse_segment_schema(schema: list[str]) -> dict:
     return {'container': container, 'variables': variables, 'events': events}
 
 
+# -- Segment definition → human-readable breakdown ---------------------------
+
+# Mapping of API func names to user-facing operator labels.
+_PRED_LABELS: dict[str, str] = {
+    'streq': 'equals', 'not-streq': 'does not equal',
+    'contains': 'contains', 'not-contains': 'does not contain',
+    'starts-with': 'starts with', 'ends-with': 'ends with',
+    'not-starts-with': 'does not start with', 'not-ends-with': 'does not end with',
+    'matches': 'matches', 'not-matches': 'does not match',
+    'streq-in': 'equals any of', 'not-streq-in': 'does not equal any of',
+    'contains-any-of': 'contains any of', 'contains-all-of': 'contains all of',
+    'not-contains-any-of': 'does not contain any of',
+    'not-contains-all-of': 'does not contain all of',
+    'exists': 'exists', 'not-exists': 'does not exist',
+    'event-exists': 'exists', 'not-event-exists': 'does not exist',
+    'eq': '=', 'not-eq': '≠', 'gt': '>', 'lt': '<', 'ge': '≥', 'le': '≤',
+    'eq-any-of': 'equals any of', 'not-eq-any-of': 'does not equal any of',
+}
+
+_CONTEXT_LABELS: dict[str, str] = {
+    'hits': 'Hit', 'visits': 'Visit', 'visitors': 'Visitor',
+}
+
+_LOGIC_LABELS: dict[str, str] = {
+    'and': 'AND', 'or': 'OR', 'without': 'NOT',
+    'sequence': 'THEN', 'sequence-prefix': 'THEN (prefix)',
+    'sequence-suffix': 'THEN (suffix)',
+    'sequence-and': 'AND (unordered)', 'sequence-or': 'OR (unordered)',
+}
+
+
+def _attr_name(val: Any) -> str:
+    """Extract a readable attribute name from a val/evt node."""
+    if not isinstance(val, dict):
+        return str(val)
+    func = val.get('func', '')
+    if func == 'attr':
+        raw = val.get('name', '')
+        # 'variables/evar22' → 'evar22', 'variables/page' → 'page'
+        return raw.split('/')[-1] if '/' in raw else raw
+    if func == 'event':
+        return val.get('name', '').split('/')[-1]
+    if func == 'total':
+        evt = val.get('evt', {})
+        return f"total({_attr_name(evt)})"
+    return val.get('description') or val.get('name', '?')
+
+
+def _pred_value(node: dict) -> str:
+    """Extract the comparison value(s) from a predicate node."""
+    if 'str' in node:
+        return f'"{node["str"]}"'
+    if 'num' in node:
+        return str(node['num'])
+    if 'list' in node:
+        items = node['list']
+        if len(items) <= 5:
+            return ', '.join(f'"{v}"' if isinstance(v, str) else str(v) for v in items)
+        return ', '.join(f'"{v}"' if isinstance(v, str) else str(v) for v in items[:5]) + f' … (+{len(items) - 5} more)'
+    if 'glob' in node:
+        return f'"{node["glob"]}"'
+    return ''
+
+
+def _walk_segment_definition(node: Any, depth: int = 0) -> list[dict]:
+    """Recursively walk a segment definition and produce a flat list of display rows.
+
+    Each row is a dict: {'depth': int, 'text': str, 'kind': str}
+    where kind is 'container', 'operator', 'rule', or 'time'.
+    """
+    if not isinstance(node, dict):
+        return []
+    func = node.get('func', '')
+    rows: list[dict] = []
+
+    # Top-level segment wrapper — just descend into its container
+    if func == 'segment':
+        container = node.get('container')
+        if container:
+            rows.extend(_walk_segment_definition(container, depth))
+        return rows
+
+    # Container: show scope label, then recurse into pred
+    if func == 'container':
+        ctx = node.get('context', '')
+        label = _CONTEXT_LABELS.get(ctx, ctx.title() if ctx else 'Container')
+        rows.append({'depth': depth, 'text': f'{label} container', 'kind': 'container'})
+        pred = node.get('pred')
+        if pred:
+            rows.extend(_walk_segment_definition(pred, depth + 1))
+        return rows
+
+    # Boolean logic: and / or / without
+    if func in ('and', 'or'):
+        children = node.get('preds', [])
+        label = _LOGIC_LABELS.get(func, func.upper())
+        for i, child in enumerate(children):
+            rows.extend(_walk_segment_definition(child, depth))
+            if i < len(children) - 1:
+                rows.append({'depth': depth, 'text': label, 'kind': 'operator'})
+        return rows
+
+    if func == 'without':
+        rows.append({'depth': depth, 'text': 'NOT', 'kind': 'operator'})
+        pred = node.get('pred')
+        if pred:
+            rows.extend(_walk_segment_definition(pred, depth + 1))
+        return rows
+
+    # Sequences: stream / checkpoints
+    if func in ('sequence', 'sequence-prefix', 'sequence-suffix',
+                'sequence-and', 'sequence-or'):
+        items = node.get('stream') or node.get('checkpoints', [])
+        label = _LOGIC_LABELS.get(func, 'THEN')
+        for i, child in enumerate(items):
+            rows.extend(_walk_segment_definition(child, depth))
+            if i < len(items) - 1:
+                rows.append({'depth': depth, 'text': label, 'kind': 'operator'})
+        return rows
+
+    # Time / container / dimension restrictions
+    if func == 'time-restriction':
+        limit = node.get('limit', '')
+        count = node.get('count', '')
+        unit = node.get('unit', '')
+        rows.append({'depth': depth, 'text': f'{limit} {count} {unit}'.strip(), 'kind': 'time'})
+        return rows
+
+    if func in ('container-restriction', 'dimension-restriction'):
+        limit = node.get('limit', '')
+        count = node.get('count', '')
+        rows.append({'depth': depth, 'text': f'{func}: {limit} {count}'.strip(), 'kind': 'time'})
+        return rows
+
+    if func == 'exclude-next-checkpoint':
+        rows.append({'depth': depth, 'text': 'exclude next checkpoint', 'kind': 'time'})
+        return rows
+
+    # Leaf predicates: comparison / existence
+    label = _PRED_LABELS.get(func, func)
+    attr = _attr_name(node.get('val') or node.get('evt') or {})
+    value = _pred_value(node)
+    desc = node.get('description', '')
+
+    if func in ('exists', 'not-exists', 'event-exists', 'not-event-exists'):
+        text = f'{desc or attr} {label}'
+    elif value:
+        text = f'{desc or attr} {label} {value}'
+    else:
+        text = f'{desc or attr} {label}'
+
+    rows.append({'depth': depth, 'text': text, 'kind': 'rule'})
+    return rows
+
+
+def _parse_segment_breakdown(definition: dict) -> list[dict]:
+    """Public entry point: parse a segment definition into display rows."""
+    return _walk_segment_definition(definition)
+
+
 def _walk_formula(node: Any, metrics: set, segments: set) -> None:
     """Recursively walk a calculated metric formula tree collecting references.
 
@@ -1618,6 +1778,10 @@ def segment_detail(segment_id: str):
     schema = (segment.get('compatibility') or {}).get('schema', [])
     referenced = _parse_segment_schema(schema)
 
+    # Parse the definition into a human-readable breakdown.
+    definition = segment.get('definition') or {}
+    breakdown = _parse_segment_breakdown(definition)
+
     return render_template(
         'segment_detail.html',
         title=segment.get('name', segment_id),
@@ -1629,7 +1793,8 @@ def segment_detail(segment_id: str):
         active_tab='segments',
         back_url='/segments',
         back_label='Back to Segments',
-        definition_json=json.dumps(segment.get('definition') or {}, indent=2),
+        definition_json=json.dumps(definition, indent=2),
+        breakdown=breakdown,
     )
 
 
