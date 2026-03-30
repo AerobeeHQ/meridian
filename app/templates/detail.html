@@ -109,7 +109,7 @@
                             </td>
                         </tr>
                         {% endif %}
-                        {% set evar_num = dimension_id | replace('evar', '') | int %}
+                        {% set evar_num = dimension_id.split('.')[0] | replace('evar', '') | int %}
                         <tr>
                             <th>Instance Event</th>
                             <td><code>post_event_list</code> token: <code>{{ (99 + evar_num) if evar_num <= 100 else (9899 + evar_num) }}</code></td>
@@ -117,7 +117,7 @@
                         {% endif %}
                         <tr>
                             <th>Data Feed Column</th>
-                            <td><code>post_{{ dimension_id }}</code></td>
+                            <td><code>post_{{ dimension_id.split('.')[0] }}</code></td>
                         </tr>
                         <tr>
                             <th>Description</th>
