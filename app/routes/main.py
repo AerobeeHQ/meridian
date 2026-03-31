@@ -2336,13 +2336,31 @@ def _load_reactor_endpoints() -> list[dict]:
 
     try:
         import yaml  # pyyaml — optional dep only needed here
-        with open(path_yaml) as fh:
-            spec = yaml.safe_load(fh)
     except ImportError:
         logger.error("pyyaml is not installed; install it with 'uv add pyyaml'. Reactor debug page will be empty.")
         _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
         return []
 
+    try:
+        with open(path_yaml) as fh:
+            spec = yaml.safe_load(fh)
+    except OSError as exc:
+        logger.error("Failed to read Reactor swagger at %s: %s. Reactor debug page will be empty", path_yaml, exc)
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+    except yaml.YAMLError as exc:
+        logger.error("Failed to parse Reactor swagger YAML at %s: %s. Reactor debug page will be empty", path_yaml, exc)
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+
+    if not isinstance(spec, dict):
+        logger.error(
+            "Unexpected Reactor swagger structure in %s (expected mapping, got %s). Reactor debug page will be empty",
+            path_yaml,
+            type(spec).__name__,
+        )
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
     comp_params = spec.get('components', {}).get('parameters', {})
 
     # These are injected by the proxy — skip them from user-facing display
