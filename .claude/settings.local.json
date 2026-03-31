@@ -1,36 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh issue:*)",
-      "Bash(git checkout:*)",
-      "Bash(git tag:*)",
-      "Bash(git push:*)",
-      "Bash(uv run:*)",
-      "Bash(python3 -c \":*)",
-      "Bash(python3:*)",
-      "Bash(git pull:*)",
-      "Bash(uv add:*)",
-      "Bash(wc -l /Users/joris/Workspace/Python/Codex/docs/autopsies/*.md)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(gh pr:*)",
-      "Bash(ls /Users/joris/Workspace/Python/Codex/*.csv)",
-      "Bash(ls /Users/joris/Workspace/Python/Codex/Processing*)",
-      "Bash(git cherry-pick:*)",
-      "Bash(ls /Users/joris/Workspace/Python/Codex/docs/*.json)",
-      "Bash(ls /Users/joris/Workspace/Python/Codex/docs/*.yaml)",
-      "Bash(git stash:*)",
-      "Bash(git rebase:*)",
-      "Bash(grep -r \"route\\\\|@.*\\\\.route\" ~/Workspace/Python/Launchpad/app/routes/*.py)",
-      "Bash(grep -r \"base_url\\\\|domain\\\\|host\" ~/Workspace/Python/Launchpad/app/*.py ~/Workspace/Python/Launchpad/run.py)",
-      "Bash(grep -A 20 \"adobe.analytics\\\\|eVar\\\\|prop\\\\|event\" ~/Workspace/Python/Launchpad/docs/autopsies/*.md)",
-      "Bash(find /Users/joris/Workspace/Python/Launchpad -name *.py -path */launchpy/*)",
-      "Bash(curl -s http://127.0.0.1:5010)",
-      "Bash(pkill -f \"run.py\")",
-      "WebFetch(domain:developer.adobe.com)",
-      "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(uv sync:*)"
     ]
   }
 }
