@@ -1817,9 +1817,13 @@ def cache_view():
     # Build Launch section data when the feature is enabled
     launch_info = None
     if current_app.config.get('LAUNCH_ENABLED'):
-        all_cache_keys = cache_info.get('cache_keys', {})
+        # cache_info['cache_keys'] is expected to be a mapping:
+        #   { cache_key: { ...metadata..., "expired": bool, ... }, ... }
+        all_cache_entries = cache_info.get('cache_keys', {}) or {}
         search_cache_count = sum(
-            1 for k in all_cache_keys if k.startswith('launch_search_')
+            1
+            for key, meta in all_cache_entries.items()
+            if key.startswith('launch_search_') and not meta.get('expired', False)
         )
         launch_info = {
             'property_id':        current_app.config.get('LAUNCH_PROPERTY_ID', ''),
