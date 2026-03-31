@@ -107,7 +107,8 @@ highlights correctly when on the Reactor page.
 `POST /debug/reactor/call` follows the same pattern as `POST /debug/call`:
 
 1. Validate `LAUNCH_ENABLED` and the `codex_launch_service` instance
-2. Reject non-GET methods
+2. Allow GET always; allow POST only for `/search` (a read-only search endpoint that
+   requires POST by the Reactor API's design); reject all other methods
 3. Substitute `{PARAM_NAME}` path placeholders from the request body
 4. Delegate to `AdobeLaunchService.get_raw(path, params)` which attaches the correct
    IMS auth headers (`Authorization`, `x-api-key`, `x-gw-ims-org-id`, `Accept`)
@@ -142,7 +143,7 @@ the existing `api_debug.html`.
 - [ ] Click `GET /companies` — params table shows `page[size]` / `page[number]` with defaults
 - [ ] Click `GET /properties/{PROPERTY_ID}/rules` — PROPERTY_ID is pre-filled with the configured property
 - [ ] Send `GET /companies` — response body displayed with green badge
-- [ ] Send `POST /search` — rejected with "POST requests are disabled" error
+- [ ] Send `POST /search` — response body displayed with green badge (POST enabled for /search by design)
 - [ ] Verify saved-values dot appears on endpoint after a successful call
 - [ ] Click Reset — body reverts to template, dot disappears
 - [ ] Set `LAUNCH_ENABLED=false` — Reactor Debug link hidden from nav, `/debug/reactor` returns 403
