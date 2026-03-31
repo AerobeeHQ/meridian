@@ -6,35 +6,35 @@ https://experienceleague.adobe.com/en/docs/experience-platform/tags/home
 
 ### Organisations
 
-`CE6D2999554750267F000101@AdobeOrg`
+`<ORG_ID>@AdobeOrg`
 
 ### Companies
 
-`CO9d0207c86586409da0e0808fba656a17`
+`<COMPANY_ID>`
 
 ### Properties
 
-* **AAA Web Property**: `PR5439e4310a364080ab16e35dcec7ace7`
+* **Your Web Property**: `<PROPERTY_ID>`
 
 ```json
 {
   "attributes": {
-    "created_at": "2025-12-04T22:19:16.267Z",
-    "created_by_display_name": "Joris de Beer",
-    "created_by_email": "joris.debeer@maxisdigital.com.au",
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "created_by_display_name": "Your Name",
+    "created_by_email": "user@example.com",
     "development": false,
     "domains": [
-      "maxisdev.com"
+      "example.com"
     ],
     "enabled": true,
-    "name": "AAA Web Property",
+    "name": "Your Web Property",
     "platform": "web",
     "rule_component_sequencing_enabled": true,
-    "token": "83be834d9281",
+    "token": "<PROPERTY_TOKEN>",
     "undefined_vars_return_empty": false,
-    "updated_at": "2025-12-04T22:19:16.267Z",
-    "updated_by_display_name": "Joris de Beer",
-    "updated_by_email": "joris.debeer@maxisdigital.com.au"
+    "updated_at": "2025-01-01T00:00:00.000Z",
+    "updated_by_display_name": "Your Name",
+    "updated_by_email": "user@example.com"
   }
 }
 ```
@@ -51,7 +51,7 @@ https://experienceleague.adobe.com/en/docs/experience-platform/tags/home
         "value": "eVar1"
       },
       "relationships.property.data.id": {
-        "value": "PR5439e4310a364080ab16e35dcec7ace7"
+        "value": "<PROPERTY_ID>"
       },
       "attributes.deleted_at": {
         "exists": false
