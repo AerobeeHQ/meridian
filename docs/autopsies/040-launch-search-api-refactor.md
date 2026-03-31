@@ -127,10 +127,17 @@ This is accepted. The `delegate_descriptor_id` is now shown below each result in
 
 ---
 
-## Known Issue — "Unknown Rule" for some rule_component results
+## "Unknown Rule" — Two-Strategy Rule Resolver
 
-In some cases the rule name displays as "Unknown Rule". This occurs when the `/search` response for a `rule_component` does not include `relationships.rule.data.id`, so the batch rule-name fetch has no ID to query.
+The `/search` API does not always populate `relationships.rule.data.id` on `rule_component` results (observed on components with `core::conditions::custom-code` delegate). Without a rule ID, the batch fetch has nothing to query and the name falls back to "Unknown Rule".
 
-The Reactor API response for rule components includes a `links.rules` URL (e.g. `https://reactor.adobe.io/rule_components/{id}/rules`) which can be used as a fallback. When `relationships.rule.data.id` is absent, GET this URL to retrieve the parent rule(s) and resolve the name.
+**Fix (same session):** `search_and_resolve` now categorises each rule_component by resolution strategy before dispatching any fetches:
 
-This is a known gap, tracked for a follow-up fix.
+| Strategy | Condition | Fetch |
+|----------|------------------------------------------------|-----------------------------------|
+| A        | `relationships.rule.data.id` present           | `GET /rules/{id}`                 |
+| B        | relationship ID absent, `links.rules` present  | `GET {links.rules}` → first item  |
+
+Both strategies run in the same `ThreadPoolExecutor` pass. Results land in separate maps (`rule_map` keyed by rule ID, `comp_map` keyed by component ID). The entry-builder resolves strategy A first; if the rule ID was absent it looks up strategy B and also extracts the rule ID from the fetched data for the Launchpad deep link.
+
+If both strategies fail (no relationship, no links.rules, or the fetch errors), the entry still appears but labelled "Unknown Rule" — the component is at least visible rather than silently dropped.

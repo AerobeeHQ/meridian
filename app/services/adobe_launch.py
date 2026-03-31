@@ -141,14 +141,33 @@ class AdobeLaunchService:
         resp = self.post_raw("/search", body)
         return resp.get("data", [])
 
+    def _get_first_rule_for_component(self, rules_url: str) -> dict:
+        """Fetch the first rule for a component via its links.rules URL.
+
+        The Reactor API does not always populate relationships.rule.data.id in
+        search results. This fallback GETs the component's rules relationship
+        URL (e.g. /rule_components/{id}/rules) and returns the first rule object,
+        or an empty dict if none are found.
+        """
+        resp = requests.get(rules_url, headers=self._headers())
+        resp.raise_for_status()
+        rules = resp.json().get("data", [])
+        return rules[0] if rules else {}
+
     def search_and_resolve(self, dimension_value: str, property_id: str) -> list:
         """Search for a dimension and resolve rule names for rule_component matches.
 
-        Calls search_dimension() then batch-fetches the parent rules for any
-        rule_component results so we can display the rule name. Deduplicates
-        so the same rule only appears once even if multiple of its components match.
-        rule_component entries take precedence over rule-name matches for the
-        same rule_id (component matches are more informative).
+        Calls search_dimension() then resolves the parent rule name for each
+        rule_component result using one of two strategies, run in parallel:
+
+        - Strategy A (relationships.rule.data.id present):
+            GET /rules/{id} — standard single-rule fetch.
+        - Strategy B (relationship ID absent, links.rules present):
+            GET {links.rules} — returns the list of parent rules for the component.
+            Used when the /search response omits the relationship data.
+
+        Deduplicates so the same rule only appears once. rule_component entries
+        take precedence over rule-name matches for the same rule_id.
 
         Each returned dict is compatible with the related_launch_rules_section macro:
             source:                 'rule' | 'extension' | 'data_element'
@@ -167,26 +186,54 @@ class AdobeLaunchService:
         """
         raw_results = self.search_dimension(dimension_value, property_id)
 
-        # Collect unique rule IDs needed from rule_component matches
-        rule_ids = {
-            item["relationships"]["rule"]["data"]["id"]
-            for item in raw_results
-            if item.get("type") == "rule_components"
-            and item.get("relationships", {}).get("rule", {}).get("data", {}).get("id")
-        }
+        # Categorise rule_component items by resolution strategy.
+        # strategy_a: rule_id -> True  (deduplicated; fetch via GET /rules/{id})
+        # strategy_b: comp_id -> url   (fetch via GET {links.rules})
+        strategy_a: dict = {}
+        strategy_b: dict = {}
+        for item in raw_results:
+            if item.get("type") != "rule_components":
+                continue
+            rel_id = (item.get("relationships", {})
+                          .get("rule", {}).get("data", {}).get("id"))
+            if rel_id:
+                strategy_a[rel_id] = True
+            else:
+                rules_url = item.get("links", {}).get("rules")
+                if rules_url:
+                    strategy_b[item["id"]] = rules_url
 
-        # Batch-fetch rule metadata in parallel
+        # Single executor pass for both strategies.
+        # rule_map:  rule_id  -> rule data object  (strategy A results)
+        # comp_map:  comp_id  -> rule data object  (strategy B results)
         rule_map: dict = {}
-        if rule_ids:
-            with ThreadPoolExecutor(max_workers=8) as executor:
-                futures = {executor.submit(self.get_rule, rid): rid for rid in rule_ids}
-                for future in as_completed(futures):
-                    rid = futures[future]
-                    try:
-                        rule_map[rid] = future.result()
-                    except Exception:
-                        logger.warning("Failed to fetch rule %s for search results", rid)
-                        rule_map[rid] = {}
+        comp_map: dict = {}
+
+        tasks: dict = {}
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            for rule_id in strategy_a:
+                fut = executor.submit(self.get_rule, rule_id)
+                tasks[fut] = ("a", rule_id)
+            for comp_id, url in strategy_b.items():
+                fut = executor.submit(self._get_first_rule_for_component, url)
+                tasks[fut] = ("b", comp_id)
+
+            for future in as_completed(tasks):
+                strategy, id_ = tasks[future]
+                try:
+                    result = future.result()
+                    if strategy == "a":
+                        rule_map[id_] = result
+                    else:
+                        comp_map[id_] = result
+                except Exception:
+                    logger.warning(
+                        "Failed to resolve rule (strategy %s, id %s)", strategy, id_
+                    )
+                    if strategy == "a":
+                        rule_map[id_] = {}
+                    else:
+                        comp_map[id_] = {}
 
         entries = []
         seen: set = set()
@@ -197,14 +244,21 @@ class AdobeLaunchService:
             if item.get("type") != "rule_components":
                 continue
             attrs = item.get("attributes", {})
+
+            # Resolve rule data — try strategy A first, fall back to B
             rule_id = (item.get("relationships", {})
                            .get("rule", {}).get("data", {}).get("id"))
+            if rule_id:
+                rule_data = rule_map.get(rule_id, {})
+            else:
+                rule_data = comp_map.get(item["id"], {})
+                rule_id = rule_data.get("id")   # extract for Launchpad deep link
+
+            rule_attrs = rule_data.get("attributes", {})
             key = ("rule", rule_id)
             if key in seen:
                 continue
             seen.add(key)
-            rule_data = rule_map.get(rule_id, {})
-            rule_attrs = rule_data.get("attributes", {})
             entries.append({
                 "source":                  "rule",
                 "source_id":               None,
