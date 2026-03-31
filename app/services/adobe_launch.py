@@ -133,6 +133,43 @@ class AdobeLaunchService:
         url = f"{REACTOR_BASE_URL}/rules/{rule_id}/rule_components"
         return self._get_all_pages(url, params={"page[size]": 100})
 
+    def post_raw(self, path: str, json_body: dict = None) -> dict:
+        """Make an authenticated POST request to a Reactor API path with a JSON body.
+
+        Used by the debug page to proxy /search calls, which require POST by the
+        Reactor API's design despite being a read-only search operation.
+
+        Args:
+            path:      API path, e.g. '/search'
+            json_body: Request body as a dict (sent as application/vnd.api+json)
+
+        Returns:
+            Parsed JSON response body
+        """
+        post_headers = dict(self._headers())
+        post_headers['Content-Type'] = 'application/vnd.api+json'
+        url = f"{REACTOR_BASE_URL}{path}"
+        resp = requests.post(url, headers=post_headers, json=json_body or {})
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_raw(self, path: str, params: dict = None) -> dict:
+        """Make an authenticated GET request to an arbitrary Reactor API path.
+
+        Used by the Reactor debug page to proxy calls through Codex's credentials.
+
+        Args:
+            path:   API path, e.g. '/companies' or '/properties/PRabc/rules'
+            params: Optional query parameters dict
+
+        Returns:
+            Parsed JSON response body
+        """
+        url = f"{REACTOR_BASE_URL}{path}"
+        resp = requests.get(url, headers=self._headers(), params=params or {})
+        resp.raise_for_status()
+        return resp.json()
+
     def get_analytics_actions(self, property_id: str) -> list:
         """
         Return all Analytics variable assignments from the production library.

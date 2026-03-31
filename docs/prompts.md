@@ -14,9 +14,17 @@ Summarise your approach and changes in a new markdown document in the  docs/auto
 
 Limit yourself to using API 2.0 features
 
+### Find something to improve v2
+
+Please look for a todo or bug and try to address it. You can start with either items in todo.md, version-2-roadmap.md, If you don't find anything  there . then search the codebase, and find something yourself. :)
+
+Before modifying any files, create a new branch with prefix feature/ or fix/
+
+Summarise your approach and changes in a new markdown document in the docs/autopsies folder. (See other md files for example styles)
+
+Limit yourself to using Analytics API 2.0 or Reactor API features
+
 ### Suggested Improvements
-
-
 
 ### Code Review
 
