@@ -23,7 +23,6 @@ CONFIG_CACHE_KEYS = {
     'listvars',
     'segments',
     'calculated_metrics',
-    'launch_rules',       # v2-003: Adobe Launch rules (only populated when LAUNCH_ENABLED)
 }
 
 
@@ -32,9 +31,6 @@ def warm_cache_key(app, rsid, cache_key):
     cache = CacheService()
     api_v2 = getattr(app, 'codex_api_service_v2', None)
     api_v14 = app.codex_api_service_v14
-
-    api_launch = getattr(app, 'codex_launch_service', None)
-    property_id = app.config.get('LAUNCH_PROPERTY_ID')
 
     fetch_map = {
         'processing_rules':    lambda: api_v14.get_processing_rules(rsid),
@@ -49,9 +45,6 @@ def warm_cache_key(app, rsid, cache_key):
             'segments':           lambda: api_v2.get_segments(rsid),
             'calculated_metrics': lambda: api_v2.get_calculated_metrics(rsid),
         })
-    if api_launch is not None and property_id:
-        fetch_map['launch_rules'] = lambda: api_launch.get_analytics_actions(property_id)
-
     fetch_func = fetch_map.get(cache_key)
     if not fetch_func:
         return

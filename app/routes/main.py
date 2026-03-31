@@ -264,44 +264,6 @@ def format_rule_html(text: str) -> Markup:
     return Markup('\n'.join(output))
 
 
-def find_related_launch_rules(actions: list, dimension_type: str, dimension_id: str) -> list:
-    """Return Launch analytics actions that set the given dimension.
-
-    Args:
-        actions:        Cached list from AdobeLaunchService.get_analytics_actions().
-                        Each dict has 'rule_id', 'rule_name', 'rule_enabled',
-                        'evars', 'props', 'events', 'lists'.
-        dimension_type: 'evar', 'prop', 'event', or 'listvar'.
-        dimension_id:   Full dimension ID (e.g. 'evar5') or just the number ('5').
-
-    Returns:
-        Subset of actions that reference the given dimension.
-    """
-    if not actions or not dimension_type or not dimension_id:
-        return []
-
-    # Strip any alphabetic prefix to get the numeric suffix
-    num_str = re.sub(r'^[a-zA-Z]+', '', str(dimension_id))
-    if not num_str:
-        return []
-
-    if dimension_type == 'evar':
-        target, key = f'eVar{num_str}', 'evars'   # Adobe Analytics uses capital V
-    elif dimension_type == 'prop':
-        target, key = f'prop{num_str}', 'props'
-    elif dimension_type == 'event':
-        target, key = f'event{num_str}', 'events'
-    elif dimension_type == 'listvar':
-        target, key = f'list{num_str}', 'lists'
-    else:
-        return []
-
-    target_lower = target.lower()
-    return [
-        action for action in actions
-        if target_lower in [v.lower() for v in action.get(key, [])]
-    ]
-
 
 def find_related_processing_rules(rules: list[dict], *terms: str) -> list[dict]:
     """Return processing rules whose conditions or actions reference any of the
@@ -1855,11 +1817,18 @@ def cache_view():
     # Build Launch section data when the feature is enabled
     launch_info = None
     if current_app.config.get('LAUNCH_ENABLED'):
-        _cached_actions = cache.get(rsid, 'launch_rules')
+        # cache_info['cache_keys'] is expected to be a mapping:
+        #   { cache_key: { ...metadata..., "expired": bool, ... }, ... }
+        all_cache_entries = cache_info.get('cache_keys', {}) or {}
+        search_cache_count = sum(
+            1
+            for key, meta in all_cache_entries.items()
+            if key.startswith('launch_search_') and not meta.get('expired', False)
+        )
         launch_info = {
-            'property_id':   current_app.config.get('LAUNCH_PROPERTY_ID', ''),
-            'launchpad_url': current_app.config.get('LAUNCHPAD_URL', ''),
-            'action_count':  len(_cached_actions) if _cached_actions is not None else None,
+            'property_id':        current_app.config.get('LAUNCH_PROPERTY_ID', ''),
+            'launchpad_url':      current_app.config.get('LAUNCHPAD_URL', ''),
+            'search_cache_count': search_cache_count,
         }
 
     return render_template(
@@ -2057,20 +2026,48 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
     if not current_app.config.get('LAUNCH_ENABLED'):
         return '', 204
 
-    rsid = get_rsid()
-    _cached_actions = cache.get(rsid, 'launch_rules')
-    launch_available = _cached_actions is not None
+    launch_service = getattr(current_app, 'codex_launch_service', None)
+    property_id = current_app.config.get('LAUNCH_PROPERTY_ID', '')
+    if not launch_service or not property_id:
+        return '', 204
 
-    related_rules = find_related_launch_rules(
-        _cached_actions or [], dimension_type, dimension_id
-    )
+    # Build the canonical dimension value string expected by the Reactor search API
+    num_str = re.sub(r'^[a-zA-Z]+', '', str(dimension_id))
+    if not num_str.isdigit():
+        # dimension_id must end with a numeric suffix (e.g. 'evar5', '1').
+        # Reject non-numeric or empty suffixes to prevent broad, polluting searches.
+        return '', 400
+    dimension_value = {
+        'evar':    f'eVar{num_str}',
+        'prop':    f'prop{num_str}',
+        'event':   f'event{num_str}',
+        'listvar': f'list{num_str}',
+    }.get(dimension_type)
+    if not dimension_value:
+        return '', 400
+
+    rsid = get_rsid()
+    cache_key = f'launch_search_{dimension_value}'
+
+    try:
+        related_rules = cache.get_or_set(
+            rsid,
+            cache_key,
+            lambda: launch_service.search_and_resolve(dimension_value, property_id),
+            ttl_hours=1,
+        )
+        launch_available = True
+    except Exception:
+        logger.exception("Launch search failed for %s", dimension_value)
+        related_rules = []
+        launch_available = False
 
     return render_template(
         '_fragment_related_launch_rules.html',
         related_rules=related_rules,
         launch_available=launch_available,
         launchpad_url=current_app.config.get('LAUNCHPAD_URL', ''),
-        property_id=current_app.config.get('LAUNCH_PROPERTY_ID', ''),
+        property_id=property_id,
     )
 
 

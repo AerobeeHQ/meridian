@@ -122,19 +122,18 @@
                     </td>
                 </tr>
                 <tr>
-                    <th>Cached Actions</th>
+                    <th>Search Cache</th>
                     <td>
-                        {% if launch_info.action_count is none %}
-                        <span class="badge bg-secondary">Not cached yet</span>
+                        {% if launch_info.search_cache_count == 0 %}
+                        <span class="badge bg-secondary">No dimensions searched yet</span>
                         {% else %}
-                        <span class="badge bg-success">{{ launch_info.action_count }} Analytics Set Variables action{{ 's' if launch_info.action_count != 1 else '' }}</span>
+                        <span class="badge bg-success">{{ launch_info.search_cache_count }} dimension{{ 's' if launch_info.search_cache_count != 1 else '' }} cached</span>
                         {% endif %}
                     </td>
                 </tr>
             </tbody>
         </table>
-        <a href="/cache/refresh/launch_rules" class="btn btn-sm btn-outline-secondary">&#x21ba; Refresh Launch Rules</a>
-        <small class="text-muted ms-2">Re-fetches Analytics Set Variables actions from the production library.</small>
+        <small class="text-muted">Search results are fetched on demand when a detail page is opened and cached for 1 hour. Use <strong>Clear Cache</strong> above to reset.</small>
     </div>
 </div>
 {% endif %}

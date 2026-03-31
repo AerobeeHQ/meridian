@@ -747,12 +747,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
 
 {% macro related_launch_rules_section(related_rules, launch_available=True, launchpad_url='', property_id='') %}
-{# Card listing Adobe Launch entries that set the current dimension.           #}
-{# related_rules:   list of action dicts from AdobeLaunchService.             #}
-{# launch_available: False when the launch_rules cache key is absent.          #}
+{# Card listing Adobe Launch entries that reference the current dimension.     #}
+{# Results come from the Reactor /search API and include rules, extensions,    #}
+{# data elements, and custom code actions.                                     #}
+{# related_rules:   list of dicts from AdobeLaunchService.search_and_resolve() #}
+{# launch_available: False when the Reactor API search failed.                 #}
 {# launchpad_url:   Base URL for deep-linking into the Launchpad app.         #}
 {# property_id:     Launch property ID used to build deep links.              #}
-{# Each entry has source='extension' or source='rule'.                         #}
+{# Each entry has source='rule'|'extension'|'data_element'.                    #}
 <div class="card mb-4">
     <div class="card-body">
         <h5 class="card-title">Adobe Launch</h5>
@@ -761,39 +763,51 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <span style="font-size:1.1rem;">&#9888;</span>
             <div>
                 <strong>Launch data is not available.</strong>
-                <p class="mb-1 mt-1 small">The Launch cache has not been populated yet. It will be populated on the next cache warm cycle.</p>
+                <p class="mb-1 mt-1 small">The Reactor API search failed. Check that the Launch credentials and property ID are correct.</p>
             </div>
         </div>
         {% elif related_rules %}
         <p class="text-muted small mb-3">
-            {{ related_rules | length }} source{{ 's' if related_rules | length != 1 else '' }}
-            set{{ '' if related_rules | length != 1 else 's' }} this dimension.
+            {{ related_rules | length }} result{{ 's' if related_rules | length != 1 else '' }}
+            reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
         </p>
         <ul class="list-unstyled mb-0">
             {% for entry in related_rules %}
-            <li class="mb-2 d-flex align-items-center gap-2">
-                {% if entry.source == 'extension' %}
-                    <span class="badge bg-info text-dark">Global</span>
-                    {% if launchpad_url and property_id and entry.source_id %}
-                    <a href="{{ launchpad_url }}/property/{{ property_id }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+            <li class="mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    {% if entry.source == 'extension' %}
+                        <span class="badge bg-info text-dark">Global</span>
+                        {% if launchpad_url and property_id and entry.source_id %}
+                        <a href="{{ launchpad_url }}/property/{{ property_id }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% else %}
+                        {{ entry.rule_name }}
+                        {% endif %}
+                    {% elif entry.source == 'data_element' %}
+                        <span class="badge bg-warning text-dark">Data Element</span>
+                        {% if launchpad_url and property_id and entry.source_id %}
+                        <a href="{{ launchpad_url }}/property/{{ property_id }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% else %}
+                        {{ entry.rule_name }}
+                        {% endif %}
                     {% else %}
-                    {{ entry.rule_name }}
+                        {% if launchpad_url and property_id and entry.rule_id %}
+                        <a href="{{ launchpad_url }}/property/{{ property_id }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% else %}
+                        {{ entry.rule_name }}
+                        {% endif %}
                     {% endif %}
-                {% else %}
-                    {% if launchpad_url and property_id and entry.rule_id %}
-                    <a href="{{ launchpad_url }}/property/{{ property_id }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
-                    {% else %}
-                    {{ entry.rule_name }}
+                    {% if not entry.rule_enabled %}
+                    <span class="badge bg-secondary">Disabled</span>
                     {% endif %}
-                {% endif %}
-                {% if not entry.rule_enabled %}
-                <span class="badge bg-secondary">Disabled</span>
+                </div>
+                {% if entry.delegate_descriptor_id %}
+                <div class="ms-0 mt-1"><small class="text-muted font-monospace">{{ entry.delegate_descriptor_id }}</small></div>
                 {% endif %}
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="text-muted mb-0">No Launch rules set this dimension.</p>
+        <p class="text-muted mb-0">No Launch rules reference this dimension.</p>
         {% endif %}
     </div>
 </div>
