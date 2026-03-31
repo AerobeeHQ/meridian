@@ -1,19 +1,14 @@
 """
 Adobe Experience Platform Tags (Reactor) API client.
 
-Fetches two sources of Analytics variable assignments from the production library:
+Uses the Reactor /search API to find all property resources (rules, rule
+components, data elements, extensions) that reference a given Analytics
+dimension string (e.g. 'eVar1', 'prop5', 'event3').
 
-1. **Extension configuration** — variables set globally in the Adobe Analytics
-   extension (trackerProperties.eVars / props / events). These are applied on
-   every hit, regardless of which rules fire.
-
-2. **Rule Set Variables actions** — per-rule analytics actions that conditionally
-   set variables when a rule fires (delegate_descriptor_id contains "setVariables").
-
-Reactor API quirk: the `settings` field on extensions and rule components is a
-JSON *string*, not a parsed object — always json.loads() before use.
+This approach is not scoped to the production library and matches custom
+code actions as well as structured setVariables actions, giving a more
+complete picture than walking the library graph.
 """
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -24,55 +19,14 @@ from app.services.adobe_auth import OAuth2Auth
 logger = logging.getLogger(__name__)
 
 REACTOR_BASE_URL = "https://reactor.adobe.io"
-_ANALYTICS_EXTENSION_NAME = "adobe-analytics"
-_SET_VARIABLES_ACTION = "setVariables"
-
-
-def _parse_settings(raw) -> dict:
-    """Parse a settings value that may be a JSON string or an already-parsed dict."""
-    if isinstance(raw, str):
-        try:
-            return json.loads(raw)
-        except (json.JSONDecodeError, TypeError):
-            return {}
-    return raw or {}
-
-
-def _extract_names(items: list) -> list:
-    """Extract non-empty 'name' fields from a list of variable dicts."""
-    return [item["name"] for item in items if isinstance(item, dict) and item.get("name")]
-
-
-def _parse_tracker_properties(settings: dict) -> tuple:
-    """
-    Extract eVar, prop, event, and list variable names from an Analytics
-    settings dict.
-
-    Handles two known formats:
-    - Modern: {"trackerProperties": {"eVars": [...], "props": [...], "events": [...]}}
-    - Legacy:  {"eVars": [...], "props": [...], "events": [...]}
-
-    Adobe Analytics variable name casing:
-    - eVars: "eVar1", "eVar2", … (capital V)
-    - props:  "prop1", "prop2", …
-    - events: "event1", "event2", …
-    - lists:  "list1", "list2", "list3"
-    """
-    tracker = settings.get("trackerProperties", settings)
-    evars  = _extract_names(tracker.get("eVars")   or tracker.get("evars")    or [])
-    props  = _extract_names(tracker.get("props")   or [])
-    events = _extract_names(tracker.get("events")  or [])
-    lists  = _extract_names(tracker.get("lists")   or tracker.get("listVars") or [])
-    return evars, props, events, lists
 
 
 class AdobeLaunchService:
     """
     Client for the Adobe Experience Platform Reactor (Tags) API.
 
-    Fetches Analytics variable assignments from the production library and
-    returns a compact, cacheable list for cross-referencing in Codex.
-    Each entry has a 'source' field of either 'extension' or 'rule'.
+    Searches the property for Analytics dimension references using the
+    /search endpoint and returns display-ready dicts for Codex detail pages.
     """
 
     def __init__(self, auth_service: OAuth2Auth, org_id: str):
@@ -103,35 +57,6 @@ class AdobeLaunchService:
             url = body.get("links", {}).get("next")
             params = None  # Subsequent pages use the full URL from links.next
         return results
-
-    def get_production_library(self, property_id: str) -> dict | None:
-        """Return the most recently updated published library for a property.
-
-        Returns None if no published library exists.
-        """
-        url = f"{REACTOR_BASE_URL}/properties/{property_id}/libraries"
-        libraries = self._get_all_pages(url, params={
-            "filter[state]": "EQ published",
-            "page[size]": 100,
-        })
-        if not libraries:
-            return None
-        return max(libraries, key=lambda lib: lib.get("attributes", {}).get("updated_at", ""))
-
-    def get_library_extensions(self, library_id: str) -> list:
-        """Return the full extension objects included in a library."""
-        url = f"{REACTOR_BASE_URL}/libraries/{library_id}/extensions"
-        return self._get_all_pages(url, params={"page[size]": 100})
-
-    def get_library_rules(self, library_id: str) -> list:
-        """Return the full rule objects included in a library."""
-        url = f"{REACTOR_BASE_URL}/libraries/{library_id}/rules"
-        return self._get_all_pages(url, params={"page[size]": 100})
-
-    def get_rule_components(self, rule_id: str) -> list:
-        """Fetch all components for a single rule."""
-        url = f"{REACTOR_BASE_URL}/rules/{rule_id}/rule_components"
-        return self._get_all_pages(url, params={"page[size]": 100})
 
     def post_raw(self, path: str, json_body: dict = None) -> dict:
         """Make an authenticated POST request to a Reactor API path with a JSON body.
@@ -170,152 +95,174 @@ class AdobeLaunchService:
         resp.raise_for_status()
         return resp.json()
 
-    def get_analytics_actions(self, property_id: str) -> list:
+    def get_rule_components(self, rule_id: str) -> list:
+        """Fetch all components for a single rule."""
+        url = f"{REACTOR_BASE_URL}/rules/{rule_id}/rule_components"
+        return self._get_all_pages(url, params={"page[size]": 100})
+
+    def get_rule(self, rule_id: str) -> dict:
+        """Fetch a single rule by ID.
+
+        Returns the rule's 'data' object, or an empty dict on failure.
         """
-        Return all Analytics variable assignments from the production library.
+        resp = self.get_raw(f"/rules/{rule_id}")
+        return resp.get("data", {})
 
-        Includes two source types, returned in a single flat list:
+    def search_dimension(self, dimension_value: str, property_id: str, size: int = 100) -> list:
+        """Search all property resources for any reference to a dimension string.
 
-        Extension entry (source='extension'):
-        {
-            "source":       "extension",
-            "source_id":    str,   # Extension ID for Launchpad deep linking
-            "rule_id":      None,
-            "rule_name":    "Adobe Analytics Extension",
-            "rule_enabled": bool,
-            "evars":        list,
-            "props":        list,
-            "events":       list,
-            "lists":        list,
+        Uses the Reactor /search API to find rules, rule components, data elements,
+        and extensions whose attributes contain the given dimension value. Unlike
+        the library-walk approach, this is not scoped to the production library
+        and finds matches in custom code actions as well as structured setVariables.
+
+        Args:
+            dimension_value: Dimension string to search for, e.g. 'eVar1', 'prop5', 'event3'.
+            property_id:     Reactor property ID (PR...).
+            size:            Maximum number of results to return (default 100).
+
+        Returns:
+            Raw list of matched resource dicts from the Reactor API.
+        """
+        body = {
+            "data": {
+                "from": 0,
+                "size": size,
+                "query": {
+                    "attributes.*":                   {"value": dimension_value},
+                    "relationships.property.data.id": {"value": property_id},
+                    "attributes.deleted_at":          {"exists": False},
+                    "attributes.revision_number":     {"value": 0},
+                },
+                "sort": [{"attributes.updated_at": "desc"}],
+                "resource_types": ["rules", "rule_components", "data_elements", "extensions"],
+            }
+        }
+        resp = self.post_raw("/search", body)
+        return resp.get("data", [])
+
+    def search_and_resolve(self, dimension_value: str, property_id: str) -> list:
+        """Search for a dimension and resolve rule names for rule_component matches.
+
+        Calls search_dimension() then batch-fetches the parent rules for any
+        rule_component results so we can display the rule name. Deduplicates
+        so the same rule only appears once even if multiple of its components match.
+        rule_component entries take precedence over rule-name matches for the
+        same rule_id (component matches are more informative).
+
+        Each returned dict is compatible with the related_launch_rules_section macro:
+            source:                 'rule' | 'extension' | 'data_element'
+            source_id:              extension/data-element ID (for Launchpad deep link)
+            rule_id:                rule ID (for Launchpad deep link)
+            rule_name:              display name
+            rule_enabled:           bool
+            delegate_descriptor_id: action type hint, e.g. 'adobe-analytics::actions::setVariables'
+
+        Args:
+            dimension_value: e.g. 'eVar1', 'prop5', 'event3'
+            property_id:     Reactor property ID (PR...)
+
+        Returns:
+            Deduplicated list of display-ready dicts.
+        """
+        raw_results = self.search_dimension(dimension_value, property_id)
+
+        # Collect unique rule IDs needed from rule_component matches
+        rule_ids = {
+            item["relationships"]["rule"]["data"]["id"]
+            for item in raw_results
+            if item.get("type") == "rule_components"
+            and item.get("relationships", {}).get("rule", {}).get("data", {}).get("id")
         }
 
-        Rule entry (source='rule'):
-        {
-            "source":       "rule",
-            "source_id":    None,
-            "rule_id":      str,   # Rule ID for Launchpad deep linking
-            "rule_name":    str,
-            "rule_enabled": bool,
-            "evars":        list,
-            "props":        list,
-            "events":       list,
-            "lists":        list,
-        }
-        """
-        # Scope to the production library only
-        library = self.get_production_library(property_id)
-        if library is None:
-            logger.warning(
-                "No published library found for property %s — Launch cache will be empty",
-                property_id,
-            )
-            return []
+        # Batch-fetch rule metadata in parallel
+        rule_map: dict = {}
+        if rule_ids:
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = {executor.submit(self.get_rule, rid): rid for rid in rule_ids}
+                for future in as_completed(futures):
+                    rid = futures[future]
+                    try:
+                        rule_map[rid] = future.result()
+                    except Exception:
+                        logger.warning("Failed to fetch rule %s for search results", rid)
+                        rule_map[rid] = {}
 
-        library_id = library["id"]
-        library_name = library.get("attributes", {}).get("name", "Unknown")
-        logger.info("Using production library '%s' (%s)", library_name, library_id)
+        entries = []
+        seen: set = set()
 
-        # Fetch extensions and rules in parallel
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            ext_future  = executor.submit(self.get_library_extensions, library_id)
-            rule_future = executor.submit(self.get_library_rules, library_id)
-            extensions  = ext_future.result()
-            rules       = rule_future.result()
-
-        actions = []
-
-        # ── Extension-level global variables ─────────────────────────────────
-        for ext in extensions:
-            attrs = ext.get("attributes", {})
-            if attrs.get("name") != _ANALYTICS_EXTENSION_NAME:
+        # Process rule_components first so they take precedence over rule-name matches
+        # for the same rule_id (component matches carry a delegate_descriptor_id).
+        for item in raw_results:
+            if item.get("type") != "rule_components":
                 continue
-
-            settings = _parse_settings(attrs.get("settings", "{}"))
-            evars, props, events, lists = _parse_tracker_properties(settings)
-
-            if not any([evars, props, events, lists]):
+            attrs = item.get("attributes", {})
+            rule_id = (item.get("relationships", {})
+                           .get("rule", {}).get("data", {}).get("id"))
+            key = ("rule", rule_id)
+            if key in seen:
                 continue
-
-            actions.append({
-                "source":       "extension",
-                "source_id":    ext["id"],
-                "rule_id":      None,
-                "rule_name":    "Adobe Analytics Extension",
-                "rule_enabled": attrs.get("enabled", True),
-                "evars":        evars,
-                "props":        props,
-                "events":       events,
-                "lists":        lists,
+            seen.add(key)
+            rule_data = rule_map.get(rule_id, {})
+            rule_attrs = rule_data.get("attributes", {})
+            entries.append({
+                "source":                  "rule",
+                "source_id":               None,
+                "rule_id":                 rule_id,
+                "rule_name":               rule_attrs.get("name", "Unknown Rule"),
+                "rule_enabled":            rule_attrs.get("enabled", True),
+                "delegate_descriptor_id":  attrs.get("delegate_descriptor_id", ""),
             })
 
-        # ── Rule Set Variables actions ────────────────────────────────────────
-        if not rules:
-            logger.info(
-                "Fetched %d entry from extension config, 0 rules in library '%s'",
-                len(actions), library_name,
-            )
-            return actions
+        # Then process extensions, data_elements, and rules (rule-name matches)
+        for item in raw_results:
+            item_type = item.get("type")
+            attrs = item.get("attributes", {})
 
-        rule_meta = {
-            r["id"]: {
-                "name":    r.get("attributes", {}).get("name", "Unknown"),
-                "enabled": r.get("attributes", {}).get("enabled", True),
-            }
-            for r in rules
-        }
-
-        # Fetch rule components in parallel
-        components_by_rule: dict = {}
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            futures = {
-                executor.submit(self.get_rule_components, rule_id): rule_id
-                for rule_id in rule_meta
-            }
-            for future in as_completed(futures):
-                rule_id = futures[future]
-                try:
-                    components_by_rule[rule_id] = future.result()
-                except Exception:
-                    logger.warning("Failed to fetch components for rule %s", rule_id)
-                    components_by_rule[rule_id] = []
-
-        rule_count = 0
-        for rule_id, components in components_by_rule.items():
-            for comp in components:
-                attrs = comp.get("attributes", {})
-                ddid = attrs.get("delegate_descriptor_id", "")
-
-                if _ANALYTICS_EXTENSION_NAME not in ddid:
+            if item_type == "extensions":
+                key = ("extension", item["id"])
+                if key in seen:
                     continue
-                if _SET_VARIABLES_ACTION not in ddid:
-                    continue
-
-                settings = _parse_settings(attrs.get("settings", "{}"))
-                evars, props, events, lists = _parse_tracker_properties(settings)
-
-                if not any([evars, props, events, lists]):
-                    continue
-
-                meta = rule_meta.get(rule_id, {})
-                actions.append({
-                    "source":       "rule",
-                    "source_id":    None,
-                    "rule_id":      rule_id,
-                    "rule_name":    meta.get("name", "Unknown"),
-                    "rule_enabled": meta.get("enabled", True),
-                    "evars":        evars,
-                    "props":        props,
-                    "events":       events,
-                    "lists":        lists,
+                seen.add(key)
+                entries.append({
+                    "source":                  "extension",
+                    "source_id":               item["id"],
+                    "rule_id":                 None,
+                    "rule_name":               attrs.get("display_name") or attrs.get("name") or "Extension",
+                    "rule_enabled":            attrs.get("enabled", True),
+                    "delegate_descriptor_id":  attrs.get("delegate_descriptor_id", ""),
                 })
-                rule_count += 1
+
+            elif item_type == "data_elements":
+                key = ("data_element", item["id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                entries.append({
+                    "source":                  "data_element",
+                    "source_id":               item["id"],
+                    "rule_id":                 None,
+                    "rule_name":               attrs.get("name", "Data Element"),
+                    "rule_enabled":            attrs.get("enabled", True),
+                    "delegate_descriptor_id":  attrs.get("delegate_descriptor_id", ""),
+                })
+
+            elif item_type == "rules":
+                key = ("rule", item["id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                entries.append({
+                    "source":                  "rule",
+                    "source_id":               None,
+                    "rule_id":                 item["id"],
+                    "rule_name":               attrs.get("name", "Unknown Rule"),
+                    "rule_enabled":            attrs.get("enabled", True),
+                    "delegate_descriptor_id":  "",
+                })
 
         logger.info(
-            "Fetched %d entries (%d extension + %d rule actions) from library '%s' for property %s",
-            len(actions),
-            len(actions) - rule_count,
-            rule_count,
-            library_name,
-            property_id,
+            "search_and_resolve('%s', '%s') → %d results (%d raw)",
+            dimension_value, property_id, len(entries), len(raw_results),
         )
-        return actions
+        return entries
