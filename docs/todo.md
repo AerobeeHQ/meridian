@@ -27,9 +27,21 @@ This document is a list of smaller todo items and bugs found while using the Cod
   For example, 
   * segmentId `s200001582_5df07b97e0a67a0e926c94e1` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/segments/edit/s200001582_5df07b97e0a67a0e926c94e1
   * metricId `cm200001582_69c1d1263db7d8215a55df17` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/calculatedMetrics/edit/cm200001582_69c1d1263db7d8215a55df17
+- [ ] Hyperlink the Adobe Launch rule into Adobe Tags website.
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
+- [ ] Move the following panels on the prop/evar/events/listvar detail pages from the left hand column to the right hand columns below the Top 10 Values table: 
+  1. Components but renamed to Segments and "Calculated Metrics"
+  2. Related Processing Rules
+  3. Related Channel Rules (but rename to "Related Marketing Channel Rules")
+  4. Adobe Launch
+- [ ] Allow users to manage (crud) the tags in Journey Squad Owner, and rename to "Tags"
+- [ ] Improve listing pages
+  - [ ] Make the shaded rows on the listing pages lighter by half.
+  - [ ] Make the table header sticky
+  - [ ] Puth the Copy/Column visibility/Download buttons on the same row as the Refresh button to make better use of the vertical space
+- [ ]
 
 ## Bugs
 
@@ -74,13 +86,11 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
   On each Prop/eVar/Event/ListVar detail page, show which Marketing Channel rules reference that dimension — the exact same pattern as the existing Related Processing Rules section. The channel rules data is already cached.
 
- - [ ] ~~**Item 5. ListVar 30-day trend chart**~~
+ - [ ] DESCOPED ~~**Item 5. ListVar 30-day trend chart**~~
 
-  Same as suggestion #1 but for ListVar detail pages. get_dimension_trend() accepts any variable ID, so variables/listvar1 works. The listvar_detail.html template just needs the same right-column chart pattern as
+  Same as suggestion #1 but for ListVar detail pages. get_dimension_trend() accepts any variable ID, so variables/listvar1 works. The listvar_detail.html template just needs the same right-column chart pattern as event_detail.html.
 
-     event_detail.html.
-
- - [ ] **Item 6. Segment detail: human-readable container breakdown**                                                
+ - [x] **Item 6. Segment detail: human-readable container breakdown**                                                
      The Segment Detail page currently just shows raw JSON for the definition. The same recursive walker used for Calculated Metrics (which produces a "Referenced Metrics / Segments" list) could be adapted for segments — parsing
      container logic into an indented summary showing hit/visit/visitor containers, rules (dimension / operator / value), and nesting. Higher value for complex multi-container segments.
 
