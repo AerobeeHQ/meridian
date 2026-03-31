@@ -2033,6 +2033,10 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
 
     # Build the canonical dimension value string expected by the Reactor search API
     num_str = re.sub(r'^[a-zA-Z]+', '', str(dimension_id))
+    if not num_str.isdigit():
+        # dimension_id must end with a numeric suffix (e.g. 'evar5', '1').
+        # Reject non-numeric or empty suffixes to prevent broad, polluting searches.
+        return '', 400
     dimension_value = {
         'evar':    f'eVar{num_str}',
         'prop':    f'prop{num_str}',
