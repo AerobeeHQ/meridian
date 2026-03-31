@@ -192,5 +192,8 @@ notebooks/**/.github/
 .DS_Store
 config_*.json
 
+# Claude
+.claude/settings.local.json
+
 # My own notes
 docs/reactor-notes.md
