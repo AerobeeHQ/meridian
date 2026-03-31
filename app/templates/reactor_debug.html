@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row g-0" style="min-height: 75vh;">
+
+    {# ── Left panel: endpoint browser ──────────────────────────────────────── #}
+    <div class="col-md-4 border-end pe-0" style="overflow-y: auto;">
+        <div class="p-3">
+
+            {# Header bar #}
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div>
+                    <span class="badge bg-secondary me-1" style="font-size:0.75em;">Reactor API</span>
+                    <span class="text-muted" style="font-size:0.8em;">{{ endpoint_count }} endpoints</span>
+                </div>
+                {% if default_property_id %}
+                <small class="text-muted font-monospace" style="font-size:0.7em;"
+                       title="Configured Launch property — pre-filled in path params">
+                    {{ default_property_id }}
+                </small>
+                {% endif %}
+            </div>
+
+            <input type="search" class="form-control form-control-sm mb-2"
+                id="endpointSearch" placeholder="Search endpoints…" autocomplete="off">
+
+            <div id="endpointList" style="font-size:0.8em;"></div>
+        </div>
+    </div>
+
+    {# ── Right panel: request + response ───────────────────────────────────── #}
+    <div class="col-md-8">
+        <div class="p-3">
+
+            <div id="noSelection" class="text-muted mt-4 text-center">
+                <p class="fs-5">&#x1F50D; Select an endpoint from the left panel.</p>
+                <p class="small">Requests are proxied through the Codex server using the configured Reactor credentials.</p>
+                <p class="small">GET requests and POST /search are enabled. Values entered are saved per-endpoint for reuse.</p>
+            </div>
+
+            <div id="endpointPanel" style="display:none;">
+
+                {# Title + action buttons #}
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <div>
+                        <h6 class="mb-0 font-monospace" id="epTitle" style="font-size:0.95em;"></h6>
+                        <small class="text-muted" id="epSummary"></small>
+                    </div>
+                    <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                        <button class="btn btn-outline-secondary btn-sm py-0" id="resetBtn"
+                                style="font-size:0.8em; display:none;"
+                                onclick="resetToTemplate()" title="Clear saved values and restore defaults">
+                            ↺ Reset
+                        </button>
+                        <button class="btn btn-primary btn-sm ms-1" id="sendBtn"
+                                onclick="sendRequest()">Send &#9654;</button>
+                    </div>
+                </div>
+
+                {# Parameters reference table (FR5) #}
+                <div id="paramsSection" class="mb-3">
+                    <p class="text-muted fw-semibold mb-1" style="font-size:0.8em;">PARAMETERS</p>
+                    <div id="paramsList"></div>
+                </div>
+
+                {# Request body / params editor #}
+                <div class="mb-3">
+                    <p class="text-muted fw-semibold mb-1" style="font-size:0.8em;">
+                        REQUEST BODY / PARAMS <span class="text-muted fw-normal">(JSON)</span>
+                        <span id="savedIndicator" class="text-success ms-2"
+                              style="display:none; font-size:0.85em; font-weight:normal;">
+                            &#10003; values restored from last call
+                        </span>
+                    </p>
+                    <textarea id="requestBody" class="form-control font-monospace"
+                              rows="25" spellcheck="false"
+                              style="font-size:0.8em; resize:vertical;"></textarea>
+                    <div id="bodyError" class="text-danger small mt-1" style="display:none;"></div>
+                </div>
+
+                {# Response viewer (FR3, FR4) #}
+                <div id="responseSection" style="display:none;">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <p class="text-muted fw-semibold mb-0" style="font-size:0.8em;">RESPONSE</p>
+                        <div>
+                            <span id="responseStatus" class="badge me-2"></span>
+                            <button class="btn btn-outline-secondary btn-sm py-0"
+                                    style="font-size:0.75em;"
+                                    onclick="copyResponse()">Copy</button>
+                        </div>
+                    </div>
+                    <pre id="responseBody" class="pre-code p-3 rounded mb-0"
+                         style="background:#f8f9fa; max-height:450px; overflow-y:auto; font-size:0.78em; white-space:pre-wrap; word-break:break-all;"></pre>
+                </div>
+
+            </div>{# /endpointPanel #}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+const ENDPOINTS = {{ endpoints_json | safe }};
+const DEFAULT_PROPERTY_ID = {{ default_property_id | tojson }};
+const STORAGE_PREFIX = 'reactor_debug:body:';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let selectedEp = null;
+let currentTemplate = '';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function methodBadge(m) {
+    const colors = {GET:'#198754',POST:'#0d6efd',PUT:'#ffc107',DELETE:'#dc3545',PATCH:'#0dcaf0'};
+    const c = colors[m] || '#6c757d';
+    return `<span class="badge me-1" style="background:${c};font-size:0.7em;">${m}</span>`;
+}
+
+function epKey(ep) {
+    return `${ep.http_method}:${ep.path}`;
+}
+
+// POST /search is a read-only search operation that the Reactor API requires via POST.
+const READ_ONLY_POST_PATHS = new Set(['/search']);
+
+function isReadOnly(ep) {
+    if (ep.http_method === 'GET') return true;
+    if (ep.http_method === 'POST' && READ_ONLY_POST_PATHS.has(ep.path)) return true;
+    return false;
+}
+
+function storageKey(ep) {
+    return STORAGE_PREFIX + epKey(ep);
+}
+
+// ── Reactor ID placeholder examples (FR5 + FR8) ────────────────────────────
+// Reactor resource IDs follow a two-letter prefix convention.
+function reactorIdExample(paramName) {
+    const n = paramName.toUpperCase();
+    // Prefer the configured property ID for property params (FR8)
+    if (DEFAULT_PROPERTY_ID && n.includes('PROPERTY')) return DEFAULT_PROPERTY_ID;
+    if (n.includes('PROPERTY'))    return 'PRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('COMPANY'))     return 'COxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('COMPONENT'))   return 'RCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('RULE'))        return 'RLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('ELEMENT'))     return 'DExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('EXTENSION_PACKAGE') || n === 'EXTENSION_PACKAGE_ID') return 'EPxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('EXTENSION'))   return 'EXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('LIBRARY'))     return 'LBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('ENVIRONMENT')) return 'ENxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('BUILD'))       return 'BLxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('HOST'))        return 'HTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('SECRET'))      return 'SExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('CALLBACK'))    return 'CBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('NOTE'))        return 'NTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    if (n.includes('AUDIT'))       return 'AExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+    return '';
+}
+
+// Build a starter JSON object for the request body textarea
+function buildTemplate(ep) {
+    // POST /search: return a ready-to-run search request body
+    if (ep.http_method === 'POST' && ep.path === '/search') {
+        return JSON.stringify({
+            data: {
+                from: 0,
+                size: 25,
+                query: {
+                    "attributes.name": {
+                        value: ""
+                    }
+                },
+                sort: [
+                    { "attributes.name": "asc" }
+                ],
+                resource_types: [
+                    "rules",
+                    "data_elements",
+                    "rule_components",
+                    "extensions",
+                    "libraries",
+                    "properties"
+                ]
+            }
+        }, null, 2);
+    }
+
+    const body = {};
+    for (const p of (ep.params || [])) {
+        if (p.in !== 'path' && p.in !== 'query') continue;
+
+        if (p.in === 'path') {
+            // Always include path params with an example value
+            body[p.name] = (p.example !== undefined && p.example !== null)
+                ? p.example
+                : reactorIdExample(p.name);
+        } else if (p.required) {
+            body[p.name] = (p.example !== undefined && p.example !== null) ? p.example
+                         : (p.default !== undefined && p.default !== null) ? p.default
+                         : '';
+        } else if (p.default !== undefined && p.default !== null) {
+            // Include optional query params that have sensible defaults (e.g. page[size])
+            body[p.name] = p.default;
+        }
+    }
+    return JSON.stringify(body, null, 2);
+}
+
+// ── Endpoint list rendering (FR7) ──────────────────────────────────────────
+function renderList() {
+    const search = document.getElementById('endpointSearch').value.trim().toLowerCase();
+
+    const filtered = ENDPOINTS.filter(ep => {
+        if (!search) return true;
+        const hay = [ep.http_method, ep.path, ep.summary, ep.tag]
+            .filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(search);
+    });
+
+    // Group by tag
+    const groups = {};
+    for (const ep of filtered) {
+        const tag = ep.tag || 'Other';
+        (groups[tag] = groups[tag] || []).push(ep);
+    }
+
+    const selKey = selectedEp ? epKey(selectedEp) : null;
+    const hasSearch = search.length > 0;
+    const container = document.getElementById('endpointList');
+
+    if (Object.keys(groups).length === 0) {
+        container.innerHTML = '<div class="text-muted small p-2">No endpoints match.</div>';
+        return;
+    }
+
+    const html = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b)).map(([tag, eps]) => {
+        const isOpenTag = hasSearch || eps.some(e => epKey(e) === selKey);
+        const btnRows = eps.map(ep => {
+            const key = epKey(ep);
+            const hasSaved = localStorage.getItem(storageKey(ep)) !== null;
+            // Green dot indicates saved values exist for this endpoint (FR8)
+            const savedDot = hasSaved
+                ? ` <span style="color:#198754;font-size:0.65em;" title="Has saved values">&#9679;</span>`
+                : '';
+            const label = methodBadge(ep.http_method) + esc(ep.path) + savedDot;
+            const active = key === selKey ? ' active' : '';
+            return `<button class="ep-btn list-group-item list-group-item-action py-1 px-2 border-0 text-start${active}"
+                            style="font-size:0.8em; line-height:1.4;"
+                            data-key="${esc(key)}">${label}</button>`;
+        }).join('');
+
+        return `<div class="mb-1">
+            <button class="tag-toggle btn btn-link btn-sm text-start p-0 ps-1 text-decoration-none text-dark w-100 fw-semibold"
+                    style="font-size:0.8em;" data-open="${isOpenTag}">
+                <span class="toggle-icon">${isOpenTag ? '▾' : '▸'}</span>
+                ${esc(tag)} <span class="text-muted fw-normal">(${eps.length})</span>
+            </button>
+            <div class="tag-eps ${isOpenTag ? '' : 'd-none'}">
+                <div class="list-group list-group-flush border rounded-1 mb-1">${btnRows}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.tag-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const isOpen = btn.dataset.open === 'true';
+            btn.dataset.open = !isOpen;
+            btn.querySelector('.toggle-icon').textContent = !isOpen ? '▾' : '▸';
+            btn.nextElementSibling.classList.toggle('d-none', isOpen);
+        });
+    });
+
+    container.querySelectorAll('.ep-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ep = ENDPOINTS.find(e => epKey(e) === btn.dataset.key);
+            if (ep) selectEp(ep);
+        });
+    });
+}
+
+// ── Endpoint selection ─────────────────────────────────────────────────────
+function selectEp(ep) {
+    selectedEp = ep;
+
+    document.getElementById('noSelection').style.display = 'none';
+    document.getElementById('endpointPanel').style.display = 'block';
+    document.getElementById('responseSection').style.display = 'none';
+
+    // Disable Send for non-GET methods
+    const btn = document.getElementById('sendBtn');
+    const readonly = isReadOnly(ep);
+    btn.disabled = !readonly;
+    btn.title = readonly ? '' : 'Read-only mode: GET and POST /search are enabled; other write methods are disabled';
+    btn.classList.toggle('btn-primary', readonly);
+    btn.classList.toggle('btn-secondary', !readonly);
+
+    // Title and summary
+    document.getElementById('epTitle').innerHTML = methodBadge(ep.http_method) + esc(ep.path);
+    document.getElementById('epSummary').textContent = ep.summary || '';
+
+    // Parameters table — path and query params only, headers are handled server-side (FR5)
+    const paramsEl = document.getElementById('paramsList');
+    const visibleParams = (ep.params || []).filter(p => p.in === 'path' || p.in === 'query');
+
+    if (visibleParams.length === 0) {
+        paramsEl.innerHTML = '<p class="text-muted small mb-0">No path or query parameters.</p>';
+    } else {
+        const rows = visibleParams.map(p => {
+            const hint = (p.example !== undefined && p.example !== null)
+                ? esc(String(p.example))
+                : (p.default !== undefined && p.default !== null)
+                    ? esc(String(p.default))
+                    : '';
+            return `<tr>
+                <td class="font-monospace small py-1 pe-2">${esc(p.name)}</td>
+                <td class="small text-muted py-1 pe-2">${esc(p.in)}</td>
+                <td class="small text-muted py-1 pe-2">${esc(p.type || '')}</td>
+                <td class="small py-1 pe-2">${p.required ? '<span class="text-danger">required</span>' : ''}</td>
+                <td class="small text-muted py-1 pe-2 font-monospace" style="font-size:0.82em;">${hint}</td>
+                <td class="small text-muted py-1" style="max-width:220px;white-space:normal;">${esc(p.description || '')}</td>
+            </tr>`;
+        }).join('');
+        paramsEl.innerHTML = `<table class="table table-sm mb-0" style="font-size:0.78em;">
+            <thead><tr>
+                <th class="py-1">Name</th>
+                <th class="py-1">In</th>
+                <th class="py-1">Type</th>
+                <th class="py-1"></th>
+                <th class="py-1">Default / Example</th>
+                <th class="py-1">Description</th>
+            </tr></thead>
+            <tbody>${rows}</tbody></table>`;
+    }
+
+    // Request body — restore saved values from localStorage (FR8)
+    currentTemplate = buildTemplate(ep);
+    const saved = localStorage.getItem(storageKey(ep));
+    const hasSaved = saved !== null && saved !== currentTemplate;
+
+    document.getElementById('requestBody').value = hasSaved ? saved : currentTemplate;
+    document.getElementById('savedIndicator').style.display = hasSaved ? 'inline' : 'none';
+    document.getElementById('resetBtn').style.display = hasSaved ? 'inline-block' : 'none';
+    document.getElementById('bodyError').style.display = 'none';
+
+    renderList();
+    document.getElementById('endpointPanel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Clear saved values and revert to the generated template
+function resetToTemplate() {
+    if (!selectedEp) return;
+    localStorage.removeItem(storageKey(selectedEp));
+    document.getElementById('requestBody').value = currentTemplate;
+    document.getElementById('savedIndicator').style.display = 'none';
+    document.getElementById('resetBtn').style.display = 'none';
+    renderList();
+}
+
+// ── Send request (FR3, FR4) ────────────────────────────────────────────────
+async function sendRequest() {
+    if (!selectedEp || !isReadOnly(selectedEp)) return;
+
+    const bodyText = document.getElementById('requestBody').value.trim();
+    let body = {};
+    if (bodyText) {
+        try {
+            body = JSON.parse(bodyText);
+        } catch(e) {
+            const errEl = document.getElementById('bodyError');
+            errEl.textContent = 'Invalid JSON: ' + e.message;
+            errEl.style.display = 'block';
+            return;
+        }
+    }
+    document.getElementById('bodyError').style.display = 'none';
+
+    const payload = {
+        http_method: selectedEp.http_method,
+        path: selectedEp.path,
+        body,
+    };
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const tStart = Date.now();
+    try {
+        const res = await fetch('/debug/reactor/call', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+        const elapsed = ((Date.now() - tStart) / 1000).toFixed(2);
+
+        const sec = document.getElementById('responseSection');
+        sec.style.display = 'block';
+        const badge = document.getElementById('responseStatus');
+
+        if (result.success) {
+            badge.textContent = `200 OK · ${elapsed}s`;
+            badge.className = 'badge bg-success me-2';
+            document.getElementById('responseBody').textContent = JSON.stringify(result.data, null, 2);
+
+            // FR8: persist successful call body to localStorage
+            localStorage.setItem(storageKey(selectedEp), bodyText || '{}');
+            document.getElementById('savedIndicator').style.display = 'inline';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+            renderList();  // refresh saved-value indicators in the list
+        } else {
+            badge.textContent = `Error · ${elapsed}s`;
+            badge.className = 'badge bg-danger me-2';
+            document.getElementById('responseBody').textContent =
+                `${result.error_type || 'Error'}: ${result.error}`;
+        }
+        sec.scrollIntoView({behavior:'smooth', block:'nearest'});
+    } catch(e) {
+        document.getElementById('responseStatus').textContent = 'Network Error';
+        document.getElementById('responseStatus').className = 'badge bg-danger me-2';
+        document.getElementById('responseBody').textContent = String(e);
+        document.getElementById('responseSection').style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Send &#9654;';
+    }
+}
+
+function copyResponse() {
+    navigator.clipboard.writeText(document.getElementById('responseBody').textContent).catch(() => {});
+}
+
+// ── Wire up controls ───────────────────────────────────────────────────────
+document.getElementById('endpointSearch').addEventListener('input', renderList);
+
+// Ctrl/Cmd+Enter to send
+document.getElementById('requestBody').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && selectedEp && isReadOnly(selectedEp)) {
+        sendRequest();
+    }
+});
+
+// Initial render
+renderList();
+</script>
+{% endblock %}

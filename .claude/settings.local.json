@@ -26,7 +26,11 @@
       "Bash(grep -A 20 \"adobe.analytics\\\\|eVar\\\\|prop\\\\|event\" ~/Workspace/Python/Launchpad/docs/autopsies/*.md)",
       "Bash(find /Users/joris/Workspace/Python/Launchpad -name *.py -path */launchpy/*)",
       "Bash(curl -s http://127.0.0.1:5010)",
-      "Bash(pkill -f \"run.py\")"
+      "Bash(pkill -f \"run.py\")",
+      "WebFetch(domain:developer.adobe.com)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(uv sync:*)"
     ]
   }
 }

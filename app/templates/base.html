@@ -216,12 +216,18 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active_tab in ['report-suites', 'cache', 'debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
+                        <a class="nav-link dropdown-toggle {% if active_tab in ['report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/report-suites">Report Suites</a></li>
                             <li><a class="dropdown-item" href="/cache">Cache</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Adobe Analytics</h6></li>
                             <li><a class="dropdown-item {% if active_tab == 'debug' %}active{% endif %}" href="/debug">API Debug</a></li>
+                            {% if config.LAUNCH_ENABLED %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Adobe Launch</h6></li>
+                            <li><a class="dropdown-item {% if active_tab == 'reactor-debug' %}active{% endif %}" href="/debug/reactor">Reactor Debug</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>

@@ -2316,6 +2316,177 @@ def api_debug_call():
         return jsonify({'success': False, 'error': str(exc), 'error_type': type(exc).__name__})
 
 
+def _load_reactor_endpoints() -> list[dict]:
+    """Parse the Reactor API YAML swagger and return a flat list of endpoint descriptors.
+
+    Results are cached at function level since the spec is a static file.
+    Headers managed by the proxy (Authorization, x-api-key, etc.) are omitted
+    from the parameter list so users only see the fields they actually need to fill.
+    """
+    if hasattr(_load_reactor_endpoints, "_cache"):
+        return _load_reactor_endpoints._cache  # type: ignore[attr-defined]
+
+    endpoints: list[dict] = []
+
+    path_yaml = os.path.join(_ASSETS_DIR, 'swagger', 'adobe_reactor_api_swagger.yaml')
+    if not os.path.exists(path_yaml):
+        logger.warning("Reactor swagger not found at %s — Reactor debug page will be empty", path_yaml)
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+
+    try:
+        import yaml  # pyyaml — optional dep only needed here
+    except ImportError:
+        logger.error("pyyaml is not installed; install it with 'uv add pyyaml'. Reactor debug page will be empty.")
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+
+    try:
+        with open(path_yaml) as fh:
+            spec = yaml.safe_load(fh)
+    except OSError as exc:
+        logger.error("Failed to read Reactor swagger at %s: %s. Reactor debug page will be empty", path_yaml, exc)
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+    except yaml.YAMLError as exc:
+        logger.error("Failed to parse Reactor swagger YAML at %s: %s. Reactor debug page will be empty", path_yaml, exc)
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+
+    if not isinstance(spec, dict):
+        logger.error(
+            "Unexpected Reactor swagger structure in %s (expected mapping, got %s). Reactor debug page will be empty",
+            path_yaml,
+            type(spec).__name__,
+        )
+        _load_reactor_endpoints._cache = []  # type: ignore[attr-defined]
+        return []
+    comp_params = spec.get('components', {}).get('parameters', {})
+
+    # These are injected by the proxy — skip them from user-facing display
+    _SKIP_HEADERS = {'authorization', 'x-api-key', 'x-gw-ims-org-id', 'accept', 'content-type'}
+
+    for path, path_item in spec.get('paths', {}).items():
+        if not isinstance(path_item, dict):
+            continue
+        path_level_params = path_item.get('parameters', [])
+
+        for http_m, ep_spec in path_item.items():
+            if http_m in ('parameters', 'summary', 'description', 'servers'):
+                continue
+            if not isinstance(ep_spec, dict):
+                continue
+
+            raw_params = path_level_params + ep_spec.get('parameters', [])
+            params: list[dict] = []
+            for p in raw_params:
+                if '$ref' in p:
+                    ref_name = p['$ref'].split('/')[-1]
+                    p = comp_params.get(ref_name, p)
+                param_name = p.get('name', '')
+                if not param_name:
+                    continue
+                if p.get('in') == 'header' and param_name.lower() in _SKIP_HEADERS:
+                    continue
+                schema = p.get('schema', {})
+                params.append({
+                    'name': param_name,
+                    'in': p.get('in', 'query'),
+                    'type': schema.get('type', 'string'),
+                    'required': bool(p.get('required', False)),
+                    'description': (p.get('description') or '').replace('\n', ' ')[:200],
+                    'default': schema.get('default'),
+                    'example': schema.get('example') or p.get('example'),
+                })
+
+            endpoints.append({
+                'api': 'reactor',
+                'tag': ep_spec.get('tags', ['Other'])[0] if ep_spec.get('tags') else 'Other',
+                'http_method': http_m.upper(),
+                'path': path,
+                'summary': ep_spec.get('summary', ''),
+                'params': params,
+            })
+
+    logger.info("Loaded %d Reactor API endpoints from swagger", len(endpoints))
+    _load_reactor_endpoints._cache = endpoints  # type: ignore[attr-defined]
+    return endpoints
+
+
+@main_bp.route('/debug/reactor')
+def reactor_debug():
+    """Interactive debug page for exploring Adobe Launch Reactor API endpoints.
+
+    Requires LAUNCH_ENABLED to be configured; returns 403 otherwise (FR1).
+    """
+    if not current_app.config.get('LAUNCH_ENABLED') or not getattr(current_app, 'codex_launch_service', None):
+        abort(403)
+
+    endpoints = _load_reactor_endpoints()
+    property_id = current_app.config.get('LAUNCH_PROPERTY_ID', '')
+    return render_template(
+        'reactor_debug.html',
+        title='Reactor Debug',
+        active_tab='reactor-debug',
+        endpoints_json=json.dumps(endpoints),
+        endpoint_count=len(endpoints),
+        default_property_id=property_id,
+        cache_info=get_cache_info(),
+    )
+
+
+@main_bp.route('/debug/reactor/call', methods=['POST'])
+def reactor_debug_call():
+    """Proxy a raw Reactor API call from the debug page and return the JSON response.
+
+    GET requests are always allowed. POST is whitelisted for /search only — it is a
+    read-only search operation that requires POST by the Reactor API's design.
+    """
+    if not current_app.config.get('LAUNCH_ENABLED'):
+        return jsonify({'success': False, 'error': 'Reactor API is not configured for this Codex instance'})
+    launch_svc = getattr(current_app, 'codex_launch_service', None)
+    if not launch_svc:
+        return jsonify({'success': False, 'error': 'Reactor API service is not available'})
+
+    payload = request.json or {}
+    http_method = payload.get('http_method', 'GET')
+    path_template = payload.get('path', '')
+    raw_body = payload.get('body')
+    if raw_body is None:
+        body = {}
+    elif isinstance(raw_body, dict):
+        # copy into a new dict so we can safely mutate (e.g., .pop during path substitution)
+        body = dict(raw_body)
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'Request body must be a JSON object for Reactor debug calls'
+        })
+
+    # POST is only allowed for /search — a read-only endpoint that requires POST by design
+    _ALLOWED_POST_PATHS = {'/search'}
+    if http_method == 'POST' and path_template not in _ALLOWED_POST_PATHS:
+        return jsonify({'success': False, 'error': f'POST is only enabled for /search. Other write methods are disabled.'})
+    if http_method not in ('GET', 'POST'):
+        return jsonify({'success': False, 'error': f'{http_method} requests are disabled in the Reactor debug page'})
+
+    # Substitute {PARAM_NAME} placeholders from the body dict into the path (GET routes only)
+    resolved_path = path_template
+    for param_name in re.findall(r'\{(\w+)\}', path_template):
+        if param_name in body:
+            resolved_path = resolved_path.replace(f'{{{param_name}}}', str(body.pop(param_name)))
+
+    try:
+        if http_method == 'POST':
+            result = launch_svc.post_raw(resolved_path, json_body=body or None)
+        else:
+            result = launch_svc.get_raw(resolved_path, params=body or None)
+        return jsonify({'success': True, 'data': result})
+    except Exception as exc:
+        logger.warning("Reactor debug call failed: %s", exc)
+        return jsonify({'success': False, 'error': str(exc), 'error_type': type(exc).__name__})
+
+
 @main_bp.route('/api/notes/options/<dimension_type>')
 def get_dimension_options(dimension_type: str):
     """
