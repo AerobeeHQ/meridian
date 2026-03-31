@@ -2451,7 +2451,17 @@ def reactor_debug_call():
     payload = request.json or {}
     http_method = payload.get('http_method', 'GET')
     path_template = payload.get('path', '')
-    body = dict(payload.get('body') or {})
+    raw_body = payload.get('body')
+    if raw_body is None:
+        body = {}
+    elif isinstance(raw_body, dict):
+        # copy into a new dict so we can safely mutate (e.g., .pop during path substitution)
+        body = dict(raw_body)
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'Request body must be a JSON object for Reactor debug calls'
+        })
 
     # POST is only allowed for /search — a read-only endpoint that requires POST by design
     _ALLOWED_POST_PATHS = {'/search'}
