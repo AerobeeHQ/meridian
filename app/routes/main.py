@@ -1977,11 +1977,17 @@ def api_related_rules(dimension_type: str, dimension_id: str):
     Called asynchronously by detail pages after initial render so that a cold
     or unavailable processing-rules cache doesn't block page load.
 
+    Returns 204 for classified dimensions (e.g. 'evar8.suburb') because
+    processing rules cannot target sub-classifications.
+
     Args:
         dimension_type: 'prop', 'evar', 'event', or 'listvar'
         dimension_id:   The dimension's display ID (e.g. 'prop3', 'evar5',
                         'event2') or listvar number (e.g. '1').
     """
+    if '.' in dimension_id:
+        return '', 204
+
     rsid = get_rsid()
     _cached_rules_raw = cache.get(rsid, 'processing_rules')
     processing_rules_cached = _cached_rules_raw is not None
@@ -2016,13 +2022,17 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
     """Return the 'Adobe Launch Rules' card as an HTML fragment.
 
     Called asynchronously from detail pages after initial render.
-    Returns 204 No Content when Launch is not enabled so the placeholder
-    can be removed without rendering an empty card.
+    Returns 204 No Content when Launch is not enabled, or when the dimension
+    is a classification (e.g. 'evar8.suburb'), since Launch rules cannot
+    target sub-classifications directly.
 
     Args:
         dimension_type: 'prop', 'evar', 'event', or 'listvar'
         dimension_id:   Full dimension ID (e.g. 'evar5') or listvar number ('1').
     """
+    if '.' in dimension_id:
+        return '', 204
+
     if not current_app.config.get('LAUNCH_ENABLED'):
         return '', 204
 
@@ -2078,11 +2088,17 @@ def api_related_channel_rules(dimension_type: str, dimension_id: str):
     Called asynchronously by detail pages after initial render so that a cold
     or unavailable channel-rules cache doesn't block page load.
 
+    Returns 204 for classified dimensions (e.g. 'evar8.suburb') because
+    channel rules cannot target sub-classifications.
+
     Args:
         dimension_type: 'prop', 'evar', 'event', or 'listvar'
         dimension_id:   The dimension's display ID (e.g. 'prop3', 'evar5',
                         'event2') or listvar number (e.g. '1').
     """
+    if '.' in dimension_id:
+        return '', 204
+
     rsid = get_rsid()
     _cached_rules_raw = cache.get(rsid, 'channel_rules')
     channel_rules_cached = _cached_rules_raw is not None
