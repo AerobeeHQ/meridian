@@ -1,4 +1,4 @@
-# Codex `v1.0`
+# Codex `v2.0`
 
 ### A Data Dictionary for your Adobe Analytics Report Suites
 
@@ -11,6 +11,7 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 ## Features
 
 - **Report Suite Overview** — Landing page with configuration health stats and cache status
+- **Report Suites** — Browse all report suites in the Adobe Analytics company with key configuration stats
 - **Conversion Variables (eVars)** — View all eVars with allocation, expiration, and descriptions
 - **Traffic Variables (Props)** — Browse props with pathing and list support settings
 - **Success Events** — List all events with type, serialisation, and descriptions
@@ -24,7 +25,9 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 - **Dimension Notes** — Annotate any dimension or event with plain-English descriptions and technical context
 - **CSV Export** — Export any configuration table for documentation or audits
 - **Background Pre-Caching** — Configuration data is pre-warmed at startup and refreshed every 24 hours
+- **Cache Management** — View cache status for all data sources; force-refresh individual caches on demand
 - **API Debug** — Interactive browser-based explorer for all Adobe Analytics API 1.4 and 2.0 endpoints; browse, inspect parameters, and send read-only requests proxied securely through the server
+- **Adobe Launch Integration** — See which Launch (Tags) rules set each variable (eVar, prop, event, listvar)
 
 ---
 
@@ -110,10 +113,20 @@ Create a `config.json` file in the project root (use `config.dist.json` as a tem
     "CLIENT_ID": "your-client-id",
     "CLIENT_SECRET": "your-client-secret",
     "ORGANIZATION_ID": "ABC123@AdobeOrg",
+    "SCOPES": "openid, AdobeID, additional_info.projectedProductContext",
     "AW_USERNAME": "user:acme",
-    "AW_SECRET": "wsse-secret"
+    "AW_SECRET": "wsse-secret",
+    "API_V14_TIMEOUT": 5,
+    "LAUNCH_ENABLED": false,
+    "LAUNCH_PROPERTY_ID": "",
+    "LAUNCHPAD_URL": "",
+    "AUTH_MODE": "server",
+    "OAUTH_REDIRECT_URI": "http://localhost:5010/auth/callback",
+    "SESSION_SECRET": ""
 }
 ```
+
+> **Note:** `LAUNCH_ENABLED`, `LAUNCH_PROPERTY_ID`, `LAUNCHPAD_URL` are optional. Enable to surface Adobe Launch rules on dimension detail pages. `AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET` are for per-user OAuth login (roadmap v2-004).
 
 ---
 
@@ -184,7 +197,7 @@ Codex/
 
 See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan with complexity assessments and implementation details.
 
-### Completed in v1.0
+### Completed in v2.0
 
 * [x] Report Suite Overview page
 * [x] Background pre-caching (24-hour refresh, force-refresh button)
@@ -193,11 +206,12 @@ See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan 
 * [x] Calculated Metrics listing and detail pages (API 2.0)
 * [x] Dimension Notes / annotations
 * [x] API Debug page — interactive explorer for all 1.4 and 2.0 endpoints
+* [x] Marketing Channel Rules cross-linking on dimension detail pages
+* [x] Adobe Launch (Tags) integration — show which Launch rules set each variable
+* [x] Cache Management page — view cache status and force-refresh
 
 ### Planned for v2.0
 
-* [ ] Marketing Channel Rules cross-linking on dimension detail pages
-* [ ] Adobe Launch (Tags) integration — show which Launch rules set each variable
 * [ ] User OAuth login — replace server-to-server with per-user Adobe IMS login
 
 ## License
@@ -206,4 +220,4 @@ MIT
 
 ---
 
-*Last updated: March 2026*
+*Last updated: April 2026*

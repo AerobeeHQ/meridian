@@ -2,7 +2,9 @@
 
 **Date:** 2026-03-31
 **Branch:** `main`
-**Status:** Complete — pending commit
+**Status:** Complete — merged (supersedes autopsy 036)
+
+> **Note:** This autopsy supersedes [autopsy 036](036-adobe-launch-integration.md). The original library-walk approach described there was replaced by the search API approach documented here.
 
 ---
 

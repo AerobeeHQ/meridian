@@ -71,12 +71,15 @@ After completing a feature implementation, or whenever the user needs to review 
 The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
 
 ## 7. Key Files
-- `app/routes/main.py`: Core application logic.
+- `app/routes/main.py`: Core application logic and routes.
+- `app/routes/auth.py`: Authentication routes (login, callback, logout) for per-user OAuth.
 - `app/services/adobe_analytics_v2.py`: API 2.0 wrapper.
 - `app/services/adobe_analytics.py`: API 1.4 wrapper.
 - `app/services/adobe_auth.py`: OAuth2 token management.
+- `app/services/adobe_launch.py`: Adobe Experience Platform Tags (Reactor) API client for Launch integration.
 - `app/services/cache.py`: JSON file-based caching with per-key TTL.
 - `app/services/cache_warmer.py`: Background cache pre-warming via APScheduler (24h interval).
+- `app/services/git_info.py`: Git branch/commit info for footer display.
 - `app/services/notes.py`: User-provided dimension annotation storage (JSON file-based).
 - `verify_setup.py`: Local setup and configuration checks.
 - `notebooks/`: Exploratory scripts.
