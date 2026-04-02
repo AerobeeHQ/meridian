@@ -2090,12 +2090,22 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
         related_rules = []
         launch_available = False
 
+    # Build Adobe Tags base URL via the Launch service (includes Reactor company ID)
+    adobe_tags_base = None
+    try:
+        org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+        if launch_service and org_alias:
+            adobe_tags_base = launch_service.get_tags_base_url(org_alias)
+    except Exception:
+        pass
+
     return render_template(
         '_fragment_related_launch_rules.html',
         related_rules=related_rules,
         launch_available=launch_available,
         launchpad_url=current_app.config.get('LAUNCHPAD_URL', ''),
         property_id=property_id,
+        adobe_tags_base=adobe_tags_base,
     )
 
 

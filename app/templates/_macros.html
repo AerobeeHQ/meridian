@@ -746,15 +746,22 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 {% endmacro %}
 
 
-{% macro related_launch_rules_section(related_rules, launch_available=True, launchpad_url='', property_id='') %}
-{# Card listing Adobe Launch entries that reference the current dimension.     #}
-{# Results come from the Reactor /search API and include rules, extensions,    #}
-{# data elements, and custom code actions.                                     #}
-{# related_rules:   list of dicts from AdobeLaunchService.search_and_resolve() #}
-{# launch_available: False when the Reactor API search failed.                 #}
-{# launchpad_url:   Base URL for deep-linking into the Launchpad app.         #}
-{# property_id:     Launch property ID used to build deep links.              #}
-{# Each entry has source='rule'|'extension'|'data_element'.                    #}
+{% macro related_launch_rules_section(related_rules, launch_available=True, launchpad_url='', property_id='', adobe_tags_base='') %}
+{# Card listing Adobe Launch entries that reference the current dimension.         #}
+{# Results come from the Reactor /search API and include rules, extensions,        #}
+{# data elements, and custom code actions.                                         #}
+{# related_rules:    list of dicts from AdobeLaunchService.search_and_resolve()   #}
+{# launch_available: False when the Reactor API search failed.                     #}
+{# launchpad_url:    Base URL for the Launchpad app (takes priority if set).       #}
+{# property_id:      Launch property ID for building deep links.                   #}
+{# adobe_tags_base:  Base URL for native Adobe Tags UI (fallback if no Launchpad). #}
+{#   e.g. https://experience.adobe.com/#/@org/so:company/data-collection/tags      #}
+{# Each entry has source='rule'|'extension'|'data_element'.                        #}
+{#                                                                                  #}
+{# Link priority per entry:                                                         #}
+{#   1. Launchpad URL (if launchpad_url and property_id are set)                   #}
+{#   2. Adobe Tags UI (if adobe_tags_base and property_id are set)                 #}
+{#   3. Plain text (no link)                                                        #}
 <div class="card mb-4">
     <div class="card-body">
         <h5 class="card-title">Adobe Launch</h5>
@@ -773,25 +780,33 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         </p>
         <ul class="list-unstyled mb-0">
             {% for entry in related_rules %}
+            {# Resolve the best available base URL for this entry #}
+            {% if launchpad_url and property_id %}
+                {% set link_base = launchpad_url ~ '/property/' ~ property_id %}
+            {% elif adobe_tags_base and property_id %}
+                {% set link_base = adobe_tags_base ~ '/properties/' ~ property_id %}
+            {% else %}
+                {% set link_base = '' %}
+            {% endif %}
             <li class="mb-2">
                 <div class="d-flex align-items-center gap-2">
                     {% if entry.source == 'extension' %}
                         <span class="badge bg-info text-dark">Global</span>
-                        {% if launchpad_url and property_id and entry.source_id %}
-                        <a href="{{ launchpad_url }}/property/{{ property_id }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% if link_base and entry.source_id %}
+                        <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
                         {% else %}
                         {{ entry.rule_name }}
                         {% endif %}
                     {% elif entry.source == 'data_element' %}
                         <span class="badge bg-warning text-dark">Data Element</span>
-                        {% if launchpad_url and property_id and entry.source_id %}
-                        <a href="{{ launchpad_url }}/property/{{ property_id }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% if link_base and entry.source_id %}
+                        <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
                         {% else %}
                         {{ entry.rule_name }}
                         {% endif %}
                     {% else %}
-                        {% if launchpad_url and property_id and entry.rule_id %}
-                        <a href="{{ launchpad_url }}/property/{{ property_id }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener">{{ entry.rule_name }}</a>
+                        {% if link_base and entry.rule_id %}
+                        <a href="{{ link_base }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
                         {% else %}
                         {{ entry.rule_name }}
                         {% endif %}
