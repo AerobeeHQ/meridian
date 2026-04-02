@@ -2150,6 +2150,61 @@ def api_related_channel_rules(dimension_type: str, dimension_id: str):
 
 
 # =============================================================================
+# Tags API Routes  (/api/tags)
+# =============================================================================
+
+@main_bp.route('/api/tags', methods=['GET'])
+def list_tags() -> Response:
+    """Return the ordered list of available tag names.
+
+    Returns:
+        JSON array of strings, e.g. ``["Shop", "Checkout", ...]``.
+    """
+    return jsonify(notes_service.get_tags())
+
+
+@main_bp.route('/api/tags', methods=['POST'])
+def create_tag() -> Response:
+    """Add a new tag to the tag library.
+
+    Request body:
+        JSON object with a ``name`` field, e.g. ``{"name": "Analytics"}``.
+
+    Returns:
+        ``{"tags": [...]}`` with the updated tag list on success.
+        ``{"error": "..."}`` with HTTP 400/409 on invalid input or duplicate.
+    """
+    data = request.get_json() or {}
+    name: str = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'Tag name is required'}), 400
+    try:
+        return jsonify({'tags': notes_service.add_tag(name)})
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 409
+
+
+@main_bp.route('/api/tags/<tag_name>', methods=['DELETE'])
+def remove_tag(tag_name: str) -> Response:
+    """Remove a tag from the tag library.
+
+    Existing notes that reference the deleted tag are **not** modified; their
+    stored ``squad_owners`` arrays retain the value.
+
+    Args:
+        tag_name: URL-encoded tag label to remove.
+
+    Returns:
+        ``{"tags": [...]}`` with the updated tag list on success.
+        ``{"error": "..."}`` with HTTP 404 if the tag does not exist.
+    """
+    try:
+        return jsonify({'tags': notes_service.delete_tag(tag_name)})
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 404
+
+
+# =============================================================================
 # Notes API Routes
 # =============================================================================
 

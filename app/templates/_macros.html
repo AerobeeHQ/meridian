@@ -191,16 +191,23 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     <hr class="my-3">
 
-    <!-- Journey Squad Owner -->
+    <!-- Tags -->
     <div class="mb-3">
-        <label class="form-label fw-semibold">Journey Squad Owner</label>
-        <div class="squad-chips">
-            {% for squad in ['Shop', 'Inspire', 'Checkout', 'Trolley', 'Loyalty', 'Perso', 'Finance', 'Search', 'Instore', 'Platform', 'All Squads'] %}
-            <span class="badge bg-secondary squad-chip me-1 mb-1" data-squad="{{ squad }}" style="cursor: pointer;">{{ squad }}</span>
-            {% endfor %}
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label fw-semibold mb-0">Tags</label>
+            <button type="button" class="btn btn-link btn-sm p-0 tag-manage-toggle"
+                    style="font-size:11px; text-decoration:none; color:#888;" title="Add or remove available tags">Manage</button>
+        </div>
+        <div class="squad-chips"></div>
+        <div class="tag-add-row d-none mt-2">
+            <div class="input-group input-group-sm" style="max-width:280px;">
+                <input type="text" class="form-control tag-new-input" placeholder="New tag name…" maxlength="50">
+                <button type="button" class="btn btn-outline-secondary tag-add-confirm">Add</button>
+                <button type="button" class="btn btn-outline-secondary tag-manage-done">Done</button>
+            </div>
         </div>
         <input type="hidden" name="squad_owners" value="">
-        <div class="form-text">Click to select owning squad(s)</div>
+        <div class="form-text">Click to select tag(s). Use Manage to add or remove available tags.</div>
     </div>
 
     <!-- Last Verified -->
@@ -235,27 +242,110 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     let saveTimeout = null;
     let hasUnsavedChanges = false;
 
-    // Squad chip selection
-    const squadChips = form.querySelectorAll('.squad-chip');
+    // Tag chip state
     const squadInput = form.querySelector('[name="squad_owners"]');
+    const chipsContainer = form.querySelector('.squad-chips');
+    const manageToggleBtn = form.querySelector('.tag-manage-toggle');
+    const addRow = form.querySelector('.tag-add-row');
+    const newTagInput = form.querySelector('.tag-new-input');
+    const addConfirmBtn = form.querySelector('.tag-add-confirm');
+    const manageDoneBtn = form.querySelector('.tag-manage-done');
     let selectedSquads = [];
+    let availableTags = [];
+    let inManageMode = false;
 
-    squadChips.forEach(chip => {
-        chip.addEventListener('click', function() {
-            const squad = this.dataset.squad;
-            if (selectedSquads.includes(squad)) {
-                selectedSquads = selectedSquads.filter(s => s !== squad);
-                this.classList.remove('bg-primary');
-                this.classList.add('bg-secondary');
+    function renderTagChips() {
+        chipsContainer.innerHTML = '';
+        availableTags.forEach(function(tag) {
+            const chip = document.createElement('span');
+            const isSelected = selectedSquads.includes(tag);
+            chip.className = 'badge me-1 mb-1' + (isSelected ? ' bg-primary' : ' bg-secondary');
+            chip.style.cursor = 'pointer';
+            chip.style.userSelect = 'none';
+            chip.dataset.squad = tag;
+
+            if (inManageMode) {
+                chip.innerHTML = tag + ' <span style="font-size:10px;opacity:0.7;" title="Remove from list">&times;</span>';
+                chip.querySelector('span').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteTagFromLibrary(tag);
+                });
             } else {
-                selectedSquads.push(squad);
-                this.classList.remove('bg-secondary');
-                this.classList.add('bg-primary');
+                chip.textContent = tag;
+                chip.addEventListener('click', function() {
+                    if (selectedSquads.includes(tag)) {
+                        selectedSquads = selectedSquads.filter(function(s) { return s !== tag; });
+                    } else {
+                        selectedSquads.push(tag);
+                    }
+                    squadInput.value = JSON.stringify(selectedSquads);
+                    renderTagChips();
+                    markUnsaved();
+                });
             }
-            squadInput.value = JSON.stringify(selectedSquads);
-            markUnsaved();
+            chipsContainer.appendChild(chip);
         });
-    });
+    }
+
+    function loadTags() {
+        return fetch('/api/tags')
+            .then(function(r) { return r.json(); })
+            .then(function(tags) { availableTags = tags; })
+            .catch(function(e) { console.error('Failed to load tags:', e); availableTags = []; });
+    }
+
+    function deleteTagFromLibrary(tagName) {
+        fetch('/api/tags/' + encodeURIComponent(tagName), { method: 'DELETE' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                availableTags = data.tags;
+                selectedSquads = selectedSquads.filter(function(s) { return s !== tagName; });
+                squadInput.value = JSON.stringify(selectedSquads);
+                renderTagChips();
+            })
+            .catch(function(e) { console.error('Failed to delete tag:', e); });
+    }
+
+    if (manageToggleBtn) {
+        manageToggleBtn.addEventListener('click', function() {
+            inManageMode = true;
+            addRow.classList.remove('d-none');
+            renderTagChips();
+        });
+    }
+    if (manageDoneBtn) {
+        manageDoneBtn.addEventListener('click', function() {
+            inManageMode = false;
+            addRow.classList.add('d-none');
+            renderTagChips();
+        });
+    }
+    if (addConfirmBtn) {
+        function doAddTag() {
+            var name = newTagInput.value.trim();
+            if (!name) return;
+            fetch('/api/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (res.ok) {
+                    availableTags = res.data.tags;
+                    newTagInput.value = '';
+                    renderTagChips();
+                } else {
+                    alert(res.data.error || 'Could not add tag');
+                }
+            })
+            .catch(function(e) { console.error('Failed to add tag:', e); });
+        }
+        addConfirmBtn.addEventListener('click', doAddTag);
+        newTagInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); doAddTag(); }
+        });
+    }
 
     // Load dimension options for Equivalent Dimension dropdown
     function loadDimensionOptions() {
@@ -511,18 +601,10 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         form.querySelector('[name="typical_questions"]').value = data.typical_questions || '';
         form.querySelector('[name="last_verified"]').value = data.last_verified || '';
 
-        // Set squad chips
+        // Set tag chips
         selectedSquads = data.squad_owners || [];
-        squadChips.forEach(chip => {
-            if (selectedSquads.includes(chip.dataset.squad)) {
-                chip.classList.remove('bg-secondary');
-                chip.classList.add('bg-primary');
-            } else {
-                chip.classList.remove('bg-primary');
-                chip.classList.add('bg-secondary');
-            }
-        });
         squadInput.value = JSON.stringify(selectedSquads);
+        renderTagChips();
     }
 
     // Mark form as having unsaved changes
@@ -603,7 +685,11 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Initialize
     setupPlatformAvailabilityListener();
-    loadDimensionOptions().then(loadNotes);
+    Promise.all([loadTags(), loadDimensionOptions()])
+        .then(function() {
+            renderTagChips();
+            loadNotes();
+        });
 })();
 {% endmacro %}
 
