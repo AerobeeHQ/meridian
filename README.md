@@ -214,6 +214,59 @@ See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan 
 
 * [ ] User OAuth login — replace server-to-server with per-user Adobe IMS login
 
+---
+
+## Known Issues
+
+See [docs/todo.md](docs/todo.md) for the full bug list.
+
+| # | Issue | Notes |
+|---|-------|-------|
+| 1 | **Trendline chart shows peaks/valleys for dimensions with no recent data** | Likely stale cache or Adobe API returning noise values. A flatline is expected when a dimension has no data in the last 30 days. |
+| 2 | **API Debug page blocks all POST requests** | Some Adobe API 1.4 POST endpoints are read-only by design (e.g. `GetReportSuites`). These are currently blocked alongside write operations. A safe allowlist for read-only POST calls is under consideration. |
+
+---
+
+## Version History
+
+### v2.0 (March – April 2026)
+
+Major feature release built on top of the original Flask conversion. All new features use the Adobe Analytics API 2.0 (OAuth2) or Adobe Reactor API where applicable.
+
+| Feature | Description |
+|---------|-------------|
+| Report Suite Overview | Landing page with configuration health stats and cache status |
+| Segments | Listing and detail pages via API 2.0; human-readable container breakdown |
+| Calculated Metrics | Listing, detail pages, formula cross-references, and 30-day trend charts |
+| Processing Rules cross-linking | Detail pages show which rules reference each dimension |
+| Marketing Channel Rules cross-linking | Detail pages show which channel rules reference each dimension |
+| Adobe Launch integration | Detail pages show which Launch (Tags) rules set each variable |
+| Background Pre-Caching | Configuration data pre-warmed at startup and refreshed every 24 hours |
+| Cache Management | View per-key cache status and force-refresh on demand |
+| API Debug | Interactive browser-based explorer for all API 1.4 and 2.0 endpoints |
+| Reactor Debug | Interactive explorer for Adobe Launch Reactor API endpoints |
+| Dimension Notes | Per-dimension plain-English annotations persisted to disk |
+| Data Feed column names | Each dimension detail page shows the corresponding data feed column |
+| User OAuth login (partial) | Config scaffolding in place; per-user Adobe IMS login planned for a future release |
+
+### v1.0 (December 2025)
+
+Initial conversion of the [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) application to Python/Flask with Docker support.
+
+| Feature | Description |
+|---------|-------------|
+| eVars listing and detail | Allocation, expiration, and description for all conversion variables |
+| Props listing and detail | Pathing, list support settings for all traffic variables |
+| Events listing and detail | Type, serialisation, and descriptions for all success events |
+| ListVars listing and detail | ListVar configuration and top-10 value data |
+| Processing Rules | Display all processing rules with conditions and actions |
+| Marketing Channels | Channel definitions and channel classification rules |
+| Core Dimensions | Out-of-the-box Adobe Analytics dimensions |
+| CSV Export | Export any configuration table |
+| File-based caching | JSON cache with configurable TTL to reduce API calls |
+
+---
+
 ## License
 
 MIT
