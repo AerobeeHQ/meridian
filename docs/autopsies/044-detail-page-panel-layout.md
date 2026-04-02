@@ -30,7 +30,7 @@ Left column                    Right column
 ─────────────────              ─────────────────
 Config table                   Trend chart
 Related Processing Rules        Stats row
-Adobe Launch                   Top 10 Values
+Adobe Launch Rules             Top 10 Values
 Related Channel Rules
 Components
 Notes
