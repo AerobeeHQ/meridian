@@ -131,8 +131,16 @@ class AdobeAnalyticsV2Service:
         """
         if not org_alias:
             return None
-        global_company_id = self._get_global_company_id()
-        if not global_company_id:
+
+        try:
+            global_company_id = self._get_global_company_id()
+        except ValueError as exc:
+            # If the global company ID cannot be resolved, we return None
+            # to match the documented behavior of this helper.
+            logger.warning(
+                "Unable to resolve global company ID for Experience Cloud URL: %s",
+                exc,
+            )
             return None
 
         base = (
