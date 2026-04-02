@@ -4,7 +4,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
 ## TODOs
 
-- [ ] In the Components panel on prop/evar/event/listvar detail pages, use the pill style already being used on the Segment/Metric details page instead of the plain hyperlink. 
+- [x] In the Components panel on prop/evar/event/listvar detail pages, use the pill style already being used on the Segment/Metric details page instead of the plain hyperlink. **Already done — `components_section` macro uses `badge bg-light text-dark border` pills, matching segment/metric detail pages. Implemented as part of [autopsy 028](autopsies/028-components-panel.md).**
 - [x] Hyperlink the segmentId and metricId shown on their respective detail pages the Adobe Analytics equivalent.
   For example,
   * segmentId `s200001582_5df07b97e0a67a0e926c94e1` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/segments/edit/s200001582_5df07b97e0a67a0e926c94e1
