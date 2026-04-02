@@ -14,7 +14,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
-- [ ] Move the following panels on the prop/evar/events/listvar detail pages from the left hand column to the right hand columns below the Top 10 Values table: 
+- [x] Move the following panels on the prop/evar/events/listvar detail pages from the left hand column to the right hand columns below the Top 10 Values table: 
   1. Components but renamed to Segments and "Calculated Metrics"
   2. Related Processing Rules
   3. Related Channel Rules (but rename to "Related Marketing Channel Rules")
