@@ -1668,6 +1668,14 @@ def calculated_metric_detail(cm_id: str):
         ttl_hours=1,
     )
 
+    ec_url = None
+    if get_api_version() == '2.0':
+        try:
+            org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+            ec_url = api.get_experience_cloud_url('calculatedMetrics', cm_id, org_alias=org_alias)
+        except Exception:
+            pass
+
     return render_template(
         'calc_metric_detail.html',
         title=cm.get('name', cm_id),
@@ -1681,6 +1689,7 @@ def calculated_metric_detail(cm_id: str):
         back_label='Back to Calculated Metrics',
         definition_json=json.dumps(cm.get('definition') or {}, indent=2),
         trend_data=trend_data,
+        experience_cloud_url=ec_url,
     )
 
 
@@ -1744,6 +1753,14 @@ def segment_detail(segment_id: str):
     definition = segment.get('definition') or {}
     breakdown = _parse_segment_breakdown(definition)
 
+    ec_url = None
+    if get_api_version() == '2.0':
+        try:
+            org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+            ec_url = api.get_experience_cloud_url('segments', segment_id, org_alias=org_alias)
+        except Exception:
+            pass
+
     return render_template(
         'segment_detail.html',
         title=segment.get('name', segment_id),
@@ -1757,6 +1774,7 @@ def segment_detail(segment_id: str):
         back_label='Back to Segments',
         definition_json=json.dumps(definition, indent=2),
         breakdown=breakdown,
+        experience_cloud_url=ec_url,
     )
 
 

@@ -19,7 +19,13 @@
                     <tbody>
                         <tr>
                             <th style="width:38%;">Segment ID</th>
-                            <td><code>{{ segment_id }}</code></td>
+                            <td>
+                                <code>{{ segment_id }}</code>
+                                {% if experience_cloud_url %}
+                                <a href="{{ experience_cloud_url }}" target="_blank" rel="noopener noreferrer"
+                                   title="Open in Adobe Analytics" class="ms-1 text-muted" style="font-size:12px;">&#8599;</a>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th>Name</th>

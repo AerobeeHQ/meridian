@@ -5,10 +5,11 @@ This document is a list of smaller todo items and bugs found while using the Cod
 ## TODOs
 
 - [ ] In the Components panel on prop/evar/event/listvar detail pages, use the pill style already being used on the Segment/Metric details page instead of the plain hyperlink. 
-- [ ] Hyperlink the segmentId and metricId shown on their respective detail pages the Adobe Analytics equivalent. 
-  For example, 
+- [x] Hyperlink the segmentId and metricId shown on their respective detail pages the Adobe Analytics equivalent.
+  For example,
   * segmentId `s200001582_5df07b97e0a67a0e926c94e1` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/segments/edit/s200001582_5df07b97e0a67a0e926c94e1
   * metricId `cm200001582_69c1d1263db7d8215a55df17` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/calculatedMetrics/edit/cm200001582_69c1d1263db7d8215a55df17
+  **Fixed in [feature/segment-metric-experience-cloud-links](autopsies/042-segment-metric-experience-cloud-links.md)**
 - [ ] Hyperlink the Adobe Launch rule into Adobe Tags website.
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.

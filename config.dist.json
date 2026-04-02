@@ -22,6 +22,9 @@
     "_comment_api14_timeout":  "Timeout in seconds for API 1.4 HTTP requests. Increase if you see spurious timeouts on slow connections. 500ms (0.5) is possible but aggressive; 5 is a safe default for cross-Pacific calls.",
     "API_V14_TIMEOUT":         5,
 
+    "_comment_ec":             "Optional: your Adobe Experience Cloud company alias — the '@...' part in Experience Cloud URLs (e.g. 'originenergy' for https://experience.adobe.com/#/@originenergy/...). When set, Segment and Calculated Metric detail pages show a clickable deep-link to the Adobe Analytics UI. Leave blank or omit to hide the link.",
+    "EXPERIENCE_CLOUD_ORG":    "",
+
     "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. Requires API_VERSION 2.0 and the Reactor API scope added to your Adobe I/O project. LAUNCHPAD_URL enables deep-links from Codex to the Launchpad app (leave blank to show rule names without links). The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
     "LAUNCH_ENABLED":          false,
     "LAUNCH_PROPERTY_ID":      "<YOUR_LAUNCH_PROPERTY_ID (e.g. PRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)>",
