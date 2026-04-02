@@ -10,7 +10,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
   * segmentId `s200001582_5df07b97e0a67a0e926c94e1` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/segments/edit/s200001582_5df07b97e0a67a0e926c94e1
   * metricId `cm200001582_69c1d1263db7d8215a55df17` would link to https://experience.adobe.com/#/@originenergy/so:origin0/analytics/spa/#/components/calculatedMetrics/edit/cm200001582_69c1d1263db7d8215a55df17
   **Fixed in [feature/segment-metric-experience-cloud-links](autopsies/042-segment-metric-experience-cloud-links.md)**
-- [ ] Hyperlink the Adobe Launch rule into Adobe Tags website.
+- [x] Hyperlink the Adobe Launch rule into Adobe Tags website. **Fixed in [feature/launch-adobe-tags-deeplinks](autopsies/043-launch-adobe-tags-deeplinks.md)**
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
 - [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
 - [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
