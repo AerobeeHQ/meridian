@@ -48,22 +48,33 @@ Selecting by `#dataTable` keeps this rule scoped to listing pages. The solid whi
 
 No additional DataTables plugin is needed — with `paging: false` and no `scrollY` configured, DataTables renders a standard `<table>` and CSS sticky works directly.
 
-### 3. Refresh button in toolbar — `listing.html`
+### 3. Toolbar consolidation — `listing.html` + `base.html`
 
-The separate `<a>` element above the table was removed. In its place, a custom DataTables button is conditionally added when `cache_key` is set:
+The separate Refresh `<a>` div above the table was removed. DataTables' `dom` option now builds the entire toolbar as one flex row:
 
 ```js
-{% if cache_key %}
-{
-    text: '&#x21ba; Refresh',
-    className: 'btn-outline-secondary',
-    titleAttr: 'Force refresh data from API',
-    action: function() { window.location.href = '/cache/refresh/{{ cache_key }}'; }
-},
-{% endif %}
+dom: '<"d-flex align-items-center gap-2 mb-3"B<"flex-grow-1"f><"dt-refresh-slot ms-auto">>rtip'
 ```
 
-The button appears first in the row so it reads: **↺ Refresh | Copy | Column visibility | Download ▾** — all on a single line above the filter and table.
+Breakdown:
+- `B` — Copy / ColVis / Download buttons on the left
+- `<"flex-grow-1"f>` — Filter input expands to fill the middle
+- `<"dt-refresh-slot ms-auto">` — empty placeholder pushed to the far right
+
+After DataTables initialises, the Refresh link is injected into that slot:
+
+```js
+document.querySelector('.dt-refresh-slot').innerHTML =
+    '<a href="/cache/refresh/..." class="btn btn-sm btn-outline-secondary" ...>↺ Refresh</a>';
+```
+
+The Refresh link remains a native `<a>` element (right-aligned, matching the original design intent) while sharing a row with the DT buttons and search box.
+
+Two supporting CSS changes in `base.html`:
+- `.dt-buttons { margin-bottom: 0 }` — removes the gap only needed when buttons had their own row
+- `.dataTables_filter label { display: flex; width: 100% }` + `.dataTables_filter input { flex: 1 }` — makes the search input stretch to fill its `flex-grow-1` container
+
+The result: **[Copy] [ColVis] [Download ▾] [——— Filter: ___ ———] [↺ Refresh]** — all on one line.
 
 ---
 
@@ -71,8 +82,8 @@ The button appears first in the row so it reads: **↺ Refresh | Copy | Column v
 
 | File | Change |
 |------|--------|
-| `app/templates/base.html` | Added CSS: lighter stripe, sticky `#dataTable thead th` |
-| `app/templates/listing.html` | Removed standalone Refresh div; added custom Refresh button to DataTables |
+| `app/templates/base.html` | Lighter stripe CSS; sticky `#dataTable thead th`; `.dt-buttons` margin reset; filter input flex styles |
+| `app/templates/listing.html` | Removed standalone Refresh div; custom `dom` toolbar row; Refresh link injected via JS |
 | `docs/todo.md` | Marked all three listing improvement items as done |
 
 ---

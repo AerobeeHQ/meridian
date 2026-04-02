@@ -64,16 +64,8 @@ $(document).ready(function() {
         pageLength: -1,
         paging: false,
         orderClasses: true,
-        dom: 'Blfrtip',
+        dom: '<"d-flex align-items-center gap-2 mb-3"B<"flex-grow-1"f><"dt-refresh-slot ms-auto">>rtip',
         buttons: [
-            {% if cache_key %}
-            {
-                text: '&#x21ba; Refresh',
-                className: 'btn-outline-secondary',
-                titleAttr: 'Force refresh data from API',
-                action: function() { window.location.href = '/cache/refresh/{{ cache_key }}'; }
-            },
-            {% endif %}
             'copy',
             'colvis',
             {
@@ -94,6 +86,11 @@ $(document).ready(function() {
             info: "Showing _TOTAL_ entries"
         }
     });
+
+    {% if cache_key %}
+    document.querySelector('.dt-refresh-slot').innerHTML =
+        '<a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>';
+    {% endif %}
 });
 </script>
 {% endblock %}
