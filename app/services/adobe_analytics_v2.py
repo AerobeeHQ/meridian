@@ -149,36 +149,6 @@ class AdobeAnalyticsV2Service:
         )
         return f"{base}/#/components/{component_type}/edit/{component_id}"
 
-    def get_tags_base_url(self, org_alias: Optional[str] = None) -> Optional[str]:
-        """
-        Return the base URL for the Adobe Experience Platform Tags (Launch) UI.
-
-        The returned string ends before the property path so callers can append
-        ``/properties/{property_id}/rules/{rule_id}`` etc.
-
-        Example return value::
-
-            https://experience.adobe.com/#/@originenergy/so:origin0/data-collection/tags
-
-        Args:
-            org_alias: The company alias (``EXPERIENCE_CLOUD_ORG`` config value).
-                       Returns ``None`` when absent.
-
-        Returns:
-            Base URL string, or ``None`` when either identifier is missing.
-        """
-        if not org_alias:
-            return None
-        try:
-            global_company_id = self._get_global_company_id()
-        except ValueError as exc:
-            logger.warning("Unable to resolve global company ID for Tags URL: %s", exc)
-            return None
-        return (
-            f"https://experience.adobe.com/#/@{org_alias}"
-            f"/so:{global_company_id}/data-collection/tags"
-        )
-
     def _make_request(
         self,
         endpoint: str,

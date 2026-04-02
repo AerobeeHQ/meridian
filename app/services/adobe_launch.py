@@ -32,6 +32,7 @@ class AdobeLaunchService:
     def __init__(self, auth_service: OAuth2Auth, org_id: str):
         self.auth = auth_service
         self.org_id = org_id
+        self._reactor_company_id: str | None = None
 
     def _headers(self) -> dict:
         return {
@@ -94,6 +95,55 @@ class AdobeLaunchService:
         resp = requests.get(url, headers=self._headers(), params=params or {})
         resp.raise_for_status()
         return resp.json()
+
+    def get_company_id(self) -> str | None:
+        """
+        Return the Reactor company ID (``CO...``) for the authenticated org.
+
+        Fetches ``GET /companies`` once and caches the result on the instance.
+        Returns ``None`` if the call fails or the response is empty so callers
+        can degrade gracefully.
+        """
+        if self._reactor_company_id is not None:
+            return self._reactor_company_id
+
+        try:
+            resp = self.get_raw("/companies")
+            companies = resp.get("data", [])
+            if companies:
+                self._reactor_company_id = companies[0].get("id")
+                logger.info("Reactor company ID: %s", self._reactor_company_id)
+        except Exception:
+            logger.warning("Failed to fetch Reactor company ID from /companies")
+
+        return self._reactor_company_id
+
+    def get_tags_base_url(self, org_alias: str | None) -> str | None:
+        """
+        Build the base URL for the Adobe Experience Platform Tags (Launch) UI.
+
+        The returned string ends before the property path, e.g.::
+
+            https://experience.adobe.com/#/@originenergy/sname:prod/data-collection/tags/companies/COabc123
+
+        Callers append ``/properties/{property_id}/rules/{rule_id}`` etc.
+
+        Args:
+            org_alias: The ``EXPERIENCE_CLOUD_ORG`` config value (e.g. ``"originenergy"``).
+                       Returns ``None`` when absent.
+
+        Returns:
+            URL string, or ``None`` when either identifier is unavailable.
+        """
+        if not org_alias:
+            return None
+        company_id = self.get_company_id()
+        if not company_id:
+            return None
+        return (
+            f"https://experience.adobe.com/#/@{org_alias}"
+            f"/sname:prod/data-collection/tags/companies/{company_id}"
+        )
 
     def get_rule_components(self, rule_id: str) -> list:
         """Fetch all components for a single rule."""
