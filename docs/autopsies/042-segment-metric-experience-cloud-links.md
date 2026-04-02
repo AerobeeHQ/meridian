@@ -30,7 +30,7 @@ The URL requires two company identifiers:
 ```json
 {
   "imsOrgs": [{
-    "imsOrgId": "E3470C0F53D670ED0A490D45@AdobeOrg",
+    "imsOrgId": "<ORG_HEX_ID>@AdobeOrg",
     "companies": [{
       "globalCompanyId": "origin0",
       "companyName": "Origin",
