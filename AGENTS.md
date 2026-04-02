@@ -62,12 +62,12 @@ After completing a feature implementation, or whenever the user needs to review 
    HOST=0.0.0.0 uv run run.py > /tmp/codex.log 2>&1 &
    sleep 3 && curl -s http://127.0.0.1:5010 > /dev/null && echo "UP"
    ```
-3. **Always present the review link** as a clickable markdown hyperlink:
+3. **If the hostname of the computer is M4, then Always present the review link** as a clickable markdown hyperlink:
    ```
    [http://100.78.114.119:5010](http://100.78.114.119:5010)
    ```
 
-**Tailscale IP**: `100.78.114.119` — this container's stable Tailscale address.
+**Tailscale IP**: `100.78.114.119` — M4's stable Tailscale address.
 The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
 
 ## 7. Key Files
