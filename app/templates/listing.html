@@ -2,12 +2,6 @@
 
 {% block content %}
 
-{% if cache_key %}
-<div class="d-flex justify-content-end mb-2">
-    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
-</div>
-{% endif %}
-
 {% if page_note %}
 <div class="alert alert-info alert-sm mb-3" role="alert">
     <small>{{ page_note }}</small>
@@ -70,7 +64,7 @@ $(document).ready(function() {
         pageLength: -1,
         paging: false,
         orderClasses: true,
-        dom: 'Blfrtip',
+        dom: '<"d-flex align-items-center gap-2 mb-3"B<"flex-grow-1"f><"dt-refresh-slot ms-auto">>rtip',
         buttons: [
             'copy',
             'colvis',
@@ -92,6 +86,11 @@ $(document).ready(function() {
             info: "Showing _TOTAL_ entries"
         }
     });
+
+    {% if cache_key %}
+    document.querySelector('.dt-refresh-slot').innerHTML =
+        '<a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>';
+    {% endif %}
 });
 </script>
 {% endblock %}
