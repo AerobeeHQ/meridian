@@ -177,8 +177,9 @@ def get_tags() -> list[str]:
             data = json.load(fh)
         if isinstance(data, list):
             return [str(t) for t in data]
-    except (json.JSONDecodeError, IOError):
-        pass
+    except (json.JSONDecodeError, IOError) as exc:
+        # If the tags file is unreadable or malformed, fall back to the built-in defaults.
+        print(f"Warning: failed to load tags from {tags_path!r}: {exc}. Falling back to default SQUAD_OPTIONS.")
     return list(SQUAD_OPTIONS)
 
 
