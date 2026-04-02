@@ -19,7 +19,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
   2. Related Processing Rules
   3. Related Channel Rules → renamed to "Related Marketing Channel Rules"
   4. Adobe Launch
-- [ ] Allow users to manage (crud) the tags in Journey Squad Owner, and rename to "Tags"
+- [x] Allow users to manage (crud) the tags in Journey Squad Owner, and rename to "Tags" **Fixed in [feature/tags-crud](autopsies/047-tags-crud.md)**
 - [x] Improve listing pages **Fixed in [feature/listing-page-improvements](autopsies/044-listing-page-improvements.md)**
   - [x] Make the shaded rows on the listing pages lighter by half.
   - [x] Make the table header sticky

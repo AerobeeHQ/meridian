@@ -147,6 +147,92 @@ def delete(rsid, dimension_type, dimension_id):
     return False
 
 
+# ---------------------------------------------------------------------------
+# Tag-library management
+# ---------------------------------------------------------------------------
+
+_TAGS_FILENAME = '_tags.json'
+
+
+def _get_tags_path() -> str:
+    """Return the path to the global tags configuration file."""
+    return os.path.join(NOTES_DIR, _TAGS_FILENAME)
+
+
+def get_tags() -> list[str]:
+    """Return the current list of available tags.
+
+    Reads from ``notes/_tags.json`` if it exists; otherwise falls back to
+    the built-in ``SQUAD_OPTIONS`` list so existing deployments see their
+    previous chips without any migration step.
+
+    Returns:
+        Ordered list of tag name strings.
+    """
+    tags_path = _get_tags_path()
+    if not os.path.exists(tags_path):
+        return list(SQUAD_OPTIONS)
+    try:
+        with open(tags_path, 'r', encoding='utf-8') as fh:
+            data = json.load(fh)
+        if isinstance(data, list):
+            return [str(t) for t in data]
+    except (json.JSONDecodeError, IOError):
+        pass
+    return list(SQUAD_OPTIONS)
+
+
+def _save_tags(tags: list[str]) -> list[str]:
+    """Persist *tags* to disk and return the same list."""
+    _ensure_notes_dir()
+    with open(_get_tags_path(), 'w', encoding='utf-8') as fh:
+        json.dump(tags, fh, ensure_ascii=False, indent=2)
+    return tags
+
+
+def add_tag(name: str) -> list[str]:
+    """Add *name* to the tag library.
+
+    Args:
+        name: Tag label to add. Leading/trailing whitespace is stripped.
+
+    Returns:
+        Updated list of tags (includes the new entry).
+
+    Raises:
+        ValueError: If *name* is empty or already present in the list.
+    """
+    name = name.strip()
+    if not name:
+        raise ValueError("Tag name cannot be empty")
+    tags = get_tags()
+    if name in tags:
+        raise ValueError(f"Tag '{name}' already exists")
+    tags.append(name)
+    return _save_tags(tags)
+
+
+def delete_tag(name: str) -> list[str]:
+    """Remove *name* from the tag library.
+
+    Does **not** modify existing notes that already reference the deleted tag;
+    their ``squad_owners`` arrays retain the value.
+
+    Args:
+        name: Tag label to remove.
+
+    Returns:
+        Updated list of tags (excludes the removed entry).
+
+    Raises:
+        ValueError: If *name* is not present in the current list.
+    """
+    tags = get_tags()
+    if name not in tags:
+        raise ValueError(f"Tag '{name}' not found")
+    return _save_tags([t for t in tags if t != name])
+
+
 def generate_expiry_notes(dimension, dimension_type):
     """
     Generate default expiry notes from dimension API data.
