@@ -69,52 +69,6 @@
             </div>
         </div>
 
-        <!-- Related Processing Rules (loaded asynchronously) -->
-        <div id="related-rules-placeholder" class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Related Processing Rules</h5>
-                <p class="text-muted mb-0 small">
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    Loading&hellip;
-                </p>
-            </div>
-        </div>
-
-        {% if config.LAUNCH_ENABLED %}
-        <!-- Adobe Launch Rules (loaded asynchronously) -->
-        <div id="related-launch-rules-placeholder" class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Adobe Launch Rules</h5>
-                <p class="text-muted mb-0 small">
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    Loading&hellip;
-                </p>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Related Channel Rules (loaded asynchronously) -->
-        <div id="related-channel-rules-placeholder" class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Related Channel Rules</h5>
-                <p class="text-muted mb-0 small">
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    Loading&hellip;
-                </p>
-            </div>
-        </div>
-
-        <!-- Components (loaded asynchronously) -->
-        <div id="components-placeholder" class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Components</h5>
-                <p class="text-muted mb-0 small">
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    Loading&hellip;
-                </p>
-            </div>
-        </div>
-
         <!-- Editable Notes Section -->
         <div class="card">
             <div class="card-body">
@@ -196,7 +150,7 @@
         {% endif %}
 
         <!-- Top 10 Values -->
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Top 10 Values (Last 30 Days)</h5>
                 {% if top_items %}
@@ -221,6 +175,52 @@
                 {% else %}
                 <p class="text-muted">No data available for the last 30 days.</p>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Related Processing Rules (loaded asynchronously) -->
+        <div id="related-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Related Processing Rules</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+
+        {% if config.LAUNCH_ENABLED %}
+        <!-- Adobe Launch (loaded asynchronously) -->
+        <div id="related-launch-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Adobe Launch</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Related Marketing Channel Rules (loaded asynchronously) -->
+        <div id="related-channel-rules-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Related Marketing Channel Rules</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
+            </div>
+        </div>
+
+        <!-- Segments & Calculated Metrics (loaded asynchronously) -->
+        <div id="components-placeholder" class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Segments &amp; Calculated Metrics</h5>
+                <p class="text-muted mb-0 small">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Loading&hellip;
+                </p>
             </div>
         </div>
     </div>
@@ -253,7 +253,7 @@
 }());
 
 {% if config.LAUNCH_ENABLED %}
-// Async: load Adobe Launch Rules after page render
+// Async: load Adobe Launch after page render
 (function () {
     var placeholder = document.getElementById('related-launch-rules-placeholder');
     if (!placeholder) return;
@@ -269,7 +269,7 @@
         })
         .catch(function () {
             placeholder.querySelector('.card-body').innerHTML =
-                '<h5 class="card-title">Adobe Launch Rules</h5>' +
+                '<h5 class="card-title">Adobe Launch</h5>' +
                 '<p class="text-muted mb-0">Could not load Launch rules data.</p>';
         });
 }());
@@ -287,7 +287,7 @@
         })
         .catch(function () {
             placeholder.querySelector('.card-body').innerHTML =
-                '<h5 class="card-title">Related Channel Rules</h5>' +
+                '<h5 class="card-title">Related Marketing Channel Rules</h5>' +
                 '<p class="text-muted mb-0">Could not load channel rules data.</p>';
         });
 }());
@@ -304,7 +304,7 @@
         })
         .catch(function () {
             placeholder.querySelector('.card-body').innerHTML =
-                '<h5 class="card-title">Components</h5>' +
+                '<h5 class="card-title">Segments &amp; Calculated Metrics</h5>' +
                 '<p class="text-muted mb-0">Could not load components data.</p>';
         });
 }());

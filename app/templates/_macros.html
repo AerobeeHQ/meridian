@@ -615,7 +615,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 {# calc_metrics_cached:  False when the calculated_metrics cache key is absent.        #}
 <div class="card mb-4">
     <div class="card-body">
-        <h5 class="card-title">Components</h5>
+        <h5 class="card-title">Segments &amp; Calculated Metrics</h5>
         {% if not segments_cached and not calc_metrics_cached %}
         <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
             <span style="font-size:1.1rem;">&#9888;</span>
@@ -837,7 +837,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 {#                  or API 1.4 unavailable) — shows a distinct "not loaded" notice.       #}
 <div class="card mb-4">
     <div class="card-body">
-        <h5 class="card-title">Related Channel Rules</h5>
+        <h5 class="card-title">Related Marketing Channel Rules</h5>
         {% if not rules_available %}
         <div class="d-flex align-items-start gap-2 text-warning-emphasis bg-warning-subtle border border-warning-subtle rounded p-3 mb-0">
             <span style="font-size:1.1rem;">&#9888;</span>
