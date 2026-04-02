@@ -112,8 +112,23 @@ function epKey(ep) {
     return ep.api === '1.4' ? `1.4:${ep.method}` : `2.0:${ep.http_method}:${ep.path}`;
 }
 
+// POST paths that the server will accept because they are read-only by design.
+// Must stay in sync with _ALLOWED_POST_PATHS in routes/main.py.
+const ALLOWED_POST_PATHS = new Set([
+    '/reports',
+    '/reports/realtime',
+    '/calculatedmetrics/validate',
+    '/segments/validate',
+    '/projects/validate',
+    '/componentmetadata/shares/component/search',
+    '/componentmetadata/tags/component/search',
+]);
+
 function isReadOnly(ep) {
-    return ep.api === '1.4' || ep.http_method === 'GET';
+    if (ep.api === '1.4') return true;
+    if (ep.http_method === 'GET') return true;
+    if (ep.http_method === 'POST' && ALLOWED_POST_PATHS.has(ep.path)) return true;
+    return false;
 }
 
 // Build a starter JSON body from an endpoint descriptor
@@ -130,6 +145,23 @@ function buildTemplate(ep) {
         }
         return JSON.stringify(body, null, 2);
     } else {
+        // Provide a useful starter body for key POST endpoints
+        if (ep.http_method === 'POST' && ep.path === '/reports') {
+            return JSON.stringify({
+                rsid: DEFAULT_RSID,
+                globalFilters: [{ type: 'dateRange', dateRange: 'LAST_7_DAYS' }],
+                metricContainer: { metrics: [{ columnId: '0', id: 'metrics/pageviews' }] },
+                dimension: 'variables/page',
+                settings: { limit: 10 }
+            }, null, 2);
+        }
+        if (ep.http_method === 'POST' && ep.path === '/reports/realtime') {
+            return JSON.stringify({
+                rsid: DEFAULT_RSID,
+                metrics: [{ id: 'metrics/pageviews' }],
+                dimension: 'variables/page'
+            }, null, 2);
+        }
         const body = {};
         for (const p of (ep.params || [])) {
             if (p.in !== 'path' && p.in !== 'query') continue;
@@ -226,7 +258,7 @@ function selectEp(ep) {
     const btn = document.getElementById('sendBtn');
     const readonly = isReadOnly(ep);
     btn.disabled = !readonly;
-    btn.title = readonly ? '' : 'Read-only mode: POST, PUT, DELETE and PATCH are disabled';
+    btn.title = readonly ? '' : 'Write operations are disabled. Read-only POST endpoints (/reports, /*/validate, /*/search) are permitted.';
     btn.classList.toggle('btn-primary', readonly);
     btn.classList.toggle('btn-secondary', !readonly);
 
