@@ -2,12 +2,6 @@
 
 {% block content %}
 
-{% if cache_key %}
-<div class="d-flex justify-content-end mb-2">
-    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
-</div>
-{% endif %}
-
 {% if page_note %}
 <div class="alert alert-info alert-sm mb-3" role="alert">
     <small>{{ page_note }}</small>
@@ -72,6 +66,14 @@ $(document).ready(function() {
         orderClasses: true,
         dom: 'Blfrtip',
         buttons: [
+            {% if cache_key %}
+            {
+                text: '&#x21ba; Refresh',
+                className: 'btn-outline-secondary',
+                titleAttr: 'Force refresh data from API',
+                action: function() { window.location.href = '/cache/refresh/{{ cache_key }}'; }
+            },
+            {% endif %}
             'copy',
             'colvis',
             {
