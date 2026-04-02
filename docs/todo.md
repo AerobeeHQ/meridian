@@ -28,7 +28,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 ## Bugs
 
 - [x] The Data Feed Column for a classified value should just show the parent data dimension. For example `http://127.0.0.1:5010/evars/evar8.suburb` should show `evar8` as the column name, instead of `evar8.suburb`.
-- [ ] We block the API debug page from sending an POST requests, but some (or all, who really knows) can't actually change any data. That's just how you make a read only call to those endpoints. How do we safely allow those, while still ensuring that no one can ever update data in a report suite? Partially addressed in [Launch Search API Refactor](docs/autopsies/040-launch-search-api-refactor.md)
+- [x] We block the API debug page from sending an POST requests, but some (or all, who really knows) can't actually change any data. That's just how you make a read only call to those endpoints. How do we safely allow those, while still ensuring that no one can ever update data in a report suite? **Fixed in [fix/api-debug-allow-readonly-post](autopsies/046-api-debug-readonly-post.md)**
 - [ ] When a prop/evar/event/listvar doesn't have any recent data, the trendline chart still shows peaks and valleys. What is this data? If there is none, it should be showing a flatline. Is it cached? Made up? Data from another eVar, or data from a different config.json / Client, but the app is reading cached json files. Either way, the trendline should be accurate. See screenshot for prop15 Fuel List taken from Origin Energy config. ![Screenshot](../assets/screenshots/bug-trendline-chart-suggests-data-when-none.png)
  
   ## Suggested Improvements

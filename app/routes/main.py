@@ -2332,10 +2332,23 @@ def api_debug_call():
             if get_api_version() != '2.0':
                 return jsonify({'success': False, 'error': 'API 2.0 is not configured for this Codex instance'})
             http_method = payload.get('http_method', 'GET')
-            if http_method not in ('GET',):
+            path_template = payload.get('path', '')
+            # POST is allowed only for known read-only endpoints.
+            # All other non-GET methods (PUT, DELETE, PATCH) and unknown POSTs are blocked.
+            _ALLOWED_POST_PATHS = {
+                '/reports',                                    # Run a report (read-only by design)
+                '/reports/realtime',                           # Run a realtime report (read-only)
+                '/calculatedmetrics/validate',                 # Validate a metric definition (no write)
+                '/segments/validate',                          # Validate a segment definition (no write)
+                '/projects/validate',                          # Validate a project definition (no write)
+                '/componentmetadata/shares/component/search',  # Search shares (read-only)
+                '/componentmetadata/tags/component/search',    # Search tags (read-only)
+            }
+            if http_method == 'POST' and path_template not in _ALLOWED_POST_PATHS:
+                return jsonify({'success': False, 'error': 'POST is only enabled for read-only endpoints (/reports, /reports/realtime, /*/validate, /*/search). Write operations are not permitted.'})
+            if http_method not in ('GET', 'POST'):
                 return jsonify({'success': False, 'error': f'{http_method} requests are disabled in the API debug page'})
             svc = get_api_service()
-            path_template = payload.get('path', '')
             body = dict(payload.get('body') or {})
 
             # Substitute {paramName} placeholders from the body into the path,
