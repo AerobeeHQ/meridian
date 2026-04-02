@@ -49,6 +49,11 @@ def create_app():
     # API 1.4 request timeout (seconds); see config.dist.json for guidance
     app.config['API_V14_TIMEOUT'] = config.get('API_V14_TIMEOUT', 5.0)
 
+    # Experience Cloud deep-links (optional)
+    # Set to the company alias that appears in Experience Cloud URLs, e.g. "originenergy"
+    # for https://experience.adobe.com/#/@originenergy/...
+    app.config['EXPERIENCE_CLOUD_ORG'] = config.get('EXPERIENCE_CLOUD_ORG')
+
     # Adobe Launch (Tags) integration - Roadmap v2-003
     app.config['LAUNCH_ENABLED'] = config.get('LAUNCH_ENABLED', False)
     app.config['LAUNCH_PROPERTY_ID'] = config.get('LAUNCH_PROPERTY_ID')

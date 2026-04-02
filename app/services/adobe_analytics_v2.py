@@ -112,6 +112,43 @@ class AdobeAnalyticsV2Service:
 
         raise ValueError("Could not determine globalCompanyId from discovery endpoint")
 
+    def get_experience_cloud_url(
+        self, component_type: str, component_id: str, org_alias: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Build a deep-link URL to the Adobe Experience Cloud Analytics UI.
+
+        Args:
+            component_type: ``"segments"`` or ``"calculatedMetrics"``.
+            component_id:   The segment or calculated metric ID.
+            org_alias:      The company alias that appears after ``@`` in
+                            Experience Cloud URLs (e.g. ``"originenergy"``).
+                            Comes from the ``EXPERIENCE_CLOUD_ORG`` config key.
+                            If absent no URL is returned.
+
+        Returns:
+            A full URL string, or ``None`` when either identifier is missing.
+        """
+        if not org_alias:
+            return None
+
+        try:
+            global_company_id = self._get_global_company_id()
+        except ValueError as exc:
+            # If the global company ID cannot be resolved, we return None
+            # to match the documented behavior of this helper.
+            logger.warning(
+                "Unable to resolve global company ID for Experience Cloud URL: %s",
+                exc,
+            )
+            return None
+
+        base = (
+            f"https://experience.adobe.com/#/@{org_alias}"
+            f"/so:{global_company_id}/analytics/spa"
+        )
+        return f"{base}/#/components/{component_type}/edit/{component_id}"
+
     def _make_request(
         self,
         endpoint: str,
