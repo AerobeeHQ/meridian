@@ -864,7 +864,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             {{ related_rules | length }} result{{ 's' if related_rules | length != 1 else '' }}
             reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
         </p>
-        <div class="accordion accordion-flush" id="launch-rules-accordion">
+        <div>
             {% for entry in related_rules %}
             {# Resolve the best available base URL for this entry #}
             {% if launchpad_url and property_id %}
@@ -901,64 +901,61 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
             {% set _accordion_id = 'launch-rule-' ~ loop.index %}
 
-            <div class="accordion-item border-0 border-bottom">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed px-0 py-2 bg-transparent shadow-none"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#{{ _accordion_id }}"
-                            aria-expanded="false"
-                            aria-controls="{{ _accordion_id }}">
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            {# Source type badge (Global / Data Element) #}
-                            {% if entry.source == 'extension' %}
-                                <span class="badge bg-info text-dark">Global</span>
-                            {% elif entry.source == 'data_element' %}
-                                <span class="badge bg-warning text-dark">Data Element</span>
-                            {% endif %}
+            <div class="border-bottom">
+                {# Row: badges + name link on the left, chevron toggle on the right.      #}
+                {# The outer div handles the collapse toggle; stopPropagation on the      #}
+                {# <a> link lets it open in a new tab without toggling the accordion.     #}
+                <div class="d-flex align-items-center gap-2 py-2 px-0"
+                     style="cursor:pointer; font-size:0.875rem;"
+                     data-bs-toggle="collapse"
+                     data-bs-target="#{{ _accordion_id }}"
+                     aria-expanded="false"
+                     aria-controls="{{ _accordion_id }}">
 
-                            {# Rule / extension / data-element name with deep link #}
-                            {% if entry.source == 'extension' %}
-                                {% if link_base and entry.source_id %}
-                                <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
-                                {% else %}
-                                <span>{{ entry.rule_name }}</span>
-                                {% endif %}
-                            {% elif entry.source == 'data_element' %}
-                                {% if link_base and entry.source_id %}
-                                <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
-                                {% else %}
-                                <span>{{ entry.rule_name }}</span>
-                                {% endif %}
-                            {% else %}
-                                {% if link_base and entry.rule_id %}
-                                <a href="{{ link_base }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
-                                {% else %}
-                                <span>{{ entry.rule_name }}</span>
-                                {% endif %}
-                            {% endif %}
+                    {# Source type badge (Global / Data Element) #}
+                    {% if entry.source == 'extension' %}
+                        <span class="badge bg-info text-dark">Global</span>
+                    {% elif entry.source == 'data_element' %}
+                        <span class="badge bg-warning text-dark">Data Element</span>
+                    {% endif %}
 
-                            {# Component type badge: Action (yellow) / Condition (green) / Event (blue) #}
-                            {% if _comp_type == 'actions' %}
-                                <span class="badge" style="background-color:#f5a623; color:#000;">Action</span>
-                            {% elif _comp_type == 'conditions' %}
-                                <span class="badge bg-success">Condition</span>
-                            {% elif _comp_type == 'events' %}
-                                <span class="badge bg-primary">Event</span>
-                            {% elif entry.source == 'rule' %}
-                                {# No delegate_descriptor_id — matched only in rule name/description #}
-                                <span class="badge bg-light text-muted border" title="This rule appeared because its name or description contains the dimension string. It may not directly set this variable.">Name match</span>
-                            {% endif %}
+                    {# Rule name — plain text, no link (link moved into accordion body) #}
+                    <span class="flex-grow-1">{{ entry.rule_name }}</span>
 
-                            {# Disabled badge #}
-                            {% if not entry.rule_enabled %}
-                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Disabled</span>
-                            {% endif %}
-                        </div>
-                    </button>
-                </h2>
+                    {# Component type badge: Action (yellow) / Condition (green) / Event (blue) #}
+                    {% if _comp_type == 'actions' %}
+                        <span class="badge" style="background-color:#f5a623; color:#000;">Action</span>
+                    {% elif _comp_type == 'conditions' %}
+                        <span class="badge bg-success">Condition</span>
+                    {% elif _comp_type == 'events' %}
+                        <span class="badge bg-primary">Event</span>
+                    {% elif entry.source == 'rule' %}
+                        <span class="badge bg-light text-muted border" title="This rule appeared because its name or description contains the dimension string. It may not directly set this variable.">Name match</span>
+                    {% endif %}
+
+                    {# Disabled badge #}
+                    {% if not entry.rule_enabled %}
+                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Disabled</span>
+                    {% endif %}
+
+                    {# Chevron toggle #}
+                    <span class="text-muted" style="font-size:0.7rem;">&#9660;</span>
+                </div>
                 <div id="{{ _accordion_id }}" class="accordion-collapse collapse">
                     <div class="accordion-body px-0 pt-1 pb-2">
+                        {# "Open in Launch" deep-link pill #}
+                        {% if link_base %}
+                            {% if entry.source == 'extension' and entry.source_id %}
+                            <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer"
+                               class="badge bg-light text-dark border text-decoration-none me-1 mb-2">Open in Launch</a>
+                            {% elif entry.source == 'data_element' and entry.source_id %}
+                            <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer"
+                               class="badge bg-light text-dark border text-decoration-none me-1 mb-2">Open in Launch</a>
+                            {% elif entry.rule_id %}
+                            <a href="{{ link_base }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener noreferrer"
+                               class="badge bg-light text-dark border text-decoration-none me-1 mb-2">Open in Launch</a>
+                            {% endif %}
+                        {% endif %}
                         {# Action label + raw delegate ID #}
                         {% if _label %}
                         <div class="mb-2">
