@@ -234,12 +234,23 @@ class AdobeLaunchService:
             The settings JSON uses inconsistent shapes across property versions:
               - Flat list:    tracker["evars"] = [{"name": "eVar1", ...}, ...]
               - Nested dict:  tracker["evars"] = {"evars": [{"name": "eVar1", ...}]}
+            Key capitalisation also varies (e.g. "evars" vs "eVars"), so we
+            do a case-insensitive lookup across all keys in the tracker dict.
             """
-            val = tracker.get(key, [])
+            key_lower = key.lower()
+            val = next(
+                (v for k, v in tracker.items() if k.lower() == key_lower),
+                [],
+            )
             if isinstance(val, list):
                 return val
             if isinstance(val, dict):
-                return val.get(key, [])
+                # Nested dict — inner key may also vary in case
+                inner = next(
+                    (v for k, v in val.items() if k.lower() == key_lower),
+                    [],
+                )
+                return inner if isinstance(inner, list) else []
             return []
 
         for evar in _items("evars"):
@@ -384,6 +395,13 @@ class AdobeLaunchService:
                     variable_assignments.extend(
                         self._parse_set_variables_settings(comp_attrs.get("settings") or "")
                     )
+
+            # Keep only the assignment(s) for the dimension being searched.
+            dim_lower = dimension_value.lower()
+            variable_assignments = [
+                va for va in variable_assignments
+                if va["variable"].lower() == dim_lower
+            ]
 
             entries.append({
                 "source":                  "rule",
