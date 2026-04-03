@@ -76,13 +76,43 @@ The predicate grammar for events in the Adobe Analytics API 2.0 segment definiti
 }
 ```
 
-### Strategy table
+### Part 3 — Props / listVars: `metricFilters` segment (not `globalFilters`)
 
-| Dimension type | Metric used | globalFilter |
-|---------------|-------------|--------------|
-| eVar | `metrics/evar<n>instances` | date range only |
-| event | `metrics/occurrences` | date range + `event-exists` segment |
-| prop, listVar | `metrics/occurrences` | date range + `exists` segment |
+Props are hit-level dimensions with no built-in instances metric. Adobe Analysis Workspace scopes them by attaching the inline segment directly to the **metric** via `metricFilters`, not to the report via `globalFilters`.
+
+```json
+{
+  "metricContainer": {
+    "metrics": [{"id": "metrics/occurrences", "filters": ["0"]}],
+    "metricFilters": [{
+      "id": "0",
+      "type": "segment",
+      "segmentDefinition": {
+        "func": "segment",
+        "version": [1, 0, 0],
+        "container": {
+          "func": "container",
+          "context": "hits",
+          "pred": {
+            "func": "exists",
+            "val": {"func": "attr", "name": "variables/prop1"}
+          }
+        }
+      }
+    }]
+  }
+}
+```
+
+listVars are treated the same as props (pending confirmation).
+
+### Final strategy table
+
+| Dimension type | Metric | Scoping mechanism |
+|---------------|--------|-------------------|
+| eVar | `metrics/evar<n>instances` | None — built-in metric already scoped |
+| prop, listVar | `metrics/occurrences` | `metricFilters` inline `exists` segment |
+| event | `metrics/occurrences` | `globalFilters` inline `event-exists` segment |
 
 For a variable with no recent data, the API now correctly returns all-zero rows (or an empty rows array), producing a flatline chart instead of reporting suite-wide traffic.
 
@@ -92,7 +122,7 @@ For a variable with no recent data, the API now correctly returns all-zero rows 
 
 | File | Change |
 |------|--------|
-| `app/services/adobe_analytics_v2.py` | Added `_dimension_exists_filter()` and `_resolve_trend_metric()` static methods; updated `get_dimension_trend()` to select the correct metric and filter per dimension type |
+| `app/services/adobe_analytics_v2.py` | Added `_dimension_exists_filter()` and `_resolve_trend_metric()` static methods; `_resolve_trend_metric()` returns a full `metricContainer` dict so each dimension type can define its own filter strategy |
 | `docs/todo.md` | Marked trendline bug as fixed |
 
 ---
