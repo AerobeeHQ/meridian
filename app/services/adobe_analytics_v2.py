@@ -774,6 +774,40 @@ class AdobeAnalyticsV2Service:
 
         return items
 
+    @staticmethod
+    def _dimension_exists_filter(dimension: str) -> dict:
+        """Build an inline segment globalFilter that restricts a report to hits
+        where *dimension* has a value (i.e. is not Unspecified / not set).
+
+        Args:
+            dimension: Full dimension ID, e.g. 'variables/prop1' or 'variables/event3'.
+
+        Returns:
+            A ``ReportFilter`` dict with ``type: "segment"`` and an inline
+            ``segmentDefinition`` using the Adobe Analytics API 2.0 predicate
+            grammar (``exists`` for props/evars/listvars, ``event-exists`` for
+            events).
+        """
+        is_event = dimension.startswith('variables/event')
+        pred_func = 'event-exists' if is_event else 'exists'
+        val_func = 'event' if is_event else 'attr'
+        return {
+            "type": "segment",
+            "segmentDefinition": {
+                "container": {
+                    "func": "container",
+                    "context": "hits",
+                    "pred": {
+                        "func": pred_func,
+                        "val": {
+                            "func": val_func,
+                            "name": dimension,
+                        },
+                    },
+                }
+            },
+        }
+
     def get_dimension_trend(
         self,
         rsid: str,
@@ -782,11 +816,16 @@ class AdobeAnalyticsV2Service:
         days: int = 30
     ) -> dict:
         """
-        Get daily trend data for a dimension (total occurrences per day)
+        Get daily trend data for a dimension (occurrences per day where the
+        dimension has a value).
+
+        The report is scoped to hits where *dimension* is set (not Unspecified),
+        so the chart reflects actual usage of that variable rather than overall
+        report-suite traffic.
 
         Args:
             rsid: Report suite ID
-            dimension: Dimension ID (e.g., 'variables/prop1')
+            dimension: Dimension ID (e.g., 'variables/prop1', 'variables/event3')
             metric: Metric to use ('occurrences' or 'instances')
             days: Number of days to look back
 
@@ -796,14 +835,16 @@ class AdobeAnalyticsV2Service:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-        # Build report request for time-series data
+        # Build report request for time-series data, filtered to hits where the
+        # specific dimension has a value (not Unspecified).
         request_body = {
             "rsid": rsid,
             "globalFilters": [
                 {
                     "type": "dateRange",
                     "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
-                }
+                },
+                self._dimension_exists_filter(dimension),
             ],
             "metricContainer": {
                 "metrics": [{"id": f"metrics/{metric}"}]
