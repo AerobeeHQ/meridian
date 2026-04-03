@@ -953,6 +953,20 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     <small class="text-muted font-monospace ms-1" style="font-size:0.7rem; opacity:0.6;">({{ entry.delegate_descriptor_id }})</small>
                 </div>
                 {% endif %}
+                {# Variable assignments from setVariables actions #}
+                {% if entry.variable_assignments %}
+                <ul class="list-unstyled ms-2 mt-1 mb-0" style="font-size:0.8rem;">
+                    {% for va in entry.variable_assignments %}
+                    <li class="text-muted">
+                        <span class="font-monospace text-body-secondary">{{ va.variable }}</span>
+                        {% if va.value %}
+                        <span class="text-muted mx-1">→</span>
+                        <span class="font-monospace">{{ va.value }}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
