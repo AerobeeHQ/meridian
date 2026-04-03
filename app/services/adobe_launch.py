@@ -9,6 +9,7 @@ This approach is not scoped to the production library and matches custom
 code actions as well as structured setVariables actions, giving a more
 complete picture than walking the library graph.
 """
+import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -204,6 +205,71 @@ class AdobeLaunchService:
         rules = resp.json().get("data", [])
         return rules[0] if rules else {}
 
+    @staticmethod
+    def _parse_set_variables_settings(settings_raw: str) -> list[dict]:
+        """Parse an ``adobe-analytics::actions::setVariables`` settings JSON string.
+
+        Extracts the variable assignments (eVars, props, events) into a flat list
+        of dicts, each with ``variable`` and ``value`` keys.  ``value`` may be a
+        constant string or a ``%dataElement%`` reference.
+
+        Returns an empty list if the settings cannot be parsed or is empty.
+        """
+        if not settings_raw:
+            return []
+        if isinstance(settings_raw, dict):
+            settings = settings_raw
+        else:
+            try:
+                settings = json.loads(settings_raw)
+            except (ValueError, TypeError):
+                return []
+
+        assignments: list[dict] = []
+        tracker = settings.get("trackerProperties", {})
+
+        def _items(key: str) -> list:
+            """Return the flat list of variable items for a tracker key.
+
+            The settings JSON uses inconsistent shapes across property versions:
+              - Flat list:    tracker["evars"] = [{"name": "eVar1", ...}, ...]
+              - Nested dict:  tracker["evars"] = {"evars": [{"name": "eVar1", ...}]}
+            Key capitalisation also varies (e.g. "evars" vs "eVars"), so we
+            do a case-insensitive lookup across all keys in the tracker dict.
+            """
+            key_lower = key.lower()
+            val = next(
+                (v for k, v in tracker.items() if k.lower() == key_lower),
+                [],
+            )
+            if isinstance(val, list):
+                return val
+            if isinstance(val, dict):
+                # Nested dict — inner key may also vary in case
+                inner = next(
+                    (v for k, v in val.items() if k.lower() == key_lower),
+                    [],
+                )
+                return inner if isinstance(inner, list) else []
+            return []
+
+        for evar in _items("evars"):
+            name = evar.get("name", "")
+            if name:
+                assignments.append({"variable": name, "value": evar.get("value", "")})
+
+        for prop in _items("props"):
+            name = prop.get("name", "")
+            if name:
+                assignments.append({"variable": name, "value": prop.get("value", "")})
+
+        for event in _items("events"):
+            name = event.get("name", "")
+            if name:
+                assignments.append({"variable": name, "value": event.get("value", "")})
+
+        return assignments
+
     def search_and_resolve(self, dimension_value: str, property_id: str) -> list:
         """Search for a dimension and resolve rule names for rule_component matches.
 
@@ -237,21 +303,28 @@ class AdobeLaunchService:
         raw_results = self.search_dimension(dimension_value, property_id)
 
         # Categorise rule_component items by resolution strategy.
-        # strategy_a: rule_id -> True  (deduplicated; fetch via GET /rules/{id})
-        # strategy_b: comp_id -> url   (fetch via GET {links.rules})
-        strategy_a: dict = {}
-        strategy_b: dict = {}
+        # strategy_a: rule_id  -> [component_item, ...]  (fetch rule via GET /rules/{id})
+        # strategy_b: comp_id  -> url                    (fetch rule via GET {links.rules})
+        # component_by_rule groups all component items per rule_id so we can
+        # later aggregate variable_assignments across multiple setVariables actions.
+        strategy_a: dict[str, list] = {}
+        strategy_b: dict[str, str] = {}
+        component_by_rule: dict[str, list] = {}   # rule_id -> [comp_item, ...]
+        component_by_comp: dict[str, list] = {}   # comp_id -> [comp_item] (for strategy B)
+
         for item in raw_results:
             if item.get("type") != "rule_components":
                 continue
             rel_id = (item.get("relationships", {})
                           .get("rule", {}).get("data", {}).get("id"))
             if rel_id:
-                strategy_a[rel_id] = True
+                strategy_a.setdefault(rel_id, []).append(item)
+                component_by_rule.setdefault(rel_id, []).append(item)
             else:
                 rules_url = item.get("links", {}).get("rules")
                 if rules_url:
                     strategy_b[item["id"]] = rules_url
+                    component_by_comp.setdefault(item["id"], []).append(item)
 
         # Single executor pass for both strategies.
         # rule_map:  rule_id  -> rule data object  (strategy A results)
@@ -261,7 +334,7 @@ class AdobeLaunchService:
 
         tasks: dict = {}
         with ThreadPoolExecutor(max_workers=8) as executor:
-            for rule_id in strategy_a:
+            for rule_id in strategy_a:   # strategy_a is now rule_id -> [items]
                 fut = executor.submit(self.get_rule, rule_id)
                 tasks[fut] = ("a", rule_id)
             for comp_id, url in strategy_b.items():
@@ -309,6 +382,27 @@ class AdobeLaunchService:
             if key in seen:
                 continue
             seen.add(key)
+
+            # Aggregate variable assignments from all setVariables components for
+            # this rule (a rule may have more than one setVariables action).
+            variable_assignments: list[dict] = []
+            all_components = (component_by_rule.get(rule_id, [])
+                              or component_by_comp.get(item["id"], []))
+            for comp in all_components:
+                comp_attrs = comp.get("attributes", {})
+                ddi = comp_attrs.get("delegate_descriptor_id", "")
+                if ddi.endswith("::actions::setVariables") or ddi.endswith("::actions::set-variables"):
+                    variable_assignments.extend(
+                        self._parse_set_variables_settings(comp_attrs.get("settings") or "")
+                    )
+
+            # Keep only the assignment(s) for the dimension being searched.
+            dim_lower = dimension_value.lower()
+            variable_assignments = [
+                va for va in variable_assignments
+                if va["variable"].lower() == dim_lower
+            ]
+
             entries.append({
                 "source":                  "rule",
                 "source_id":               None,
@@ -316,6 +410,7 @@ class AdobeLaunchService:
                 "rule_name":               rule_attrs.get("name", "Unknown Rule"),
                 "rule_enabled":            rule_attrs.get("enabled", True),
                 "delegate_descriptor_id":  attrs.get("delegate_descriptor_id", ""),
+                "variable_assignments":    variable_assignments,
             })
 
         # Then process extensions, data_elements, and rules (rule-name matches)

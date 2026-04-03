@@ -24,6 +24,8 @@ Summarise your approach and changes in a new markdown document in the docs/autop
 
 Limit yourself to using Analytics API 2.0 or Reactor API features
 
+Do not commit any changes.
+
 ### Suggested Improvements
 
 ### Code Review
