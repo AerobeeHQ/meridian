@@ -774,6 +774,106 @@ class AdobeAnalyticsV2Service:
 
         return items
 
+    @staticmethod
+    def _dimension_exists_filter(dimension: str) -> dict:
+        """Build an inline segment globalFilter that restricts a report to hits
+        where *dimension* has a value (i.e. is not Unspecified / not set).
+
+        Args:
+            dimension: Full dimension ID, e.g. 'variables/prop1' or 'variables/event3'.
+
+        Returns:
+            A ``ReportFilter`` dict with ``type: "segment"`` and an inline
+            ``segmentDefinition`` using the Adobe Analytics API 2.0 predicate
+            grammar (``exists`` for props/evars/listvars, ``event-exists`` for
+            events).
+        """
+        is_event = dimension.startswith('variables/event')
+        pred_func = 'event-exists' if is_event else 'exists'
+        val_func = 'event' if is_event else 'attr'
+        return {
+            "type": "segment",
+            "segmentDefinition": {
+                "container": {
+                    "func": "container",
+                    "context": "hits",
+                    "pred": {
+                        "func": pred_func,
+                        "val": {
+                            "func": val_func,
+                            "name": dimension,
+                        },
+                    },
+                }
+            },
+        }
+
+    @staticmethod
+    def _resolve_trend_metric(dimension: str, default_metric: str) -> dict:
+        """Return the metricContainer and optional globalFilter for a trend query.
+
+        Each variable type requires a different strategy to count only hits where
+        that variable was actually set:
+
+        * **eVars** — built-in ``evar<n>instances`` metric; no filter needed.
+        * **Props** — ``occurrences`` scoped via an inline segment attached to the
+          metric through ``metricFilters`` (matches the Adobe Analysis Workspace
+          approach for hit-level dimensions).
+        * **Events** — ``occurrences`` filtered via an inline ``event-exists``
+          segment in ``globalFilters`` (confirmed working in production).
+        * **listVars** — treated the same as props until confirmed otherwise.
+
+        Args:
+            dimension: Full dimension ID, e.g. ``'variables/prop1'``.
+            default_metric: Base metric name (without ``metrics/`` prefix) used
+                for non-eVar dimensions.
+
+        Returns:
+            Dict with keys:
+            ``metric_container`` — full ``metricContainer`` dict for the request body.
+            ``global_filter``    — extra entry for ``globalFilters``, or ``None``.
+        """
+        var_name = dimension.split('/')[-1]  # e.g. "evar1", "prop3", "event5"
+
+        if var_name.startswith('evar'):
+            # Built-in instances metric — no filter required.
+            return {
+                "metric_container": {"metrics": [{"id": f"metrics/{var_name}instances"}]},
+                "global_filter": None,
+            }
+
+        if var_name.startswith('prop') or var_name.startswith('list'):
+            # Props / listVars: hit-level dimensions.  Workspace attaches the
+            # "dimension exists" segment directly to the metric via metricFilters.
+            return {
+                "metric_container": {
+                    "metrics": [{"id": f"metrics/{default_metric}", "filters": ["0"]}],
+                    "metricFilters": [{
+                        "id": "0",
+                        "type": "segment",
+                        "segmentDefinition": {
+                            "func": "segment",
+                            "version": [1, 0, 0],
+                            "container": {
+                                "func": "container",
+                                "context": "hits",
+                                "pred": {
+                                    "func": "exists",
+                                    "val": {"func": "attr", "name": dimension},
+                                },
+                            },
+                        },
+                    }],
+                },
+                "global_filter": None,
+            }
+
+        # Events: globalFilters segment with event-exists predicate.
+        return {
+            "metric_container": {"metrics": [{"id": f"metrics/{default_metric}"}]},
+            "global_filter": AdobeAnalyticsV2Service._dimension_exists_filter(dimension),
+        }
+
     def get_dimension_trend(
         self,
         rsid: str,
@@ -782,12 +882,19 @@ class AdobeAnalyticsV2Service:
         days: int = 30
     ) -> dict:
         """
-        Get daily trend data for a dimension (total occurrences per day)
+        Get daily trend data for a dimension, scoped to hits where that
+        dimension has a value.
+
+        Strategy per variable type (see ``_resolve_trend_metric``):
+        * eVars   — ``metrics/evar<n>instances``
+        * Props   — ``metrics/occurrences`` + inline ``exists`` segment via metricFilters
+        * Events  — ``metrics/occurrences`` + ``event-exists`` segment via globalFilters
+        * listVars — same as props
 
         Args:
             rsid: Report suite ID
-            dimension: Dimension ID (e.g., 'variables/prop1')
-            metric: Metric to use ('occurrences' or 'instances')
+            dimension: Dimension ID (e.g., 'variables/prop1', 'variables/evar1')
+            metric: Base metric name used as fallback for non-eVar dimensions
             days: Number of days to look back
 
         Returns:
@@ -796,22 +903,27 @@ class AdobeAnalyticsV2Service:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-        # Build report request for time-series data
+        resolved = self._resolve_trend_metric(dimension, metric)
+
+        global_filters: list[dict] = [
+            {
+                "type": "dateRange",
+                "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+            }
+        ]
+        if resolved["global_filter"] is not None:
+            global_filters.append(resolved["global_filter"])
+
         request_body = {
             "rsid": rsid,
-            "globalFilters": [
-                {
-                    "type": "dateRange",
-                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
-                }
-            ],
-            "metricContainer": {
-                "metrics": [{"id": f"metrics/{metric}"}]
-            },
+            "globalFilters": global_filters,
+            "metricContainer": resolved["metric_container"],
             "dimension": "variables/daterangeday",
             "settings": {
+                "countRepeatInstances": True,
+                "nonesBehavior": "return-nones",
                 "dimensionSort": "asc",
-                "limit": days + 1
+                "limit": days + 5,
             }
         }
 
