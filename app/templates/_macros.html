@@ -883,7 +883,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                 {% set _comp_type = _parts[1] if _parts | length >= 2 else '' %}
                 {% set _comp_name = _parts[2] if _parts | length >= 3 else '' %}
                 {# Map well-known delegate names to human-readable labels #}
-                {% if _comp_name == 'setVariables' %}
+                {% if _comp_name == 'setVariables' or _comp_name == 'set-variables' %}
                     {% set _label = 'Sets Analytics Variables' %}
                 {% elif _comp_name == 'sendBeacon' %}
                     {% set _label = 'Sends Analytics Beacon' %}

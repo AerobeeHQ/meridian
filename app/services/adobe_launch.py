@@ -217,25 +217,42 @@ class AdobeLaunchService:
         """
         if not settings_raw:
             return []
-        try:
-            settings = json.loads(settings_raw)
-        except (ValueError, TypeError):
-            return []
+        if isinstance(settings_raw, dict):
+            settings = settings_raw
+        else:
+            try:
+                settings = json.loads(settings_raw)
+            except (ValueError, TypeError):
+                return []
 
         assignments: list[dict] = []
         tracker = settings.get("trackerProperties", {})
 
-        for evar in tracker.get("evars", {}).get("evars", []):
+        def _items(key: str) -> list:
+            """Return the flat list of variable items for a tracker key.
+
+            The settings JSON uses inconsistent shapes across property versions:
+              - Flat list:    tracker["evars"] = [{"name": "eVar1", ...}, ...]
+              - Nested dict:  tracker["evars"] = {"evars": [{"name": "eVar1", ...}]}
+            """
+            val = tracker.get(key, [])
+            if isinstance(val, list):
+                return val
+            if isinstance(val, dict):
+                return val.get(key, [])
+            return []
+
+        for evar in _items("evars"):
             name = evar.get("name", "")
             if name:
                 assignments.append({"variable": name, "value": evar.get("value", "")})
 
-        for prop in tracker.get("props", {}).get("props", []):
+        for prop in _items("props"):
             name = prop.get("name", "")
             if name:
                 assignments.append({"variable": name, "value": prop.get("value", "")})
 
-        for event in tracker.get("events", {}).get("events", []):
+        for event in _items("events"):
             name = event.get("name", "")
             if name:
                 assignments.append({"variable": name, "value": event.get("value", "")})
@@ -362,9 +379,10 @@ class AdobeLaunchService:
                               or component_by_comp.get(item["id"], []))
             for comp in all_components:
                 comp_attrs = comp.get("attributes", {})
-                if comp_attrs.get("delegate_descriptor_id", "").endswith("::actions::setVariables"):
+                ddi = comp_attrs.get("delegate_descriptor_id", "")
+                if ddi.endswith("::actions::setVariables") or ddi.endswith("::actions::set-variables"):
                     variable_assignments.extend(
-                        self._parse_set_variables_settings(comp_attrs.get("settings", ""))
+                        self._parse_set_variables_settings(comp_attrs.get("settings") or "")
                     )
 
             entries.append({
