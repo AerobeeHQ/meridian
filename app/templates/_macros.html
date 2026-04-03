@@ -864,7 +864,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             {{ related_rules | length }} result{{ 's' if related_rules | length != 1 else '' }}
             reference{{ '' if related_rules | length != 1 else 's' }} this dimension.
         </p>
-        <ul class="list-unstyled mb-0">
+        <div class="accordion accordion-flush" id="launch-rules-accordion">
             {% for entry in related_rules %}
             {# Resolve the best available base URL for this entry #}
             {% if launchpad_url and property_id %}
@@ -877,7 +877,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
             {# Parse delegate_descriptor_id → component type + readable label           #}
             {# Format: {extension}::{actions|conditions|events}::{name}                 #}
-            {# e.g. adobe-analytics::actions::setVariables                               #}
+            {# e.g. adobe-analytics::actions::set-variables                              #}
             {% if entry.delegate_descriptor_id %}
                 {% set _parts = entry.delegate_descriptor_id.split('::') %}
                 {% set _comp_type = _parts[1] if _parts | length >= 2 else '' %}
@@ -899,77 +899,94 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                 {% set _label = '' %}
             {% endif %}
 
-            <li class="mb-2">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    {# Source type badge (Global / Data Element) #}
-                    {% if entry.source == 'extension' %}
-                        <span class="badge bg-info text-dark">Global</span>
-                    {% elif entry.source == 'data_element' %}
-                        <span class="badge bg-warning text-dark">Data Element</span>
-                    {% endif %}
+            {% set _accordion_id = 'launch-rule-' ~ loop.index %}
 
-                    {# Rule / extension / data-element name with deep link #}
-                    {% if entry.source == 'extension' %}
-                        {% if link_base and entry.source_id %}
-                        <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
-                        {% else %}
-                        {{ entry.rule_name }}
-                        {% endif %}
-                    {% elif entry.source == 'data_element' %}
-                        {% if link_base and entry.source_id %}
-                        <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
-                        {% else %}
-                        {{ entry.rule_name }}
-                        {% endif %}
-                    {% else %}
-                        {% if link_base and entry.rule_id %}
-                        <a href="{{ link_base }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
-                        {% else %}
-                        {{ entry.rule_name }}
-                        {% endif %}
-                    {% endif %}
+            <div class="accordion-item border-0 border-bottom">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed px-0 py-2 bg-transparent shadow-none"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ _accordion_id }}"
+                            aria-expanded="false"
+                            aria-controls="{{ _accordion_id }}">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            {# Source type badge (Global / Data Element) #}
+                            {% if entry.source == 'extension' %}
+                                <span class="badge bg-info text-dark">Global</span>
+                            {% elif entry.source == 'data_element' %}
+                                <span class="badge bg-warning text-dark">Data Element</span>
+                            {% endif %}
 
-                    {# Component type badge: Action / Condition / Event #}
-                    {% if _comp_type == 'actions' %}
-                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Action</span>
-                    {% elif _comp_type == 'conditions' %}
-                        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">Condition</span>
-                    {% elif _comp_type == 'events' %}
-                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">Event</span>
-                    {% elif entry.source == 'rule' %}
-                        {# No delegate_descriptor_id — matched only in rule name/description #}
-                        <span class="badge bg-light text-muted border" title="This rule appeared because its name or description contains the dimension string. It may not directly set this variable.">Name match</span>
-                    {% endif %}
+                            {# Rule / extension / data-element name with deep link #}
+                            {% if entry.source == 'extension' %}
+                                {% if link_base and entry.source_id %}
+                                <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
+                                {% else %}
+                                <span>{{ entry.rule_name }}</span>
+                                {% endif %}
+                            {% elif entry.source == 'data_element' %}
+                                {% if link_base and entry.source_id %}
+                                <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
+                                {% else %}
+                                <span>{{ entry.rule_name }}</span>
+                                {% endif %}
+                            {% else %}
+                                {% if link_base and entry.rule_id %}
+                                <a href="{{ link_base }}/rules/{{ entry.rule_id }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">{{ entry.rule_name }}</a>
+                                {% else %}
+                                <span>{{ entry.rule_name }}</span>
+                                {% endif %}
+                            {% endif %}
 
-                    {# Disabled badge #}
-                    {% if not entry.rule_enabled %}
-                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Disabled</span>
-                    {% endif %}
+                            {# Component type badge: Action (yellow) / Condition (green) / Event (blue) #}
+                            {% if _comp_type == 'actions' %}
+                                <span class="badge" style="background-color:#f5a623; color:#000;">Action</span>
+                            {% elif _comp_type == 'conditions' %}
+                                <span class="badge bg-success">Condition</span>
+                            {% elif _comp_type == 'events' %}
+                                <span class="badge bg-primary">Event</span>
+                            {% elif entry.source == 'rule' %}
+                                {# No delegate_descriptor_id — matched only in rule name/description #}
+                                <span class="badge bg-light text-muted border" title="This rule appeared because its name or description contains the dimension string. It may not directly set this variable.">Name match</span>
+                            {% endif %}
+
+                            {# Disabled badge #}
+                            {% if not entry.rule_enabled %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </button>
+                </h2>
+                <div id="{{ _accordion_id }}" class="accordion-collapse collapse">
+                    <div class="accordion-body px-0 pt-1 pb-2">
+                        {# Action label + raw delegate ID #}
+                        {% if _label %}
+                        <div class="mb-2">
+                            <small class="text-muted">{{ _label }}</small>
+                            <small class="text-muted font-monospace ms-1" style="font-size:0.7rem; opacity:0.6;">({{ entry.delegate_descriptor_id }})</small>
+                        </div>
+                        {% endif %}
+                        {# Variable assignments from setVariables actions #}
+                        {% if entry.variable_assignments %}
+                        <ul class="list-unstyled mb-0" style="font-size:0.8rem;">
+                            {% for va in entry.variable_assignments %}
+                            <li class="text-muted">
+                                <span class="font-monospace text-body-secondary">{{ va.variable }}</span>
+                                {% if va.value %}
+                                <span class="text-muted mx-1">→</span>
+                                <span class="font-monospace">{{ va.value }}</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% elif not _label %}
+                        <small class="text-muted fst-italic">No component details available.</small>
+                        {% endif %}
+                    </div>
                 </div>
-                {# Readable action label below the rule name #}
-                {% if _label %}
-                <div class="ms-0 mt-1">
-                    <small class="text-muted">{{ _label }}</small>
-                    <small class="text-muted font-monospace ms-1" style="font-size:0.7rem; opacity:0.6;">({{ entry.delegate_descriptor_id }})</small>
-                </div>
-                {% endif %}
-                {# Variable assignments from setVariables actions #}
-                {% if entry.variable_assignments %}
-                <ul class="list-unstyled ms-2 mt-1 mb-0" style="font-size:0.8rem;">
-                    {% for va in entry.variable_assignments %}
-                    <li class="text-muted">
-                        <span class="font-monospace text-body-secondary">{{ va.variable }}</span>
-                        {% if va.value %}
-                        <span class="text-muted mx-1">→</span>
-                        <span class="font-monospace">{{ va.value }}</span>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </li>
+            </div>
             {% endfor %}
-        </ul>
+        </div>
         {% else %}
         <p class="text-muted mb-0">No Launch rules reference this dimension.</p>
         {% endif %}
