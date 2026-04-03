@@ -12,8 +12,8 @@ This document is a list of smaller todo items and bugs found while using the Cod
   **Fixed in [feature/segment-metric-experience-cloud-links](autopsies/042-segment-metric-experience-cloud-links.md)**
 - [x] Hyperlink the Adobe Launch rule into Adobe Tags website. **Fixed in [feature/launch-adobe-tags-deeplinks](autopsies/043-launch-adobe-tags-deeplinks.md)**
 - [ ] Consolidate this **todo.md** file into the version-2-roadmap.md file.
-- [ ] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app.
-- [ ] Add a "Version History" section to the README that lists the major changes and updates for each version of the app.
+- [x] Add a "Known Issues" section to the README that links to this list of bugs, so users are aware of any current limitations or issues with the app. **Done — README.md has a Known Issues section; updated to "No known issues" once all bugs were resolved.**
+- [x] Add a "Version History" section to the README that lists the major changes and updates for each version of the app. **Done — README.md has v1.0 (Dec 2025) and v2.0 (Mar–Apr 2026) version history tables.**
 - [x] Move the following panels on the prop/evar/events/listvar detail pages from the left hand column to the right hand columns below the Top 10 Values table. **Fixed in [feature/detail-page-panel-layout](autopsies/044-detail-page-panel-layout.md)**
   1. Components → renamed to "Segments & Calculated Metrics"
   2. Related Processing Rules
@@ -29,17 +29,16 @@ This document is a list of smaller todo items and bugs found while using the Cod
 
 - [x] The Data Feed Column for a classified value should just show the parent data dimension. For example `http://127.0.0.1:5010/evars/evar8.suburb` should show `evar8` as the column name, instead of `evar8.suburb`.
 - [x] We block the API debug page from sending an POST requests, but some (or all, who really knows) can't actually change any data. That's just how you make a read only call to those endpoints. How do we safely allow those, while still ensuring that no one can ever update data in a report suite? **Fixed in [fix/api-debug-allow-readonly-post](autopsies/046-api-debug-readonly-post.md)**
-- [x] When a prop/evar/event/listvar doesn't have any recent data, the trendline chart still shows peaks and valleys. What is this data? If there is none, it should be showing a flatline. Is it cached? Made up? Data from another eVar, or data from a different config.json / Client, but the app is reading cached json files. Either way, the trendline should be accurate. See screenshot for prop15 Fuel List taken from Origin Energy config. ![Screenshot](../assets/screenshots/bug-trendline-chart-suggests-data-when-none.png) **Fixed in [fix/trendline-data-accuracy](autopsies/048-trendline-data-accuracy.md)**
+- [x] When a prop/evar/event/listvar doesn't have any recent data, the trendline chart still shows peaks and valleys. What is this data? If there is none, it should be showing a flatline. Is it cached? Made up? Data from another eVar, or data from a different config.json / Client, but the app is reading cached json files. Either way, the trendline should be accurate. See screenshot for prop15 Fuel List taken from Origin Energy config. ![Screenshot](../assets/screenshots/bug-trendline-chart-suggests-data-when-none.png) 
+  *Fixed in [fix/trendline-data-accuracy](autopsies/048-trendline-data-accuracy.md)*
  
   ## Suggested Improvements
 
   ### Quick wins
 
-- [ ] ~~**Item 1. Prop and eVar 30-day trend charts**~~
+- [x] ~~**Item 1. Prop and eVar 30-day trend charts**~~
 
-  get_dimension_trend() already exists in the API service and is fully wired for trend reporting, but it's never called from any route — Props and eVars have no trend chart on their detail pages. 
-
-  Events and Calculated Metrics both have them. Adding this is a template + route change only, reusing the existing trend_chart_js macro and Chart.js pattern. Estimated effort: ~1–2 hours.
+  Props and eVars do have trend charts — `get_dimension_trend()` is called from the prop, eVar, event, and listVar detail routes. The original description was already outdated when this item was written. **Accurate trend data now confirmed in [fix/trendline-data-accuracy](autopsies/048-trendline-data-accuracy.md) — each dimension type uses the correct metric and filter strategy.**
 
 - [x] **Item 2. Data Feed column name on dimension detail pages**
 

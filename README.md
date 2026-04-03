@@ -12,22 +12,22 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 
 - **Report Suite Overview** — Landing page with configuration health stats and cache status
 - **Report Suites** — Browse all report suites in the Adobe Analytics company with key configuration stats
-- **Conversion Variables (eVars)** — View all eVars with allocation, expiration, and descriptions
-- **Traffic Variables (Props)** — Browse props with pathing and list support settings
-- **Success Events** — List all events with type, serialisation, and descriptions
-- **List Variables** — View ListVar configurations and delimiters
+- **Conversion Variables (eVars)** — View all eVars with allocation, expiration, descriptions, and 30-day trend charts
+- **Traffic Variables (Props)** — Browse props with pathing and list support settings, and 30-day trend charts
+- **Success Events** — List all events with type, serialisation, descriptions, and 30-day trend charts
+- **List Variables** — View ListVar configurations, delimiters, and 30-day trend charts
 - **Segments** — Browse all segments defined in the report suite (API 2.0)
-- **Calculated Metrics** — View all calculated metrics with formula cross-references and 30-day trend data (API 2.0)
+- **Calculated Metrics** — View all calculated metrics with formula cross-references and 30-day trend charts (API 2.0)
 - **Processing Rules** — Display all processing rules with conditions and actions (API 1.4)
 - **Marketing Channels** — Browse channel definitions and settings (API 1.4)
 - **Channel Rules** — View marketing channel classification rules (API 1.4)
-- **Detail Views** — Drill into individual dimensions, events, segments, and metrics for full configuration details
-- **Dimension Notes** — Annotate any dimension or event with plain-English descriptions and technical context
+- **Detail Views** — Drill into individual dimensions, events, segments, and metrics for full configuration details, including related Processing Rules, Marketing Channel Rules, and Adobe Launch rules
+- **Dimension Notes** — Annotate any dimension or event with plain-English descriptions, technical context, platform availability, and user-managed tags
 - **CSV Export** — Export any configuration table for documentation or audits
 - **Background Pre-Caching** — Configuration data is pre-warmed at startup and refreshed every 24 hours
 - **Cache Management** — View cache status for all data sources; force-refresh individual caches on demand
 - **API Debug** — Interactive browser-based explorer for all Adobe Analytics API 1.4 and 2.0 endpoints; browse, inspect parameters, and send read-only requests proxied securely through the server
-- **Adobe Launch Integration** — See which Launch (Tags) rules set each variable (eVar, prop, event, listvar)
+- **Adobe Launch Integration** — See which Launch (Tags) rules reference each variable, with Action/Condition/Event badges and match-quality indicators to distinguish genuine variable assignments from name-only matches
 
 ---
 
@@ -218,12 +218,7 @@ See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan 
 
 ## Known Issues
 
-See [docs/todo.md](docs/todo.md) for the full bug list.
-
-| # | Issue | Notes |
-|---|-------|-------|
-| 1 | **Trendline chart shows peaks/valleys for dimensions with no recent data** | Likely stale cache or Adobe API returning noise values. A flatline is expected when a dimension has no data in the last 30 days. |
-| 2 | **API Debug page blocks all POST requests** | Some Adobe API 1.4 POST endpoints are read-only by design (e.g. `GetReportSuites`). These are currently blocked alongside write operations. A safe allowlist for read-only POST calls is under consideration. |
+No known issues at this time. See [docs/todo.md](docs/todo.md) for the full history of bugs and fixes.
 
 ---
 
@@ -247,6 +242,11 @@ Major feature release built on top of the original Flask conversion. All new fea
 | Reactor Debug | Interactive explorer for Adobe Launch Reactor API endpoints |
 | Dimension Notes | Per-dimension plain-English annotations persisted to disk |
 | Data Feed column names | Each dimension detail page shows the corresponding data feed column |
+| User-managed Tags | Rename, add, and remove tag options in the Notes panel at runtime |
+| Listing page improvements | Sticky headers, lighter alternating rows, toolbar consolidation |
+| Detail page panel layout | Processing Rules, Channel Rules, and Launch panels moved to right column |
+| Accurate dimension trend charts | Trend charts scoped to dimension-specific hits; eVars use `evar<n>instances`, props use a `metricFilters` segment, events use an `event-exists` segment |
+| Launch match type badges | Action / Condition / Event badges parsed from `delegate_descriptor_id`; "Name match" badge flags rule-name-only matches as potential false positives |
 | User OAuth login (partial) | Config scaffolding in place; per-user Adobe IMS login planned for a future release |
 
 ### v1.0 (December 2025)
@@ -273,4 +273,4 @@ MIT
 
 ---
 
-*Last updated: April 2026*
+*Last updated: 2026-04-03*
