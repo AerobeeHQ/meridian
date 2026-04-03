@@ -808,6 +808,36 @@ class AdobeAnalyticsV2Service:
             },
         }
 
+    @staticmethod
+    def _resolve_trend_metric(dimension: str, default_metric: str) -> tuple[str, dict | None]:
+        """Return the correct (metric_id, optional_segment_filter) for a trend query.
+
+        Different variable types need different approaches to count only the hits
+        where that variable was actually set:
+
+        * **eVars** — Adobe provides a built-in ``evar<n>instances`` metric that
+          already counts hits where that eVar was set.  No segment filter needed.
+        * **Events** — The ``event-exists`` inline segment filter works (confirmed
+          in production).
+        * **Props / listVars** — Caller should supply the right strategy once
+          confirmed; currently falls through to the inline segment filter.
+
+        Args:
+            dimension: Full dimension ID, e.g. ``'variables/evar1'``.
+            default_metric: Fallback metric name (without ``metrics/`` prefix).
+
+        Returns:
+            Tuple of ``(full_metric_id, filter_dict_or_None)``.
+        """
+        var_name = dimension.split('/')[-1]  # e.g. "evar1", "prop3", "event5"
+
+        if var_name.startswith('evar'):
+            # Use the built-in evarNinstances metric — no segment filter required.
+            return f"metrics/{var_name}instances", None
+
+        # Events: inline segment filter works (event-exists predicate).
+        return f"metrics/{default_metric}", AdobeAnalyticsV2Service._dimension_exists_filter(dimension)
+
     def get_dimension_trend(
         self,
         rsid: str,
@@ -816,17 +846,18 @@ class AdobeAnalyticsV2Service:
         days: int = 30
     ) -> dict:
         """
-        Get daily trend data for a dimension (occurrences per day where the
-        dimension has a value).
+        Get daily trend data for a dimension, scoped to hits where that
+        dimension has a value.
 
-        The report is scoped to hits where *dimension* is set (not Unspecified),
-        so the chart reflects actual usage of that variable rather than overall
-        report-suite traffic.
+        The metric and filter strategy are chosen per variable type:
+        * eVars: ``metrics/evar<n>instances`` (built-in, no segment filter)
+        * Events: ``metrics/occurrences`` + inline ``event-exists`` segment filter
+        * Props / listVars: ``metrics/occurrences`` + inline ``exists`` segment filter
 
         Args:
             rsid: Report suite ID
-            dimension: Dimension ID (e.g., 'variables/prop1', 'variables/event3')
-            metric: Metric to use ('occurrences' or 'instances')
+            dimension: Dimension ID (e.g., 'variables/evar1', 'variables/event3')
+            metric: Base metric name used as a fallback for non-eVar dimensions
             days: Number of days to look back
 
         Returns:
@@ -835,19 +866,22 @@ class AdobeAnalyticsV2Service:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-        # Build report request for time-series data, filtered to hits where the
-        # specific dimension has a value (not Unspecified).
+        actual_metric, dim_filter = self._resolve_trend_metric(dimension, metric)
+
+        global_filters: list[dict] = [
+            {
+                "type": "dateRange",
+                "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+            }
+        ]
+        if dim_filter is not None:
+            global_filters.append(dim_filter)
+
         request_body = {
             "rsid": rsid,
-            "globalFilters": [
-                {
-                    "type": "dateRange",
-                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
-                },
-                self._dimension_exists_filter(dimension),
-            ],
+            "globalFilters": global_filters,
             "metricContainer": {
-                "metrics": [{"id": f"metrics/{metric}"}]
+                "metrics": [{"id": actual_metric}]
             },
             "dimension": "variables/daterangeday",
             "settings": {

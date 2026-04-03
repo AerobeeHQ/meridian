@@ -37,45 +37,52 @@ Because every detail page showed the same underlying data (whole-suite traffic),
 
 ## Solution
 
-Added a static helper method `_dimension_exists_filter(dimension)` that builds an inline segment `globalFilter` restricting the report to **hits where the specific dimension has a value** (is not Unspecified/not-set).
+The fix has two parts, one per variable type that needed a different approach.
 
-### Segment predicate format
+### Part 1 — eVars: use `metrics/evar<n>instances`
 
-The Adobe Analytics API 2.0 supports inline `segmentDefinition` objects inside `globalFilters`. The predicate grammar for "dimension exists" differs by variable type:
+Adobe Analytics exposes a built-in metric `metrics/evar<n>instances` (e.g. `metrics/evar1instances`) that counts hits where eVar *n* was set. Analysis Workspace uses this metric for eVar sparklines. No segment filter is needed.
+
+`_resolve_trend_metric()` detects eVar dimensions and returns the built-in metric:
+```python
+if var_name.startswith('evar'):
+    return f"metrics/{var_name}instances", None
+```
+
+### Part 2 — Events: inline `event-exists` segment filter
+
+A static helper method `_dimension_exists_filter(dimension)` builds an inline segment `globalFilter` restricting the report to **hits where the event fired**.
+
+The predicate grammar for events in the Adobe Analytics API 2.0 segment definition format:
 
 | Variable type | `pred.func` | `val.func` |
 |--------------|-------------|------------|
-| prop, eVar, listVar | `exists` | `attr` |
 | event | `event-exists` | `event` |
-
-The helper detects events by checking whether `dimension.startswith('variables/event')`.
-
-### New request body
+| prop, listVar | `exists` | `attr` |
 
 ```json
 {
-  "dimension": "variables/daterangeday",
-  "metricContainer": {
-    "metrics": [{"id": "metrics/occurrences"}]
-  },
-  "globalFilters": [
-    {"type": "dateRange", "dateRange": "..."},
-    {
-      "type": "segment",
-      "segmentDefinition": {
-        "container": {
-          "func": "container",
-          "context": "hits",
-          "pred": {
-            "func": "exists",
-            "val": {"func": "attr", "name": "variables/prop15"}
-          }
-        }
+  "type": "segment",
+  "segmentDefinition": {
+    "container": {
+      "func": "container",
+      "context": "hits",
+      "pred": {
+        "func": "event-exists",
+        "val": {"func": "event", "name": "variables/event3"}
       }
     }
-  ]
+  }
 }
 ```
+
+### Strategy table
+
+| Dimension type | Metric used | globalFilter |
+|---------------|-------------|--------------|
+| eVar | `metrics/evar<n>instances` | date range only |
+| event | `metrics/occurrences` | date range + `event-exists` segment |
+| prop, listVar | `metrics/occurrences` | date range + `exists` segment |
 
 For a variable with no recent data, the API now correctly returns all-zero rows (or an empty rows array), producing a flatline chart instead of reporting suite-wide traffic.
 
@@ -85,7 +92,7 @@ For a variable with no recent data, the API now correctly returns all-zero rows 
 
 | File | Change |
 |------|--------|
-| `app/services/adobe_analytics_v2.py` | Added `_dimension_exists_filter()` static method; updated `get_dimension_trend()` to pass the dimension filter in `globalFilters` |
+| `app/services/adobe_analytics_v2.py` | Added `_dimension_exists_filter()` and `_resolve_trend_metric()` static methods; updated `get_dimension_trend()` to select the correct metric and filter per dimension type |
 | `docs/todo.md` | Marked trendline bug as fixed |
 
 ---
