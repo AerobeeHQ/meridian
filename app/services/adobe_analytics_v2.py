@@ -885,8 +885,10 @@ class AdobeAnalyticsV2Service:
             },
             "dimension": "variables/daterangeday",
             "settings": {
+                "countRepeatInstances": True,
+                "nonesBehavior": "return-nones",
                 "dimensionSort": "asc",
-                "limit": days + 1
+                "limit": days + 5,
             }
         }
 
