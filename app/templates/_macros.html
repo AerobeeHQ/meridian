@@ -874,17 +874,48 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             {% else %}
                 {% set link_base = '' %}
             {% endif %}
+
+            {# Parse delegate_descriptor_id → component type + readable label           #}
+            {# Format: {extension}::{actions|conditions|events}::{name}                 #}
+            {# e.g. adobe-analytics::actions::setVariables                               #}
+            {% if entry.delegate_descriptor_id %}
+                {% set _parts = entry.delegate_descriptor_id.split('::') %}
+                {% set _comp_type = _parts[1] if _parts | length >= 2 else '' %}
+                {% set _comp_name = _parts[2] if _parts | length >= 3 else '' %}
+                {# Map well-known delegate names to human-readable labels #}
+                {% if _comp_name == 'setVariables' %}
+                    {% set _label = 'Sets Analytics Variables' %}
+                {% elif _comp_name == 'sendBeacon' %}
+                    {% set _label = 'Sends Analytics Beacon' %}
+                {% elif _comp_name == 'custom-code' %}
+                    {% set _label = 'Custom Code' %}
+                {% elif _comp_name == 'variable' %}
+                    {% set _label = 'Variable' %}
+                {% else %}
+                    {% set _label = _comp_name | replace('-', ' ') | title %}
+                {% endif %}
+            {% else %}
+                {% set _comp_type = '' %}
+                {% set _label = '' %}
+            {% endif %}
+
             <li class="mb-2">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    {# Source type badge (Global / Data Element) #}
                     {% if entry.source == 'extension' %}
                         <span class="badge bg-info text-dark">Global</span>
+                    {% elif entry.source == 'data_element' %}
+                        <span class="badge bg-warning text-dark">Data Element</span>
+                    {% endif %}
+
+                    {# Rule / extension / data-element name with deep link #}
+                    {% if entry.source == 'extension' %}
                         {% if link_base and entry.source_id %}
                         <a href="{{ link_base }}/extensions/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
                         {% else %}
                         {{ entry.rule_name }}
                         {% endif %}
                     {% elif entry.source == 'data_element' %}
-                        <span class="badge bg-warning text-dark">Data Element</span>
                         {% if link_base and entry.source_id %}
                         <a href="{{ link_base }}/data-elements/{{ entry.source_id }}" target="_blank" rel="noopener noreferrer">{{ entry.rule_name }}</a>
                         {% else %}
@@ -897,12 +928,30 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                         {{ entry.rule_name }}
                         {% endif %}
                     {% endif %}
+
+                    {# Component type badge: Action / Condition / Event #}
+                    {% if _comp_type == 'actions' %}
+                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Action</span>
+                    {% elif _comp_type == 'conditions' %}
+                        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">Condition</span>
+                    {% elif _comp_type == 'events' %}
+                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">Event</span>
+                    {% elif entry.source == 'rule' %}
+                        {# No delegate_descriptor_id — matched only in rule name/description #}
+                        <span class="badge bg-light text-muted border" title="This rule appeared because its name or description contains the dimension string. It may not directly set this variable.">Name match</span>
+                    {% endif %}
+
+                    {# Disabled badge #}
                     {% if not entry.rule_enabled %}
-                    <span class="badge bg-secondary">Disabled</span>
+                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Disabled</span>
                     {% endif %}
                 </div>
-                {% if entry.delegate_descriptor_id %}
-                <div class="ms-0 mt-1"><small class="text-muted font-monospace">{{ entry.delegate_descriptor_id }}</small></div>
+                {# Readable action label below the rule name #}
+                {% if _label %}
+                <div class="ms-0 mt-1">
+                    <small class="text-muted">{{ _label }}</small>
+                    <small class="text-muted font-monospace ms-1" style="font-size:0.7rem; opacity:0.6;">({{ entry.delegate_descriptor_id }})</small>
+                </div>
                 {% endif %}
             </li>
             {% endfor %}
