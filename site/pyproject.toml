@@ -1,7 +1,7 @@
 [project]
 name = "codex-site"
 version = "1.0.0"
-description = "Codex brochure site — built with staticninja"
+description = "Codex brochure site — built with staticjinja"
 requires-python = ">=3.11"
 dependencies = [
     "staticjinja>=5.0.0",
