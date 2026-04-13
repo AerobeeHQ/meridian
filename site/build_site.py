@@ -6,11 +6,17 @@ Usage:
     uv run build_site.py --watch   # Build + watch for changes (local dev)
 """
 
+import os
 import sys
 import time
 import shutil
 from pathlib import Path
 from staticjinja import Site
+
+# Anchor all paths relative to this file so the script works when invoked
+# from any directory (e.g. `uv run build_site.py` from the repo root).
+BASE_DIR = Path(__file__).resolve().parent
+os.chdir(BASE_DIR)
 
 USE_RELOADER = "--watch" in sys.argv
 
