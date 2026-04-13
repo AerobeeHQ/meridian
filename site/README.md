@@ -32,7 +32,7 @@ uv sync
 ### 2. Build once
 
 ```bash
-uv run build.py
+uv run build_site.py
 ```
 
 The compiled site is written to `site/output/`.
@@ -40,7 +40,7 @@ The compiled site is written to `site/output/`.
 ### 3. Preview with auto-reload (development)
 
 ```bash
-uv run build.py --watch
+uv run build_site.py --watch
 ```
 
 Then open `site/output/index.html` in your browser, or serve it locally:
@@ -67,7 +67,7 @@ wrangler login
 
 # Build the site
 cd site
-uv run build.py
+uv run build_site.py
 
 # Deploy
 wrangler pages deploy output/ --project-name codex-site
@@ -91,7 +91,7 @@ For subsequent deploys, open the project → **Deployments** → **Upload**.
 ```bash
 # 1. Edit templates or styles
 # 2. Rebuild
-cd site && uv run build.py
+cd site && uv run build_site.py
 
 # 3. Preview
 cd output && python3 -m http.server 8080

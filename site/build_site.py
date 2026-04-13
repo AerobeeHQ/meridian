@@ -2,8 +2,8 @@
 Codex brochure site — staticjinja build script.
 
 Usage:
-    uv run build.py           # Build once → output/
-    uv run build.py --watch   # Build + watch for changes (local dev)
+    uv run build_site.py           # Build once → output/
+    uv run build_site.py --watch   # Build + watch for changes (local dev)
 """
 
 import sys
