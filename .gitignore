@@ -173,3 +173,4 @@ settings.local.json
 
 # My own notes
 reactor-notes.md
+/.playwright-mcp/
