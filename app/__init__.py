@@ -2,127 +2,104 @@
 Codex - Adobe Analytics Configuration Viewer
 Flask application factory
 """
-import json
 import os
 from flask import Flask
 
 from app.services.git_info import get_git_info
+from app.services.config_loader import load_clients
 
 
-def load_config():
-    """Load configuration from config.json"""
-    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+def _build_client_services(client_slug: str, config: dict) -> dict:
+    """Instantiate API services for one client config and return them in a dict."""
+    from app.services.adobe_auth import OAuth2Auth
+    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
+    from app.services.adobe_analytics import AdobeAnalyticsService
+    from app.services.cache import CacheService
 
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(
-            f"config.json not found at {config_path}. "
-            "Copy config.dist.json to config.json and fill in your credentials."
+    api_version = config.get('API_VERSION', '2.0')
+
+    api_v2 = None
+    if api_version == '2.0':
+        auth = OAuth2Auth(
+            client_id=config['CLIENT_ID'],
+            client_secret=config['CLIENT_SECRET'],
+            scopes=config.get('SCOPES'),
+        )
+        api_v2 = AdobeAnalyticsV2Service(
+            auth_service=auth,
+            client_id=config['CLIENT_ID'],
+            org_id=config['ORGANIZATION_ID'],
         )
 
-    with open(config_path, 'r') as f:
-        return json.load(f)
+    api_v14 = AdobeAnalyticsService(
+        username=config.get('AW_USERNAME'),
+        secret=config.get('AW_SECRET'),
+        request_timeout=config.get('API_V14_TIMEOUT', 5.0),
+    )
+
+    launch = None
+    if config.get('LAUNCH_ENABLED') and config.get('LAUNCH_PROPERTY_ID') and api_version == '2.0':
+        from app.services.adobe_launch import AdobeLaunchService
+        _launch_scopes = config.get('LAUNCH_SCOPES') or (
+            'AdobeID, openid, read_organizations, '
+            'additional_info.job_function, '
+            'additional_info.projectedProductContext, additional_info.roles'
+        )
+        _launch_auth = OAuth2Auth(
+            client_id=config['CLIENT_ID'],
+            client_secret=config['CLIENT_SECRET'],
+            scopes=_launch_scopes,
+        )
+        launch = AdobeLaunchService(
+            auth_service=_launch_auth,
+            org_id=config['ORGANIZATION_ID'],
+        )
+
+    # Per-client cache directory: cache/<client_slug>/
+    cache_dir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'cache', client_slug,
+    )
+    cache = CacheService(cache_dir=cache_dir)
+
+    return {
+        'config':  config,
+        'api_v2':  api_v2,
+        'api_v14': api_v14,
+        'launch':  launch,
+        'cache':   cache,
+    }
 
 
 def create_app():
-    """Create and configure the Flask application"""
+    """Create and configure the Flask application."""
     app = Flask(__name__)
 
-    # Load configuration
-    config = load_config()
-    app.config['APP_TITLE'] = config.get('APP_TITLE', 'Codex')
-    app.config['AW_REPORTSUITE_ID'] = config.get('AW_REPORTSUITE_ID')
-    app.config['REPORTSUITE_NAME'] = config.get('REPORTSUITE_NAME', '')
+    # ── Load all client configurations ────────────────────────────────────────
+    clients_config = load_clients()
 
-    # API version selection (default: 2.0)
-    app.config['API_VERSION'] = config.get('API_VERSION', '2.0')
+    # ── Build per-client service bundles ──────────────────────────────────────
+    app.codex_clients = {
+        slug: _build_client_services(slug, cfg)
+        for slug, cfg in clients_config.items()
+    }
 
-    # OAuth2 credentials (API 2.0)
-    app.config['CLIENT_ID'] = config.get('CLIENT_ID')
-    app.config['CLIENT_SECRET'] = config.get('CLIENT_SECRET')
-    app.config['SCOPES'] = config.get('SCOPES')
-    app.config['ORGANIZATION_ID'] = config.get('ORGANIZATION_ID')
+    # ── App-level settings ────────────────────────────────────────────────────
+    # SESSION_SECRET and AUTH_MODE are taken from the first loaded client config
+    # (alphabetical order). Override by setting CODEX_SESSION_SECRET env var.
+    first_config = next(iter(clients_config.values()))
 
-    # WSSE credentials (API 1.4 - also used for processing rules)
-    app.config['AW_USERNAME'] = config.get('AW_USERNAME')
-    app.config['AW_SECRET'] = config.get('AW_SECRET')
-
-    # API 1.4 request timeout (seconds); see config.dist.json for guidance
-    app.config['API_V14_TIMEOUT'] = config.get('API_V14_TIMEOUT', 5.0)
-
-    # Experience Cloud deep-links (optional)
-    # Set to the company alias that appears in Experience Cloud URLs, e.g. "originenergy"
-    # for https://experience.adobe.com/#/@originenergy/...
-    app.config['EXPERIENCE_CLOUD_ORG'] = config.get('EXPERIENCE_CLOUD_ORG')
-
-    # Adobe Launch (Tags) integration - Roadmap v2-003
-    app.config['LAUNCH_ENABLED'] = config.get('LAUNCH_ENABLED', False)
-    app.config['LAUNCH_PROPERTY_ID'] = config.get('LAUNCH_PROPERTY_ID')
-    app.config['LAUNCHPAD_URL'] = config.get('LAUNCHPAD_URL', '')
-    app.config['LAUNCH_SCOPES'] = config.get('LAUNCH_SCOPES')  # None = use default
-
-    # Auth mode - Roadmap v2-004
-    # 'server' = service account OAuth2 (default, current behaviour)
-    # 'user'   = per-user Adobe IMS login via Authorization Code flow
-    app.config['AUTH_MODE'] = config.get('AUTH_MODE', 'server')
-    app.config['OAUTH_REDIRECT_URI'] = config.get('OAUTH_REDIRECT_URI')
-    if config.get('SESSION_SECRET'):
-        app.secret_key = config['SESSION_SECRET']
+    session_secret = os.environ.get('CODEX_SESSION_SECRET') or first_config.get('SESSION_SECRET')
+    if session_secret:
+        app.secret_key = session_secret
 
     # Git info for footer display
     git_info = get_git_info()
     app.config['GIT_BRANCH'] = git_info.get('branch')
     app.config['GIT_COMMIT'] = git_info.get('commit')
 
-    # ── Service instantiation ─────────────────────────────────────────────────
-    # Services are created once here and stored on the app object so every part
-    # of the codebase (routes, cache warmer) shares the same instances without
-    # each having to re-implement the init logic.
-
-    from app.services.adobe_auth import OAuth2Auth
-    from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
-    from app.services.adobe_analytics import AdobeAnalyticsService
-
-    if app.config['API_VERSION'] == '2.0':
-        auth = OAuth2Auth(
-            client_id=app.config['CLIENT_ID'],
-            client_secret=app.config['CLIENT_SECRET'],
-            scopes=app.config.get('SCOPES'),
-        )
-        app.codex_api_service_v2 = AdobeAnalyticsV2Service(
-            auth_service=auth,
-            client_id=app.config['CLIENT_ID'],
-            org_id=app.config['ORGANIZATION_ID'],
-        )
-
-    app.codex_api_service_v14 = AdobeAnalyticsService(
-        username=app.config['AW_USERNAME'],
-        secret=app.config['AW_SECRET'],
-        request_timeout=app.config.get('API_V14_TIMEOUT', 5.0),
-    )
-
-    # Adobe Launch (Tags) service — only when LAUNCH_ENABLED and API 2.0
-    if app.config['LAUNCH_ENABLED'] and app.config.get('LAUNCH_PROPERTY_ID'):
-        if app.config['API_VERSION'] == '2.0':
-            from app.services.adobe_launch import AdobeLaunchService
-            # The Reactor API requires broader IMS scopes than Analytics alone.
-            # Specifically, read_organizations and additional_info.roles are needed.
-            # These match the scopes launchpy uses for successful Reactor API access.
-            # A dedicated OAuth2Auth instance is created so the narrower Analytics
-            # token is not affected.
-            _launch_scopes = app.config.get('LAUNCH_SCOPES') or (
-                'AdobeID, openid, read_organizations, '
-                'additional_info.job_function, '
-                'additional_info.projectedProductContext, additional_info.roles'
-            )
-            _launch_auth = OAuth2Auth(
-                client_id=app.config['CLIENT_ID'],
-                client_secret=app.config['CLIENT_SECRET'],
-                scopes=_launch_scopes,
-            )
-            app.codex_launch_service = AdobeLaunchService(
-                auth_service=_launch_auth,
-                org_id=app.config['ORGANIZATION_ID'],
-            )
+    # Expose the list of valid client slugs for routing validation
+    app.config['CODEX_CLIENT_SLUGS'] = set(app.codex_clients.keys())
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     from app.routes.main import main_bp
@@ -130,6 +107,16 @@ def create_app():
 
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    # ── Root route ────────────────────────────────────────────────────────────
+    # The brochure site lives on Cloudflare Pages, not here. Return a minimal
+    # response so Flask root is not a silent 404.
+    @app.route('/')
+    def root():
+        from flask import redirect
+        # Redirect to the first configured client as a convenience.
+        first_slug = next(iter(app.codex_clients))
+        return redirect(f'/{first_slug}/')
 
     # ── Background cache warmer ───────────────────────────────────────────────
     from app.services.cache_warmer import start_scheduler

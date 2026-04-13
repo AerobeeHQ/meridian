@@ -1,4 +1,6 @@
 {
+    "_WARNING":                "NEVER commit a file containing real credentials to the repository. Copy this file to $CODEX_SECRETS_DIR/<client-name>.json (e.g. ~/secrets/codex/maxis.json) and fill in the values there.",
+
     "APP_TITLE":               "<COMPANY NAME>",
     "AW_REPORTSUITE_ID":       "<RSID>",
     "REPORTSUITE_NAME":        "<HUMAN-READABLE REPORT SUITE NAME (optional, falls back to RSID)>",
