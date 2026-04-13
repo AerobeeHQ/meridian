@@ -24,6 +24,8 @@ This document is a list of smaller todo items and bugs found while using the Cod
   - [x] Make the shaded rows on the listing pages lighter by half.
   - [x] Make the table header sticky
   - [x] Put the Copy/Column visibility/Download buttons on the same row as the Refresh button to make better use of the vertical space
+- [x] Create a Codex brochure site.
+- [ ] Reorganize the site structure so that the Codex promotion site is available at the root of the domain then subfolders for each client configuration
 
 ## Bugs
 
