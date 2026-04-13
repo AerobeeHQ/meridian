@@ -2,7 +2,7 @@
 name = "codex-site"
 version = "1.0.0"
 description = "Codex brochure site — built with staticjinja"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "staticjinja>=5.0.0",
     "jinja2>=3.1.0",
