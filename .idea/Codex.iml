@@ -21,5 +21,6 @@
     <orderEntry type="library" name="dataTables.searchHighlight" level="application" />
     <orderEntry type="library" name="jquery-highlight" level="application" />
     <orderEntry type="library" name="colReorder.bootstrap5" level="application" />
+    <orderEntry type="library" name="chart.js" level="application" />
   </component>
 </module>
