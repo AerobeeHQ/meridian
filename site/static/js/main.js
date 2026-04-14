@@ -71,9 +71,10 @@
     slides.forEach((_, i) => {
       const dot = document.createElement('button');
       dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('role', 'tab');
       dot.setAttribute('aria-label', `Screenshot ${i + 1} of ${TOTAL}`);
-      dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      if (i === 0) {
+        dot.setAttribute('aria-current', 'true');
+      }
       dot.addEventListener('click', () => goTo(i));
       dotsWrap.appendChild(dot);
     });
@@ -83,13 +84,13 @@
     function goTo(idx) {
       slides[current].setAttribute('aria-hidden', 'true');
       dots[current].classList.remove('active');
-      dots[current].setAttribute('aria-selected', 'false');
+      dots[current].removeAttribute('aria-current');
 
       current = (idx + TOTAL) % TOTAL;
 
       slides[current].setAttribute('aria-hidden', 'false');
       dots[current].classList.add('active');
-      dots[current].setAttribute('aria-selected', 'true');
+      dots[current].setAttribute('aria-current', 'true');
       track.style.transform = `translateX(-${current * 100}%)`;
 
       resetProgress();
