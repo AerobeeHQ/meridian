@@ -211,57 +211,69 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'core' %}active{% endif %}" href="/core" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Out of the box dimensions">Core</a>
+                        <a class="nav-link {% if active_tab == 'core' %}active{% endif %}" href="/{{ client_slug }}/core" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Out of the box dimensions">Core</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/props" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Traffice Variables">Props</a>
+                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/{{ client_slug }}/props" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Traffice Variables">Props</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'evars' %}active{% endif %}" href="/evars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Conversion Variables">eVars</a>
+                        <a class="nav-link {% if active_tab == 'evars' %}active{% endif %}" href="/{{ client_slug }}/evars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Conversion Variables">eVars</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'events' %}active{% endif %}" href="/events" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Success Events">Events</a>
+                        <a class="nav-link {% if active_tab == 'events' %}active{% endif %}" href="/{{ client_slug }}/events" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Success Events">Events</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'listvars' %}active{% endif %}" href="/listvars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="List Variables">ListVars</a>
+                        <a class="nav-link {% if active_tab == 'listvars' %}active{% endif %}" href="/{{ client_slug }}/listvars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="List Variables">ListVars</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'segments' %}active{% endif %}" href="/segments">Segments</a>
+                        <a class="nav-link {% if active_tab == 'segments' %}active{% endif %}" href="/{{ client_slug }}/segments">Segments</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'calculated-metrics' %}active{% endif %}" href="/calculated-metrics" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Calculated Metrics">Metrics</a>
+                        <a class="nav-link {% if active_tab == 'calculated-metrics' %}active{% endif %}" href="/{{ client_slug }}/calculated-metrics" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Calculated Metrics">Metrics</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'processing-rules' %}active{% endif %}" href="/processing-rules">Proc Rules</a>
+                        <a class="nav-link {% if active_tab == 'processing-rules' %}active{% endif %}" href="/{{ client_slug }}/processing-rules">Proc Rules</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">Channels</a>
                         <ul class="dropdown-menu">
                             <li><h6 class="dropdown-header">Marketing Channels</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/marketing-channels">Channel Setup</a></li>
-                            <li><a class="dropdown-item {% if active_tab == 'channel-rules' %}active{% endif %}" href="/channel-rules">Channel Rules</a></li>
+                            <li><a class="dropdown-item {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/{{ client_slug }}/marketing-channels">Channel Setup</a></li>
+                            <li><a class="dropdown-item {% if active_tab == 'channel-rules' %}active{% endif %}" href="/{{ client_slug }}/channel-rules">Channel Rules</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle {% if active_tab in ['report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/report-suites">Report Suites</a></li>
-                            <li><a class="dropdown-item" href="/cache">Cache</a></li>
+                            <li><a class="dropdown-item" href="/{{ client_slug }}/report-suites">Report Suites</a></li>
+                            <li><a class="dropdown-item" href="/{{ client_slug }}/cache">Cache</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Adobe Analytics</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'debug' %}active{% endif %}" href="/debug">API Debug</a></li>
+                            <li><a class="dropdown-item {% if active_tab == 'debug' %}active{% endif %}" href="/{{ client_slug }}/debug">API Debug</a></li>
                             {% if config.LAUNCH_ENABLED %}
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Adobe Launch</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'reactor-debug' %}active{% endif %}" href="/debug/reactor">Reactor Debug</a></li>
+                            <li><a class="dropdown-item {% if active_tab == 'reactor-debug' %}active{% endif %}" href="/{{ client_slug }}/debug/reactor">Reactor Debug</a></li>
                             {% endif %}
                         </ul>
                     </li>
                 </ul>
 
-                {# User menu — only rendered when AUTH_MODE is 'user' (v2-004) #}
-                {% if config.AUTH_MODE == 'user' %}
                 <ul class="navbar-nav ms-auto">
+                    {# Client switcher — only shown when more than one client is configured #}
+                    {% if all_clients | length > 1 %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ client_slug }}</a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for slug in all_clients %}
+                            <li><a class="dropdown-item {% if slug == client_slug %}active{% endif %}" href="/{{ slug }}/">{{ slug }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {# User menu — only rendered when AUTH_MODE is 'user' (v2-004) #}
+                    {% if config.AUTH_MODE == 'user' %}
                     {% if session.get('user_email') %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
@@ -276,8 +288,8 @@
                         <a class="nav-link" href="{{ url_for('auth.login') }}">Login with Adobe</a>
                     </li>
                     {% endif %}
+                    {% endif %}
                 </ul>
-                {% endif %}
             </div>
         </div>
     </nav>
