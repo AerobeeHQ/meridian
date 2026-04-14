@@ -288,14 +288,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     }
 
     function loadTags() {
-        return fetch('/api/tags')
+        return fetch('/{{ client_slug }}/api/tags')
             .then(function(r) { return r.json(); })
             .then(function(tags) { availableTags = tags; })
             .catch(function(e) { console.error('Failed to load tags:', e); availableTags = []; });
     }
 
     function deleteTagFromLibrary(tagName) {
-        fetch('/api/tags/' + encodeURIComponent(tagName), { method: 'DELETE' })
+        fetch('/{{ client_slug }}/api/tags/' + encodeURIComponent(tagName), { method: 'DELETE' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 availableTags = data.tags;
@@ -324,7 +324,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         function doAddTag() {
             var name = newTagInput.value.trim();
             if (!name) return;
-            fetch('/api/tags', {
+            fetch('/{{ client_slug }}/api/tags', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name })
@@ -349,7 +349,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Load dimension options for Equivalent Dimension dropdown
     function loadDimensionOptions() {
-        return fetch(`/api/notes/options/${dimensionType}`)
+        return fetch(`/{{ client_slug }}/api/notes/options/${dimensionType}`)
             .then(response => response.json())
             .then(options => {
                 const equivalentSelect = form.querySelector('[name="equivalent_dimension"]');
@@ -624,7 +624,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         if (statusEl) statusEl.textContent = 'Saving...';
         if (saveBtn) saveBtn.disabled = true;
 
-        fetch(`/api/notes/${dimensionType}/${dimensionId}`, {
+        fetch(`/{{ client_slug }}/api/notes/${dimensionType}/${dimensionId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -649,7 +649,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Load existing notes
     function loadNotes() {
-        fetch(`/api/notes/${dimensionType}/${dimensionId}`)
+        fetch(`/{{ client_slug }}/api/notes/${dimensionType}/${dimensionId}`)
             .then(response => response.json())
             .then(data => {
                 lastSavedData = data;

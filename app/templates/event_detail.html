@@ -228,7 +228,7 @@
 (function () {
     var placeholder = document.getElementById('related-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-rules/event/{{ event_id }}')
+    fetch('/{{ client_slug }}/api/related-rules/event/{{ event_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -246,7 +246,7 @@
 (function () {
     var placeholder = document.getElementById('related-launch-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-launch-rules/event/{{ event_id }}')
+    fetch('/{{ client_slug }}/api/related-launch-rules/event/{{ event_id }}')
         .then(function (r) {
             if (r.status === 204) { placeholder.remove(); return ''; }
             return r.text();
@@ -268,7 +268,7 @@
 (function () {
     var placeholder = document.getElementById('related-channel-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-channel-rules/event/{{ event_id }}')
+    fetch('/{{ client_slug }}/api/related-channel-rules/event/{{ event_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -285,7 +285,7 @@
 (function () {
     var placeholder = document.getElementById('components-placeholder');
     if (!placeholder) return;
-    fetch('/api/components/event/{{ event_id }}')
+    fetch('/{{ client_slug }}/api/components/event/{{ event_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
