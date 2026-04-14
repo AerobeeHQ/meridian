@@ -20,6 +20,13 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
 
     api_v2 = None
     if api_version == '2.0':
+        _required_v2_keys = ('CLIENT_ID', 'CLIENT_SECRET', 'ORGANIZATION_ID')
+        _missing = [k for k in _required_v2_keys if not config.get(k)]
+        if _missing:
+            raise RuntimeError(
+                f"Client '{client_slug}' is configured for API 2.0 but is missing "
+                f"required key(s): {', '.join(_missing)}"
+            )
         auth = OAuth2Auth(
             client_id=config['CLIENT_ID'],
             client_secret=config['CLIENT_SECRET'],
