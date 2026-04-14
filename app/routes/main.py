@@ -754,13 +754,13 @@ def overview():
 
     # Read from cache only — do not trigger API calls on the overview page
     # Keep raw values (None = not yet cached) to track per-stat availability
-    _dimensions_raw        = cache.get(rsid, 'dimensions')
-    _events_raw            = cache.get(rsid, 'events')
-    _listvars_raw          = cache.get(rsid, 'listvars')
-    _processing_rules_raw  = cache.get(rsid, 'processing_rules')
-    _marketing_channels_raw = cache.get(rsid, 'marketing_channels')
-    _segments_raw          = cache.get(rsid, 'segments')
-    _calc_metrics_raw      = cache.get(rsid, 'calculated_metrics')
+    _dimensions_raw        = g.cache.get(rsid, 'dimensions')
+    _events_raw            = g.cache.get(rsid, 'events')
+    _listvars_raw          = g.cache.get(rsid, 'listvars')
+    _processing_rules_raw  = g.cache.get(rsid, 'processing_rules')
+    _marketing_channels_raw = g.cache.get(rsid, 'marketing_channels')
+    _segments_raw          = g.cache.get(rsid, 'segments')
+    _calc_metrics_raw      = g.cache.get(rsid, 'calculated_metrics')
 
     dimensions         = _dimensions_raw or []
     raw_events         = _events_raw or []
@@ -926,7 +926,7 @@ def core_detail(dimension_id: str):
     display_id = dimension_id.replace("variables/", "")
 
     # Quick Win #1: Try to get dimension from already-cached dimensions list
-    cached_dimensions = cache.get(rsid, 'dimensions')
+    cached_dimensions = g.cache.get(rsid, 'dimensions')
 
     def fetch_dimension():
         if cached_dimensions:
@@ -942,9 +942,9 @@ def core_detail(dimension_id: str):
         return api.get_dimension_trend(rsid, full_dimension_id, metric="occurrences", days=30)
 
     # Quick Win #2: Check cache first, then parallelize needed API calls
-    dimension = cache.get(rsid, f'core_detail_{display_id}')
-    top_items = cache.get(rsid, f'core_top_{display_id}')
-    trend_data = cache.get(rsid, f'core_trend_{display_id}')
+    dimension = g.cache.get(rsid, f'core_detail_{display_id}')
+    top_items = g.cache.get(rsid, f'core_top_{display_id}')
+    trend_data = g.cache.get(rsid, f'core_trend_{display_id}')
 
     tasks = {}
     if dimension is None:
@@ -962,13 +962,13 @@ def core_detail(dimension_id: str):
                 key = futures[future]
                 value = future.result()
                 if key == 'dimension':
-                    cache.set(rsid, f'core_detail_{display_id}', value)
+                    g.cache.set(rsid, f'core_detail_{display_id}', value)
                     dimension = value
                 elif key == 'top_items':
-                    cache.set(rsid, f'core_top_{display_id}', value)
+                    g.cache.set(rsid, f'core_top_{display_id}', value)
                     top_items = value
                 elif key == 'trend_data':
-                    cache.set(rsid, f'core_trend_{display_id}', value)
+                    g.cache.set(rsid, f'core_trend_{display_id}', value)
                     trend_data = value
 
     # Find classifications for this dimension (dimensions with parent = this dimension's ID)
@@ -1065,7 +1065,7 @@ def prop_detail(prop_id: str):
     display_id = prop_id.replace("variables/", "")
 
     # Quick Win #1: Try to get dimension from already-cached dimensions list
-    cached_dimensions = cache.get(rsid, 'dimensions')
+    cached_dimensions = g.cache.get(rsid, 'dimensions')
     
     def fetch_dimension():
         if cached_dimensions:
@@ -1081,9 +1081,9 @@ def prop_detail(prop_id: str):
         return api.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
 
     # Quick Win #2: Check cache first, then parallelize needed API calls
-    dimension = cache.get(rsid, f'prop_detail_{display_id}')
-    top_items = cache.get(rsid, f'prop_top_{display_id}')
-    trend_data = cache.get(rsid, f'prop_trend_{display_id}')
+    dimension = g.cache.get(rsid, f'prop_detail_{display_id}')
+    top_items = g.cache.get(rsid, f'prop_top_{display_id}')
+    trend_data = g.cache.get(rsid, f'prop_trend_{display_id}')
 
     tasks = {}
     if dimension is None:
@@ -1101,13 +1101,13 @@ def prop_detail(prop_id: str):
                 key = futures[future]
                 value = future.result()
                 if key == 'dimension':
-                    cache.set(rsid, f'prop_detail_{display_id}', value)
+                    g.cache.set(rsid, f'prop_detail_{display_id}', value)
                     dimension = value
                 elif key == 'top_items':
-                    cache.set(rsid, f'prop_top_{display_id}', value)
+                    g.cache.set(rsid, f'prop_top_{display_id}', value)
                     top_items = value
                 elif key == 'trend_data':
-                    cache.set(rsid, f'prop_trend_{display_id}', value)
+                    g.cache.set(rsid, f'prop_trend_{display_id}', value)
                     trend_data = value
 
     # Find classifications for this prop (dimensions with parent = this dimension's ID)
@@ -1208,7 +1208,7 @@ def evar_detail(evar_id: str):
     display_id = evar_id.replace("variables/", "")
 
     # Quick Win #1: Try to get dimension from already-cached dimensions list
-    cached_dimensions = cache.get(rsid, 'dimensions')
+    cached_dimensions = g.cache.get(rsid, 'dimensions')
     
     def fetch_dimension():
         if cached_dimensions:
@@ -1228,10 +1228,10 @@ def evar_detail(evar_id: str):
         return api.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
 
     # Quick Win #2: Check cache first, then parallelize needed API calls
-    dimension = cache.get(rsid, f'evar_detail_{display_id}')
-    evar_config = cache.get(rsid, f'evar_config_{display_id}')
-    top_items = cache.get(rsid, f'evar_top_{display_id}')
-    trend_data = cache.get(rsid, f'evar_trend_{display_id}')
+    dimension = g.cache.get(rsid, f'evar_detail_{display_id}')
+    evar_config = g.cache.get(rsid, f'evar_config_{display_id}')
+    top_items = g.cache.get(rsid, f'evar_top_{display_id}')
+    trend_data = g.cache.get(rsid, f'evar_trend_{display_id}')
 
     tasks = {}
     if dimension is None:
@@ -1261,16 +1261,16 @@ def evar_detail(evar_id: str):
                 if value is None:
                     continue
                 if key == 'dimension':
-                    cache.set(rsid, f'evar_detail_{display_id}', value)
+                    g.cache.set(rsid, f'evar_detail_{display_id}', value)
                     dimension = value
                 elif key == 'evar_config':
-                    cache.set(rsid, f'evar_config_{display_id}', value)
+                    g.cache.set(rsid, f'evar_config_{display_id}', value)
                     evar_config = value
                 elif key == 'top_items':
-                    cache.set(rsid, f'evar_top_{display_id}', value)
+                    g.cache.set(rsid, f'evar_top_{display_id}', value)
                     top_items = value
                 elif key == 'trend_data':
-                    cache.set(rsid, f'evar_trend_{display_id}', value)
+                    g.cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
     # Parse expiration & allocation from the API 2.0 description field.
@@ -1365,7 +1365,7 @@ def event_detail(event_id: str):
     display_id = event_id.replace("metrics/", "")
 
     # Try to get metric from already-cached metrics list
-    cached_metrics = cache.get(rsid, 'metrics')
+    cached_metrics = g.cache.get(rsid, 'metrics')
 
     def fetch_metric():
         if cached_metrics:
@@ -1378,8 +1378,8 @@ def event_detail(event_id: str):
         return api.get_event_trend(rsid, metric_id, days=30)
 
     # Check cache first, then parallelize needed API calls
-    metric = cache.get(rsid, f'event_detail_{display_id}')
-    trend_data = cache.get(rsid, f'event_trend_{display_id}')
+    metric = g.cache.get(rsid, f'event_detail_{display_id}')
+    trend_data = g.cache.get(rsid, f'event_trend_{display_id}')
 
     tasks = {}
     if metric is None:
@@ -1395,10 +1395,10 @@ def event_detail(event_id: str):
                 key = futures[future]
                 value = future.result()
                 if key == 'metric':
-                    cache.set(rsid, f'event_detail_{display_id}', value)
+                    g.cache.set(rsid, f'event_detail_{display_id}', value)
                     metric = value
                 elif key == 'trend_data':
-                    cache.set(rsid, f'event_trend_{display_id}', value)
+                    g.cache.set(rsid, f'event_trend_{display_id}', value)
                     trend_data = value
 
     return render_template(
@@ -1456,7 +1456,7 @@ def listvar_detail(listvar_name: str):
     dimension_id = f"variables/listvar{listvar_num}"
 
     # Get listvar config from cached API 1.4 data
-    cached_listvars = cache.get(rsid, 'listvars')
+    cached_listvars = g.cache.get(rsid, 'listvars')
 
     def fetch_listvar():
         if cached_listvars:
@@ -1477,9 +1477,9 @@ def listvar_detail(listvar_name: str):
         return api_v2.get_dimension_trend(rsid, dimension_id, metric="occurrences", days=30)
 
     # Check cache first, then parallelize needed API calls
-    listvar = cache.get(rsid, f'listvar_detail_{listvar_num}')
-    top_items = cache.get(rsid, f'listvar_top_{listvar_num}')
-    trend_data = cache.get(rsid, f'listvar_trend_{listvar_num}')
+    listvar = g.cache.get(rsid, f'listvar_detail_{listvar_num}')
+    top_items = g.cache.get(rsid, f'listvar_top_{listvar_num}')
+    trend_data = g.cache.get(rsid, f'listvar_trend_{listvar_num}')
 
     tasks = {}
     if listvar is None:
@@ -1500,13 +1500,13 @@ def listvar_detail(listvar_name: str):
                 except Exception:
                     value = {} if key == 'listvar' else []
                 if key == 'listvar':
-                    cache.set(rsid, f'listvar_detail_{listvar_num}', value)
+                    g.cache.set(rsid, f'listvar_detail_{listvar_num}', value)
                     listvar = value
                 elif key == 'top_items':
-                    cache.set(rsid, f'listvar_top_{listvar_num}', value)
+                    g.cache.set(rsid, f'listvar_top_{listvar_num}', value)
                     top_items = value
                 elif key == 'trend_data':
-                    cache.set(rsid, f'listvar_trend_{listvar_num}', value)
+                    g.cache.set(rsid, f'listvar_trend_{listvar_num}', value)
                     trend_data = value
 
     return render_template(
@@ -1672,7 +1672,7 @@ def calculated_metric_detail(cm_id: str):
     api = get_api_service()
     rsid = get_rsid()
 
-    cm = cache.get_or_set(
+    cm = g.cache.get_or_set(
         rsid, f'cm_detail_{cm_id}',
         lambda: api.get_calculated_metric(cm_id),
         ttl_hours=CONFIG_TTL_HOURS,
@@ -1683,7 +1683,7 @@ def calculated_metric_detail(cm_id: str):
 
     refs = _parse_calc_metric_formula(cm.get('definition') or {})
 
-    trend_data = cache.get_or_set(
+    trend_data = g.cache.get_or_set(
         rsid, f'cm_trend_{cm_id}',
         lambda: api.get_metric_trend(rsid, cm_id),
         ttl_hours=1,
@@ -1757,7 +1757,7 @@ def segment_detail(segment_id: str):
     api = get_api_service()
     rsid = get_rsid()
 
-    segment = cache.get_or_set(
+    segment = g.cache.get_or_set(
         rsid, f'segment_detail_{segment_id}',
         lambda: api.get_segment(segment_id),
         ttl_hours=CONFIG_TTL_HOURS,
@@ -1871,7 +1871,7 @@ def cache_view():
         }
 
     return render_template(
-        'cache.html',
+        'g.cache.html',
         title='Cache',
         cache_info=cache_info,
         rsid=rsid,
@@ -1884,10 +1884,10 @@ def cache_view():
 def cache_clear():
     """Clear cache and redirect to cache view"""
     rsid = get_rsid()
-    cache.clear(rsid)
+    g.cache.clear(rsid)
 
     return render_template(
-        'cache.html',
+        'g.cache.html',
         title='Cache',
         cache_info=get_cache_info(),
         rsid=rsid,
@@ -1905,7 +1905,7 @@ def cache_refresh(cache_key):
         abort(400)
 
     rsid = get_rsid()
-    cache.clear_key(rsid, cache_key)
+    g.cache.clear_key(rsid, cache_key)
     warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
     return redirect(request.referrer or '/')
@@ -1942,8 +1942,8 @@ def _find_components(rsid: str, variable_id: str) -> dict:
         Dict with ``segments`` and ``calc_metrics`` keys, each a list of
         ``{id, name}`` dicts for matched items.
     """
-    segments_raw = cache.get(rsid, 'segments') or []
-    calc_metrics_raw = cache.get(rsid, 'calculated_metrics') or []
+    segments_raw = g.cache.get(rsid, 'segments') or []
+    calc_metrics_raw = g.cache.get(rsid, 'calculated_metrics') or []
     needle = f'"{variable_id}"'
 
     # Pass 1: segments that directly reference this variable
@@ -1994,8 +1994,8 @@ def api_components(dimension_type: str, dimension_id: str):
     variable_id = variable_id_map.get(dimension_type, f'variables/{dimension_id}')
 
     components = _find_components(rsid, variable_id)
-    segments_cached = cache.get(rsid, 'segments') is not None
-    calc_metrics_cached = cache.get(rsid, 'calculated_metrics') is not None
+    segments_cached = g.cache.get(rsid, 'segments') is not None
+    calc_metrics_cached = g.cache.get(rsid, 'calculated_metrics') is not None
 
     return render_template(
         '_fragment_components.html',
@@ -2028,7 +2028,7 @@ def api_related_rules(dimension_type: str, dimension_id: str):
         return '', 204
 
     rsid = get_rsid()
-    _cached_rules_raw = cache.get(rsid, 'processing_rules')
+    _cached_rules_raw = g.cache.get(rsid, 'processing_rules')
     processing_rules_cached = _cached_rules_raw is not None
 
     if dimension_type == 'listvar':
@@ -2099,7 +2099,7 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
     cache_key = f'launch_search_{dimension_value}'
 
     try:
-        related_rules = cache.get_or_set(
+        related_rules = g.cache.get_or_set(
             rsid,
             cache_key,
             lambda: launch_service.search_and_resolve(dimension_value, property_id),
@@ -2149,7 +2149,7 @@ def api_related_channel_rules(dimension_type: str, dimension_id: str):
         return '', 204
 
     rsid = get_rsid()
-    _cached_rules_raw = cache.get(rsid, 'channel_rules')
+    _cached_rules_raw = g.cache.get(rsid, 'channel_rules')
     channel_rules_cached = _cached_rules_raw is not None
 
     if dimension_type == 'listvar':

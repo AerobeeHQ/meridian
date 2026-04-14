@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Verify Codex setup
-Checks: config.json, imports, app factory, directory structure
+Checks: CODEX_SECRETS_DIR, imports, app factory, directory structure
 """
 import sys
 import os
@@ -18,46 +18,61 @@ def check_python_version():
 
 
 def check_config():
-    """Check config.json exists and has required keys"""
-    print("Checking config.json...", end=" ")
-    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
-
-    if not os.path.exists(config_path):
-        print("FAIL - config.json not found")
-        print("  Copy config.dist.json to config.json and fill in your credentials")
-        return False
-
+    """Check CODEX_SECRETS_DIR is set and contains at least one valid client config."""
     import json
-    try:
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"FAIL - Invalid JSON: {e}")
+    from pathlib import Path
+
+    print("Checking CODEX_SECRETS_DIR...", end=" ")
+
+    secrets_dir_raw = os.environ.get('CODEX_SECRETS_DIR')
+    if not secrets_dir_raw:
+        print("FAIL - CODEX_SECRETS_DIR is not set")
+        print("  export CODEX_SECRETS_DIR=/path/to/secrets/codex")
+        print("  Then place one JSON config per client: maxis.json, coles.json, etc.")
         return False
 
-    # Check API version and validate appropriate credentials
-    api_version = config.get('API_VERSION', '2.0')
+    secrets_dir = Path(secrets_dir_raw)
+    if not secrets_dir.is_dir():
+        print(f"FAIL - directory does not exist: {secrets_dir}")
+        return False
 
-    # Always required
     base_required = ['APP_TITLE', 'AW_REPORTSUITE_ID']
+    valid_clients = []
+    errors = []
 
-    if api_version == '2.0':
-        # OAuth2 credentials required for API 2.0
-        oauth_required = ['CLIENT_ID', 'CLIENT_SECRET', 'ORGANIZATION_ID']
-        # WSSE credentials still needed for processing rules (not in 2.0 API)
-        wsse_required = ['AW_USERNAME', 'AW_SECRET']
-        required_keys = base_required + oauth_required + wsse_required
-    else:
-        # API 1.4 only needs WSSE
-        required_keys = base_required + ['AW_USERNAME', 'AW_SECRET']
+    for config_file in sorted(secrets_dir.glob('*.json')):
+        if config_file.name.startswith('_'):
+            continue
+        try:
+            with open(config_file) as f:
+                config = json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            errors.append(f"{config_file.name}: {e}")
+            continue
 
-    missing = [k for k in required_keys if not config.get(k)]
+        api_version = config.get('API_VERSION', '2.0')
+        if api_version == '2.0':
+            required_keys = base_required + ['CLIENT_ID', 'CLIENT_SECRET', 'ORGANIZATION_ID', 'AW_USERNAME', 'AW_SECRET']
+        else:
+            required_keys = base_required + ['AW_USERNAME', 'AW_SECRET']
 
-    if missing:
-        print(f"FAIL - Missing keys: {', '.join(missing)}")
+        missing = [k for k in required_keys if not config.get(k)]
+        if missing:
+            errors.append(f"{config_file.stem}: missing {', '.join(missing)}")
+        else:
+            valid_clients.append(f"{config_file.stem} (API {api_version})")
+
+    if errors:
+        for err in errors:
+            print(f"\n  WARN - {err}", end="")
+        print()
+
+    if not valid_clients:
+        print("FAIL - no valid client configs found")
+        print(f"  Copy config.dist.json to {secrets_dir}/<client>.json and fill in credentials")
         return False
 
-    print(f"OK (API {api_version})")
+    print(f"OK ({', '.join(valid_clients)})")
     return True
 
 
