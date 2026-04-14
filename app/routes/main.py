@@ -114,9 +114,11 @@ def inject_globals():
 
     if suite_name is None:
         suite_name = client_config.get('REPORTSUITE_NAME')
-        if not suite_name and get_api_version() == '2.0':
+        api_version = client_config.get('API_VERSION', '2.0')
+        api_service = g.get('api')
+        if not suite_name and api_version == '2.0' and api_service is not None:
             try:
-                suite_name = get_api_service().get_report_suite_name(rsid)
+                suite_name = api_service.get_report_suite_name(rsid)
             except Exception:
                 logger.warning("Could not resolve suite name for %s; falling back to RSID", rsid)
                 suite_name = rsid
