@@ -32,6 +32,9 @@ main_bp = Blueprint('main', __name__)
 @main_bp.url_value_preprocessor
 def _extract_client(endpoint, values):
     """Pop 'client' from URL values into g so route functions don't need it."""
+    if values is None:
+        g.client_slug = None
+        return
     g.client_slug = values.pop('client', None)
 
 
