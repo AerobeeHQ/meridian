@@ -60,6 +60,7 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
         os.path.dirname(os.path.dirname(__file__)),
         'cache', client_slug,
     )
+    os.makedirs(cache_dir, exist_ok=True)
     cache = CacheService(cache_dir=cache_dir)
 
     return {
