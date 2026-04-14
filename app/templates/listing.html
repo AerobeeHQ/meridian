@@ -24,19 +24,19 @@
             <td {% if col in monospace_columns %}class="monospace"{% endif %}{% if col in preformatted_columns %} style="vertical-align: top"{% endif %}{% if column_styles[col] is defined %} style="{{ column_styles[col] }}"{% endif %}>
                 {# Make Prop, eVar, Event, ListVar, Core Dimension, and Segment Names clickable links to detail pages #}
                 {% if col == 'Dimension' and row[col] and active_tab == 'core' %}
-                    <a href="/core/{{ row[col] }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/core/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'Prop' and row[col] %}
-                    <a href="/props/{{ row[col] }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/props/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'eVar' and row[col] %}
-                    <a href="/evars/{{ row[col] }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/evars/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'Event' and row[col] %}
-                    <a href="/events/{{ row[col] }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/events/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'ListVar' and row[col] %}
-                    <a href="/listvars/{{ row[col] }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/listvars/{{ row[col] }}">{{ row[col] }}</a>
                 {% elif col == 'Name' and row.segment_id %}
-                    <a href="/segments/{{ row.segment_id }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/segments/{{ row.segment_id }}">{{ row[col] }}</a>
                 {% elif col == 'Name' and row.cm_id %}
-                    <a href="/calculated-metrics/{{ row.cm_id }}">{{ row[col] }}</a>
+                    <a href="/{{ client_slug }}/calculated-metrics/{{ row.cm_id }}">{{ row[col] }}</a>
                 {% elif col in column_badges and row[col] and (row[col] | lower) in column_badges[col] %}
                     {{ column_badges[col][row[col] | lower] | safe }}
                 {% elif col in preformatted_columns %}
@@ -89,7 +89,7 @@ $(document).ready(function() {
 
     {% if cache_key %}
     document.querySelector('.dt-refresh-slot').innerHTML =
-        '<a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>';
+        '<a href="/{{ client_slug }}/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>';
     {% endif %}
 });
 </script>

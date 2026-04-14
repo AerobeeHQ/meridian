@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ event_id }}: {{ metric.name or 'Unknown' }}</h4>
     {% if cache_key %}
-    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+    <a href="/{{ client_slug }}/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
     {% endif %}
 </div>
 

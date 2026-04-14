@@ -707,7 +707,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <span style="font-size:1.1rem;">&#9888;</span>
             <div>
                 <strong>Segments and Calculated Metrics data is not available.</strong>
-                <p class="mb-1 mt-1 small">Visit the <a href="/segments">Segments</a> or <a href="/calculated-metrics">Metrics</a> pages to warm the cache.</p>
+                <p class="mb-1 mt-1 small">Visit the <a href="/{{ client_slug }}/segments">Segments</a> or <a href="/{{ client_slug }}/calculated-metrics">Metrics</a> pages to warm the cache.</p>
             </div>
         </div>
         {% else %}
@@ -735,7 +735,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     <div id="componentsSegments" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
                             {% for seg in components.segments %}
-                            <a href="/segments/{{ seg.id }}"
+                            <a href="/{{ client_slug }}/segments/{{ seg.id }}"
                                class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ seg.name }}</a>
                             {% endfor %}
                         </div>
@@ -755,7 +755,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     <div id="componentsMetrics" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
                             {% for cm in components.calc_metrics %}
-                            <a href="/calculated-metrics/{{ cm.id }}"
+                            <a href="/{{ client_slug }}/calculated-metrics/{{ cm.id }}"
                                class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ cm.name }}</a>
                             {% endfor %}
                         </div>
@@ -784,7 +784,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <div>
                 <strong>Processing rules data is not available.</strong>
                 <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
-                <a href="/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
+                <a href="/{{ client_slug }}/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
             </div>
         </div>
         {% elif related_rules %}
@@ -1007,7 +1007,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <div>
                 <strong>Channel rules data is not available.</strong>
                 <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
-                <a href="/channel-rules" class="btn btn-sm btn-outline-warning mt-1">Load Channel Rules</a>
+                <a href="/{{ client_slug }}/channel-rules" class="btn btn-sm btn-outline-warning mt-1">Load Channel Rules</a>
             </div>
         </div>
         {% elif related_rules %}

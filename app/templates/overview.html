@@ -20,10 +20,10 @@
 <div class="row g-3 mb-4">
 
     {% set card_items = [
-        ('Props',   stats.props,   '/props',    '#179f9b'),
-        ('eVars',   stats.evars,   '/evars',    '#667eea'),
-        ('Events',  stats.events,  '/events',   '#f093fb'),
-        ('ListVars',stats.listvars,'/listvars', '#f5a623'),
+        ('Props',   stats.props,   '/' ~ client_slug ~ '/props',    '#179f9b'),
+        ('eVars',   stats.evars,   '/' ~ client_slug ~ '/evars',    '#667eea'),
+        ('Events',  stats.events,  '/' ~ client_slug ~ '/events',   '#f093fb'),
+        ('ListVars',stats.listvars,'/' ~ client_slug ~ '/listvars', '#f5a623'),
     ] %}
 
     {% for label, stat, link, colour in card_items %}
@@ -77,7 +77,7 @@
 <div class="row g-3 mb-4">
 
     <div class="col-sm-4">
-        <a href="/processing-rules" class="text-decoration-none">
+        <a href="/{{ client_slug }}/processing-rules" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.processing_rules.available else '#d6dade' }};">
@@ -96,7 +96,7 @@
     </div>
 
     <div class="col-sm-4">
-        <a href="/marketing-channels" class="text-decoration-none">
+        <a href="/{{ client_slug }}/marketing-channels" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.marketing_channels.available else '#d6dade' }};">
@@ -115,7 +115,7 @@
     </div>
 
     <div class="col-sm-4">
-        <a href="/segments" class="text-decoration-none">
+        <a href="/{{ client_slug }}/segments" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.segments.available else '#d6dade' }};">
@@ -139,7 +139,7 @@
 <div class="row g-3 mb-4">
 
     <div class="col-sm-6">
-        <a href="/calculated-metrics" class="text-decoration-none">
+        <a href="/{{ client_slug }}/calculated-metrics" class="text-decoration-none">
             <div class="card h-100 shadow-sm overview-card">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="fs-2 fw-bold" style="color: {{ '#6c757d' if stats.calc_metrics.available else '#d6dade' }};">
@@ -176,7 +176,7 @@
                             <span class="badge bg-secondary" style="font-size: 10px; text-transform: uppercase;">{{ note.type }}</span>
                         </td>
                         <td>
-                            <a href="/{{ note.route }}/{{ note.id }}" class="fw-medium text-decoration-none">{{ note.id }}</a>
+                            <a href="/{{ client_slug }}/{{ note.route }}/{{ note.id }}" class="fw-medium text-decoration-none">{{ note.id }}</a>
                             {% if note.description %}
                             <div class="text-muted" style="font-size: 12px;">{{ note.description | truncate(80) }}</div>
                             {% endif %}
@@ -200,7 +200,7 @@
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center" style="font-size: 14px;">
                 <span class="fw-semibold">Cache Status</span>
-                <a href="/cache" class="text-decoration-none" style="font-size: 12px;">Manage →</a>
+                <a href="/{{ client_slug }}/cache" class="text-decoration-none" style="font-size: 12px;">Manage →</a>
             </div>
             <div class="card-body">
                 {% if cache_info and cache_info.exists %}
@@ -219,7 +219,7 @@
                 {% else %}
                 <div class="text-muted mb-3" style="font-size: 13px;">No cache data yet.</div>
                 {% endif %}
-                <a href="/cache/clear" class="btn btn-sm btn-outline-secondary">Clear &amp; Refresh Cache</a>
+                <a href="/{{ client_slug }}/cache/clear" class="btn btn-sm btn-outline-secondary">Clear &amp; Refresh Cache</a>
             </div>
         </div>
     </div>
