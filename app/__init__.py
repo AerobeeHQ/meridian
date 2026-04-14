@@ -117,14 +117,11 @@ def create_app():
     app.register_blueprint(auth_bp)
 
     # ── Root route ────────────────────────────────────────────────────────────
-    # The brochure site lives on Cloudflare Pages, not here. Return a minimal
-    # response so Flask root is not a silent 404.
+    # Serve the brochure site at the root. Client apps live at /<client>/.
     @app.route('/')
     def root():
-        from flask import redirect
-        # Redirect to the first configured client as a convenience.
-        first_slug = next(iter(app.codex_clients))
-        return redirect(f'/{first_slug}/')
+        from flask import render_template
+        return render_template('brochure.html')
 
     # ── Background cache warmer ───────────────────────────────────────────────
     from app.services.cache_warmer import start_scheduler
