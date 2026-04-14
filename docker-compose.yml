@@ -1,4 +1,3 @@
-
 services:
   codex:
     container_name: codex
@@ -10,10 +9,11 @@ services:
     ports:
       - "5010:5010"
     volumes:
-      - ./config.json:/app/config.json:ro
+      - ./secrets:/app/secrets:ro
       - ./exports:/app/exports:rw
       - ./cache:/app/cache:rw
     environment:
       - FLASK_DEBUG=false
+      - CODEX_SECRETS_DIR=/app/secrets
     restart: unless-stopped
 
