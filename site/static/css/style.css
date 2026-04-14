@@ -678,11 +678,6 @@ img { max-width: 100%; display: block; }
   transition: width linear;
 }
 
-/* Pause indicator */
-.carousel.paused .carousel-progress-bar {
-  animation-play-state: paused;
-}
-
 /* ─── Lineage Section ───────────────────────────────────────────── */
 .lineage-layout {
   display: grid;
