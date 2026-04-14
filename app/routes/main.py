@@ -11,7 +11,7 @@ import traceback as _traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response, g
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response, g, url_for
 
 import requests
 from markupsafe import Markup, escape
@@ -998,7 +998,7 @@ def core_detail(dimension_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='core',
-        back_url='/core',
+        back_url=url_for('main.core'),
         back_label='Back to Core Listing',
         cache_key='dimensions'
     )
@@ -1137,7 +1137,7 @@ def prop_detail(prop_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='props',
-        back_url='/props',
+        back_url=url_for('main.props'),
         back_label='Back to Props Listing',
         cache_key='dimensions'
     )
@@ -1325,7 +1325,7 @@ def evar_detail(evar_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='evars',
-        back_url='/evars',
+        back_url=url_for('main.evars'),
         back_label='Back to eVars Listing',
         cache_key='dimensions'
     )
@@ -1411,7 +1411,7 @@ def event_detail(event_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='events',
-        back_url='/events',
+        back_url=url_for('main.events'),
         back_label='Back to Events Listing',
         cache_key='events'
     )
@@ -1521,7 +1521,7 @@ def listvar_detail(listvar_name: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='listvars',
-        back_url='/listvars',
+        back_url=url_for('main.listvars'),
         back_label='Back to ListVars Listing',
         cache_key='listvars'
     )
@@ -1707,7 +1707,7 @@ def calculated_metric_detail(cm_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='calculated-metrics',
-        back_url='/calculated-metrics',
+        back_url=url_for('main.calculated_metrics'),
         back_label='Back to Calculated Metrics',
         definition_json=json.dumps(cm.get('definition') or {}, indent=2),
         trend_data=trend_data,
@@ -1792,7 +1792,7 @@ def segment_detail(segment_id: str):
         rsid=rsid,
         cache_info=get_cache_info(),
         active_tab='segments',
-        back_url='/segments',
+        back_url=url_for('main.segments'),
         back_label='Back to Segments',
         definition_json=json.dumps(definition, indent=2),
         breakdown=breakdown,
@@ -1909,7 +1909,7 @@ def cache_refresh(cache_key):
     g.cache.clear_key(rsid, cache_key)
     warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
-    return redirect(request.referrer or '/')
+    return redirect(request.referrer or url_for('main.overview'))
 
 
 # =============================================================================

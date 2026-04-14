@@ -6,7 +6,7 @@
         <a href="{{ back_url }}" class="text-muted text-decoration-none" style="font-size: 13px;">&#8592; {{ back_label }}</a>
         <h4 class="mb-0 mt-1">{{ cm.name or cm_id }}</h4>
     </div>
-    <a href="/cache/refresh/calculated_metrics" class="btn btn-sm btn-outline-secondary" title="Force refresh calculated metrics from API">&#x21ba; Refresh</a>
+    <a href="/{{ client_slug }}/cache/refresh/calculated_metrics" class="btn btn-sm btn-outline-secondary" title="Force refresh calculated metrics from API">&#x21ba; Refresh</a>
 </div>
 
 <div class="row">
@@ -106,7 +106,7 @@
                     {% for metric_id, desc in refs.metrics %}
                     {% set short_id = metric_id.split('/')[-1] %}
                     {% if short_id.startswith('event') %}
-                    <a href="/events/{{ short_id }}"
+                    <a href="/{{ client_slug }}/events/{{ short_id }}"
                        class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"
                        title="{{ metric_id }}">{{ desc or short_id }}</a>
                     {% else %}
@@ -121,7 +121,7 @@
                 <p class="mb-1" style="font-size:13px;"><strong>Segments</strong></p>
                 <div>
                     {% for seg_id, desc in refs.segments %}
-                    <a href="/segments/{{ seg_id }}"
+                    <a href="/{{ client_slug }}/segments/{{ seg_id }}"
                        class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"
                        title="{{ seg_id }}">{{ desc or seg_id }}</a>
                     {% endfor %}

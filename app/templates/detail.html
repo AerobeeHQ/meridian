@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ dimension_id }}: {{ dimension.name or dimension.title or 'Unknown' }}</h4>
     {% if cache_key %}
-    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+    <a href="/{{ client_slug }}/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
     {% endif %}
 </div>
 
@@ -132,7 +132,7 @@
                 <ul class="list-unstyled mb-0">
                     {% for classification in classifications %}
                     <li class="mb-2">
-                        <a href="/{{ dimension_type }}s/{{ classification.id }}">{{ classification.name }}</a>
+                        <a href="/{{ client_slug }}/{{ dimension_type }}s/{{ classification.id }}">{{ classification.name }}</a>
                         {% if classification.description %}
                         <br><small class="text-muted">{{ classification.description }}</small>
                         {% endif %}
@@ -312,7 +312,7 @@
 (function () {
     var placeholder = document.getElementById('related-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-rules/{{ dimension_type }}/{{ dimension_id }}')
+    fetch('/{{ client_slug }}/api/related-rules/{{ dimension_type }}/{{ dimension_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -330,7 +330,7 @@
 (function () {
     var placeholder = document.getElementById('related-launch-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-launch-rules/{{ dimension_type }}/{{ dimension_id }}')
+    fetch('/{{ client_slug }}/api/related-launch-rules/{{ dimension_type }}/{{ dimension_id }}')
         .then(function (r) {
             if (r.status === 204) { placeholder.remove(); return ''; }
             return r.text();
@@ -352,7 +352,7 @@
 (function () {
     var placeholder = document.getElementById('related-channel-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-channel-rules/{{ dimension_type }}/{{ dimension_id }}')
+    fetch('/{{ client_slug }}/api/related-channel-rules/{{ dimension_type }}/{{ dimension_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -369,7 +369,7 @@
 (function () {
     var placeholder = document.getElementById('components-placeholder');
     if (!placeholder) return;
-    fetch('/api/components/{{ dimension_type }}/{{ dimension_id }}')
+    fetch('/{{ client_slug }}/api/components/{{ dimension_type }}/{{ dimension_id }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);

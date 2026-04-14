@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">{{ listvar_name }}</h4>
     {% if cache_key %}
-    <a href="/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
+    <a href="/{{ client_slug }}/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>
     {% endif %}
 </div>
 
@@ -239,7 +239,7 @@
 (function () {
     var placeholder = document.getElementById('related-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-rules/listvar/{{ listvar_num }}')
+    fetch('/{{ client_slug }}/api/related-rules/listvar/{{ listvar_num }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -257,7 +257,7 @@
 (function () {
     var placeholder = document.getElementById('related-launch-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-launch-rules/listvar/{{ listvar_num }}')
+    fetch('/{{ client_slug }}/api/related-launch-rules/listvar/{{ listvar_num }}')
         .then(function (r) {
             if (r.status === 204) { placeholder.remove(); return ''; }
             return r.text();
@@ -279,7 +279,7 @@
 (function () {
     var placeholder = document.getElementById('related-channel-rules-placeholder');
     if (!placeholder) return;
-    fetch('/api/related-channel-rules/listvar/{{ listvar_num }}')
+    fetch('/{{ client_slug }}/api/related-channel-rules/listvar/{{ listvar_num }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);
@@ -296,7 +296,7 @@
 (function () {
     var placeholder = document.getElementById('components-placeholder');
     if (!placeholder) return;
-    fetch('/api/components/listvar/{{ listvar_num }}')
+    fetch('/{{ client_slug }}/api/components/listvar/{{ listvar_num }}')
         .then(function (r) { return r.text(); })
         .then(function (html) {
             placeholder.insertAdjacentHTML('afterend', html);

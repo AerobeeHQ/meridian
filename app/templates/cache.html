@@ -43,7 +43,7 @@
         </table>
 
         <div class="mt-3">
-            <a href="/cache/clear" class="btn btn-warning">
+            <a href="/{{ client_slug }}/cache/clear" class="btn btn-warning">
                 <i class="bi bi-trash"></i> Clear All Cache
             </a>
             <small class="text-muted ms-2">Clears all cached data. The background warmer will re-populate config data automatically.</small>
@@ -83,7 +83,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/cache/refresh/{{ key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh this key">&#x21ba;</a>
+                        <a href="/{{ client_slug }}/cache/refresh/{{ key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh this key">&#x21ba;</a>
                     </td>
                 </tr>
                 {% endfor %}
