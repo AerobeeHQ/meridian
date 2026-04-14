@@ -46,6 +46,124 @@
     });
   });
 
+  // ─── Screenshot carousel ─────────────────────────────────────────
+  const carousel     = document.getElementById('carousel');
+  const track        = document.getElementById('carouselTrack');
+  const dotsWrap     = document.getElementById('carouselDots');
+  const progressBar  = document.getElementById('carouselProgress');
+  const btnPrev      = document.getElementById('carouselPrev');
+  const btnNext      = document.getElementById('carouselNext');
+
+  if (carousel && track) {
+    const slides     = Array.from(track.querySelectorAll('.carousel-slide'));
+    const TOTAL      = slides.length;
+    const DURATION   = 60000;                    // 60s total
+    const PER_SLIDE  = DURATION / TOTAL;         // ~3.33s per slide
+
+    let current  = 0;
+    let timer    = null;
+    let paused   = false;
+    let startTs  = null;
+    let elapsed  = 0;
+
+    // Build dot indicators
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('role', 'tab');
+      dot.setAttribute('aria-label', `Screenshot ${i + 1} of ${TOTAL}`);
+      dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      dot.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(dot);
+    });
+
+    const dots = Array.from(dotsWrap.querySelectorAll('.carousel-dot'));
+
+    function goTo(idx) {
+      slides[current].setAttribute('aria-hidden', 'true');
+      dots[current].classList.remove('active');
+      dots[current].setAttribute('aria-selected', 'false');
+
+      current = (idx + TOTAL) % TOTAL;
+
+      slides[current].setAttribute('aria-hidden', 'false');
+      dots[current].classList.add('active');
+      dots[current].setAttribute('aria-selected', 'true');
+      track.style.transform = `translateX(-${current * 100}%)`;
+
+      resetProgress();
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    btnPrev.addEventListener('click', () => { prev(); pauseResume(true); });
+    btnNext.addEventListener('click', () => { next(); pauseResume(true); });
+
+    // Keyboard navigation
+    carousel.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft')  { prev(); pauseResume(true); }
+      if (e.key === 'ArrowRight') { next(); pauseResume(true); }
+    });
+
+    // Touch swipe
+    let touchX = null;
+    carousel.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+    carousel.addEventListener('touchend', e => {
+      if (touchX === null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); }
+      touchX = null;
+    });
+
+    // Pause on hover / focus
+    carousel.addEventListener('mouseenter', () => pauseResume(true));
+    carousel.addEventListener('mouseleave', () => pauseResume(false));
+    carousel.addEventListener('focusin',    () => pauseResume(true));
+    carousel.addEventListener('focusout',   () => pauseResume(false));
+
+    // Progress bar animation
+    function resetProgress() {
+      elapsed = 0;
+      startTs = null;
+      cancelAnimationFrame(timer);
+      if (!paused) animateProgress();
+    }
+
+    function animateProgress(ts) {
+      if (!startTs) startTs = ts;
+      elapsed = ts - startTs;
+      const pct = Math.min((elapsed / PER_SLIDE) * 100, 100);
+      progressBar.style.width = pct + '%';
+      progressBar.style.transition = 'none';
+
+      if (elapsed >= PER_SLIDE) {
+        next();
+        return;
+      }
+      timer = requestAnimationFrame(animateProgress);
+    }
+
+    function pauseResume(shouldPause) {
+      if (shouldPause && !paused) {
+        paused = true;
+        cancelAnimationFrame(timer);
+        carousel.classList.add('paused');
+      } else if (!shouldPause && paused) {
+        paused = false;
+        startTs = null;       // restart the per-slide timer from now
+        carousel.classList.remove('paused');
+        timer = requestAnimationFrame(animateProgress);
+      }
+    }
+
+    // Respect prefers-reduced-motion
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) {
+      timer = requestAnimationFrame(animateProgress);
+    }
+  }
+
   // ─── Intersection observer — fade-in on scroll ───────────────────
   const observerOpts = { threshold: 0.08, rootMargin: '0px 0px -20px 0px' };
   const observer = new IntersectionObserver((entries) => {

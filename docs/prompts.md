@@ -46,3 +46,22 @@ Please ensure that the site is visually appealing. All content should be on a si
 
 Please create a new branch for the site and submit a pull request. Please include a screenshot of the site in the pull request. Please generate an autopsy document in the docs/autopsies folder summarising your approach and any challenges you faced during the development of the site. (See other md files for example styles)
 
+### Multisite Feature
+
+Reorganise the site structure so that the Codex promotion site is available at the root of the domain (ie: http://localhost:5010, or https://codex.maxisdev.com -- noting that the public facing site is served via docker, and exposed using a cloudflare tunnel), then subfolders for each client configuration (`/maxis`, `/origin`, `/coles`, `/jetstar`, `/etc`). I currently have seperate config.<client-name>.json file for each client, but I think it would be better to have a single config file with multiple client configurations, and then use the URL path to determine which client configuration to use.
+
+The demo links in the brochure site should only link to the `/maxis` site. I will use Cloudflare WAF rules to password protect the other client sites, and share the credentials with the relevant stakeholders.
+
+If you think it is appropriate, or a better architecture then happy for you to move/integrate thee current `/site` folder into the `/app` folder.
+
+Please stop and ask me if you have any questions.
+
+### Image Carousel
+
+Please add an image carousel to the promotional site, using screenshots that I've taken of the Codex application . The carousel should be a 60 second slideshow of images from the `site/static/img/screenshots` folder.
+
+Please inspect the images and rename each to something meaningful.
+
+Please ensure that the images are high resolution and optimized for web use. Consider using a tool like ImageOptim to reduce file size without sacrificing quality.
+
+Please also consider adding captions or descriptions to each image to provide context and improve accessibility.

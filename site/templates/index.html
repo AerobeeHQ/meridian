@@ -37,6 +37,7 @@
       </button>
       <ul class="nav-links" id="navLinks">
         <li><a href="#features">Features</a></li>
+        <li><a href="#screenshots">Screenshots</a></li>
         <li><a href="#lineage">Data Lineage</a></li>
         <li><a href="#getting-started">Get Started</a></li>
         <li>
@@ -232,6 +233,226 @@
         </div>
 
       </div>
+    </div>
+  </section>
+
+  <!-- ─── Screenshot carousel ─────────────────────────────────────── -->
+  <section class="section section-alt" id="screenshots">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">See It In Action</span>
+        <h2 class="section-title">Every feature, visible at a glance</h2>
+        <p class="section-subtitle">
+          A tour of Codex across eVars, Props, Events, Segments, Calculated Metrics,
+          Processing Rules, and more.
+        </p>
+      </div>
+
+      <div class="carousel" id="carousel" role="region" aria-label="Codex application screenshots" aria-live="polite">
+        <div class="carousel-track" id="carouselTrack">
+
+          <figure class="carousel-slide" aria-hidden="false">
+            <img src="static/img/screenshots/evars-listing.webp"
+                 alt="eVars listing page showing all conversion variables with labels, types, and allocation settings"
+                 width="1440" height="900" loading="eager" decoding="async" />
+            <figcaption>
+              <strong>eVars — Conversion Variables</strong>
+              Browse all eVars with labels, allocation models, expiration settings, and descriptions in one searchable table.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dashboard-overview.webp"
+                 alt="Dashboard overview page showing configuration counts for Props, eVars, Events, and related components"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Report Suite Overview</strong>
+              Landing page showing variable counts, implementation health statistics, and cache status at a glance.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/props-listing.webp"
+                 alt="Props listing page showing all traffic variables with pathing, list support and delimiter settings"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Props — Traffic Variables</strong>
+              Complete listing of all Props with pathing support, list-prop configuration, and delimiter details.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dimension-detail-trend.webp"
+                 alt="Dimension detail page showing a 30-day trend chart for a traffic variable"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Dimension Detail — Trend Chart</strong>
+              30-day usage trend scoped precisely to the dimension — not total traffic — plus daily average, median, and peak.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dimension-detail-lineage.webp"
+                 alt="Dimension detail page showing data lineage including Processing Rules, Marketing Channel Rules, and Adobe Launch rules"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Dimension Detail — Data Lineage</strong>
+              See which Processing Rules, Marketing Channel Rules, and Adobe Launch rules reference the variable, with match type badges.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dimension-detail-notes.webp"
+                 alt="Dimension detail page showing annotation notes with plain-English description and technical definition"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Dimension Notes</strong>
+              Annotate any dimension with plain-English descriptions, technical definitions, use cases, and platform availability.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dimension-detail-segments.webp"
+                 alt="Dimension detail page showing related segments and calculated metrics that reference the variable"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Dimension Detail — Component References</strong>
+              Every segment and calculated metric that references the variable, including transitive references through nested containers.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/dimension-trend-chart.webp"
+                 alt="Dimension detail showing expanded trend chart statistics with daily average, median, peak and lowest values"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>30-Day Trend Statistics</strong>
+              Detailed trend summary with daily average, median, peak, and lowest values — powered by Adobe Analytics API 2.0.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/listvar-detail.webp"
+                 alt="List Variable detail page showing configuration including delimiter settings and top values"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>List Variables</strong>
+              List variable configuration with delimiter settings, expiration, and top-10 collected values.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/segment-detail.webp"
+                 alt="Segment detail page showing the segment definition, container structure, and referenced dimensions and events"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Segment Detail</strong>
+              Human-readable segment definition, container structure, compatibility status, and referenced dimensions and events.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/segments-listing.webp"
+                 alt="Segments listing page showing all segments with owner, modification date, and tags"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Segments Listing</strong>
+              Browse all segments with owner, last modified date, tags, and type — filterable and exportable to CSV.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/calculated-metrics-listing.webp"
+                 alt="Calculated metrics listing page showing all metrics with type, owner and description"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Calculated Metrics Listing</strong>
+              All calculated metrics with type, owner, and description — including cross-references to referenced segments and dimensions.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/calculated-metric-detail.webp"
+                 alt="Calculated metric detail page with formula, 30-day trend chart, and component cross-references"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Calculated Metric Detail</strong>
+              Full formula breakdown, 30-day trend chart, and cross-references to every segment and dimension in the formula.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/calculated-metric-formula.webp"
+                 alt="Calculated metric formula definition showing JSON structure and formula expression"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Calculated Metric Formula</strong>
+              Raw formula definition with JSON structure — useful for auditing complex metrics and debugging unexpected values.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/processing-rules.webp"
+                 alt="Processing Rules listing showing rule sets with conditions, match types, and actions formatted for readability"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Processing Rules</strong>
+              All processing rule sets with conditions and actions formatted for readability — dimension references highlighted in bold.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/marketing-channels.webp"
+                 alt="Marketing Channels listing showing channel names, IDs, and enabled status"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Marketing Channels</strong>
+              Channel definitions, order, and settings — with links through to channel rule conditions for attribution tracing.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/report-suites.webp"
+                 alt="Report Suites listing showing suite IDs, names, types, and currency settings"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Report Suites</strong>
+              List all report suites with key configuration settings — useful for organisations with multiple suites.
+            </figcaption>
+          </figure>
+
+          <figure class="carousel-slide" aria-hidden="true">
+            <img src="static/img/screenshots/cache-management.webp"
+                 alt="Cache management page showing per-key cache status, creation time, age, and refresh controls"
+                 width="1440" height="900" loading="lazy" decoding="async" />
+            <figcaption>
+              <strong>Cache Management</strong>
+              Per-key cache status with creation time and age — force-refresh any individual cache key without restarting the app.
+            </figcaption>
+          </figure>
+
+        </div><!-- /.carousel-track -->
+
+        <!-- Controls -->
+        <button class="carousel-btn carousel-btn-prev" id="carouselPrev" aria-label="Previous screenshot">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="carousel-btn carousel-btn-next" id="carouselNext" aria-label="Next screenshot">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <!-- Dot indicators -->
+        <div class="carousel-dots" role="tablist" aria-label="Screenshot navigation" id="carouselDots"></div>
+
+        <!-- Progress bar -->
+        <div class="carousel-progress" aria-hidden="true">
+          <div class="carousel-progress-bar" id="carouselProgress"></div>
+        </div>
+      </div><!-- /.carousel -->
     </div>
   </section>
 
