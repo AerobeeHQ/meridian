@@ -132,7 +132,18 @@
       if (!paused) animateProgress();
     }
 
+    // Respect prefers-reduced-motion for all auto-advance entry points,
+    // not only the initial startup.
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const autoAdvanceEnabled = !prefersReduced;
+
+    function startProgressAnimation() {
+      if (!autoAdvanceEnabled) return;
+      timer = requestAnimationFrame(animateProgress);
+    }
+
     function animateProgress(ts) {
+      if (!autoAdvanceEnabled) return;
       if (!startTs) startTs = ts;
       elapsed = ts - startTs;
       const pct = Math.min((elapsed / PER_SLIDE) * 100, 100);
@@ -155,15 +166,11 @@
         paused = false;
         startTs = null;       // restart the per-slide timer from now
         carousel.classList.remove('paused');
-        timer = requestAnimationFrame(animateProgress);
+        startProgressAnimation();
       }
     }
 
-    // Respect prefers-reduced-motion
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!prefersReduced) {
-      timer = requestAnimationFrame(animateProgress);
-    }
+    startProgressAnimation();
   }
 
   // ─── Intersection observer — fade-in on scroll ───────────────────
