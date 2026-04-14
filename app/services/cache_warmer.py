@@ -3,9 +3,12 @@ Background cache warmer for Adobe Analytics configuration data.
 
 Warms the cache at startup and on a 24-hour schedule so users never
 hit a cold cache for slow-changing configuration data.
+
+For multisite: iterates all configured clients and warms each independently.
 """
 import logging
 import os
+import threading
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -26,12 +29,8 @@ CONFIG_CACHE_KEYS = {
 }
 
 
-def warm_cache_key(app, rsid, cache_key):
-    """Fetch and cache a single configuration key."""
-    cache = CacheService()
-    api_v2 = getattr(app, 'codex_api_service_v2', None)
-    api_v14 = app.codex_api_service_v14
-
+def warm_cache_key(client_slug: str, rsid: str, cache: CacheService, api_v2, api_v14, cache_key: str):
+    """Fetch and cache a single configuration key for one client."""
     fetch_map = {
         'processing_rules':    lambda: api_v14.get_processing_rules(rsid),
         'channel_rules':       lambda: api_v14.get_marketing_channel_rules(rsid),
@@ -45,55 +44,65 @@ def warm_cache_key(app, rsid, cache_key):
             'segments':           lambda: api_v2.get_segments(rsid),
             'calculated_metrics': lambda: api_v2.get_calculated_metrics(rsid),
         })
+
     fetch_func = fetch_map.get(cache_key)
     if not fetch_func:
         return
 
     try:
         cache.get_or_set(rsid, cache_key, fetch_func, ttl_hours=CONFIG_TTL_HOURS)
-        logger.info("Warmed cache key '%s' for rsid '%s'", cache_key, rsid)
+        logger.info("[%s] Warmed cache key '%s'", client_slug, cache_key)
     except Exception:
-        logger.exception("Failed to warm cache key '%s' for rsid '%s'", cache_key, rsid)
+        logger.exception("[%s] Failed to warm cache key '%s'", client_slug, cache_key)
 
 
-def warm_cache(app):
-    """Fetch and cache all slow-changing configuration data."""
+def warm_client(app, client_slug: str):
+    """Warm all slow-changing cache keys for a single client."""
     with app.app_context():
-        rsid = app.config['AW_REPORTSUITE_ID']
-        logger.info("Starting cache warm for rsid '%s'", rsid)
+        ctx = app.codex_clients.get(client_slug)
+        if ctx is None:
+            logger.warning("warm_client called for unknown client '%s'", client_slug)
+            return
 
+        rsid    = ctx['config']['AW_REPORTSUITE_ID']
+        api_v2  = ctx['api_v2']
+        api_v14 = ctx['api_v14']
+        cache   = ctx['cache']
+
+        logger.info("[%s] Starting cache warm (rsid: %s)", client_slug, rsid)
         for key in CONFIG_CACHE_KEYS:
-            warm_cache_key(app, rsid, key)
+            warm_cache_key(client_slug, rsid, cache, api_v2, api_v14, key)
+        logger.info("[%s] Cache warm complete", client_slug)
 
-        logger.info("Cache warm complete for rsid '%s'", rsid)
+
+def warm_all_clients(app):
+    """Warm caches for all configured clients."""
+    for client_slug in app.codex_clients:
+        warm_client(app, client_slug)
 
 
 def start_scheduler(app):
     """
-    Start the background scheduler that warms the cache every 24 hours.
+    Start the background scheduler that warms all client caches every 24 hours.
 
     Guards against double-start in Flask's dev reloader by only running
     in the child worker process (where WERKZEUG_RUN_MAIN == 'true').
     In production (no reloader), starts unconditionally.
     """
-    # In dev mode (debug=True), Flask's reloader spawns a child process and sets
-    # WERKZEUG_RUN_MAIN='true' in it. We skip the parent process to avoid
-    # starting two schedulers. In production, debug is False so we always start.
     if app.debug and os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         return None
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(
-        lambda: warm_cache(app),
+        lambda: warm_all_clients(app),
         'interval',
         hours=24,
         id='cache_warmer',
     )
     scheduler.start()
 
-    # Warm immediately in a background thread so the app is available right away
-    import threading
-    threading.Thread(target=warm_cache, args=(app,), daemon=True).start()
+    # Warm immediately in the background so the app is available right away.
+    threading.Thread(target=warm_all_clients, args=(app,), daemon=True).start()
 
-    logger.info("Cache warmer scheduler started (24h interval)")
+    logger.info("Cache warmer scheduler started (24h interval, %d client(s))", len(app.codex_clients))
     return scheduler

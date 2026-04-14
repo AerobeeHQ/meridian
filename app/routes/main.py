@@ -11,14 +11,14 @@ import traceback as _traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response
+from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response, g
 
 import requests
 from markupsafe import Markup, escape
 
 from app.services.adobe_analytics import AdobeAnalyticsService
 from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
-from app.services.cache import CacheService, CONFIG_TTL_HOURS
+from app.services.cache import CONFIG_TTL_HOURS
 from app.services import notes as notes_service
 
 
@@ -26,8 +26,39 @@ logger = logging.getLogger(__name__)
 
 main_bp = Blueprint('main', __name__)
 
-# Initialize cache service
-cache = CacheService()
+
+# ── Client routing hooks ───────────────────────────────────────────────────────
+
+@main_bp.url_value_preprocessor
+def _extract_client(endpoint, values):
+    """Pop 'client' from URL values into g so route functions don't need it."""
+    if values is None:
+        g.client_slug = None
+        return
+    g.client_slug = values.pop('client', None)
+
+
+@main_bp.url_defaults
+def _inject_client(endpoint, values):
+    """Re-inject the client slug for url_for() calls that need it."""
+    if 'client' not in values and g.get('client_slug'):
+        values['client'] = g.client_slug
+
+
+@main_bp.before_request
+def _load_client_context():
+    """Validate the client slug and attach per-client services to g."""
+    slug = g.get('client_slug')
+    if not slug:
+        abort(404)
+    ctx = current_app.codex_clients.get(slug)
+    if ctx is None:
+        abort(404)
+    g.client_config = ctx['config']
+    g.api           = ctx['api_v2'] if ctx['api_v2'] is not None else ctx['api_v14']
+    g.api_v14       = ctx['api_v14']
+    g.launch        = ctx.get('launch')
+    g.cache         = ctx['cache']
 
 
 def _render_api_error(exc: Exception, status: int = 503):
@@ -44,7 +75,7 @@ def _render_api_error(exc: Exception, status: int = 503):
     return render_template(
         '_api_error.html',
         title='API Unavailable',
-        rsid=current_app.config.get('AW_REPORTSUITE_ID', ''),
+        rsid=(g.get('client_config') or {}).get('AW_REPORTSUITE_ID', ''),
         cache_info=None,
         active_tab=None,
         dimension_id=None,
@@ -68,68 +99,60 @@ def handle_api14_error(exc: requests.exceptions.RequestException):
 
 @main_bp.app_context_processor
 def inject_globals():
-    """Inject global values into all templates"""
-    # Use a sentinel to distinguish "not yet resolved" from an empty string
-    suite_name = current_app.config.get('CODEX_RESOLVED_SUITE_NAME')
+    """Inject global values into all templates."""
+    # Outside a client request (e.g. error pages before routing), g may not have
+    # client_config — return safe defaults so templates don't crash.
+    client_config = g.get('client_config') or {}
+    client_slug   = g.get('client_slug', '')
+
+    rsid       = client_config.get('AW_REPORTSUITE_ID', '')
+    app_title  = client_config.get('APP_TITLE', 'Codex')
+
+    # Resolve suite name once per client and cache it on the client bundle.
+    ctx = current_app.codex_clients.get(client_slug, {})
+    suite_name = ctx.get('resolved_suite_name')
 
     if suite_name is None:
-        rsid = current_app.config.get('AW_REPORTSUITE_ID', '')
-
-        # Prefer explicit config value; fall back to API lookup (API 2.0 only)
-        suite_name = current_app.config.get('REPORTSUITE_NAME')
-        if not suite_name and get_api_version() == '2.0':
+        suite_name = client_config.get('REPORTSUITE_NAME')
+        api_version = client_config.get('API_VERSION', '2.0')
+        api_service = g.get('api')
+        if not suite_name and api_version == '2.0' and api_service is not None:
             try:
-                svc = get_api_service()
-                suite_name = svc.get_report_suite_name(rsid)
+                suite_name = api_service.get_report_suite_name(rsid)
             except Exception:
                 logger.warning("Could not resolve suite name for %s; falling back to RSID", rsid)
                 suite_name = rsid
         suite_name = suite_name or rsid
-
-        # Cache on the app object so subsequent requests skip the API call
-        current_app.config['CODEX_RESOLVED_SUITE_NAME'] = suite_name
+        if ctx:
+            ctx['resolved_suite_name'] = suite_name
 
     return {
-        'git_branch': current_app.config.get('GIT_BRANCH'),
-        'git_commit': current_app.config.get('GIT_COMMIT'),
-        'suite_name': suite_name,
-        'app_title': current_app.config.get('APP_TITLE', ''),
+        'git_branch':  current_app.config.get('GIT_BRANCH'),
+        'git_commit':  current_app.config.get('GIT_COMMIT'),
+        'suite_name':  suite_name,
+        'app_title':   app_title,
+        'client_slug': client_slug,
     }
 
 
 def get_api_version() -> str:
-    """Get configured API version (default: 2.0)"""
-    return current_app.config.get('API_VERSION', '2.0')
+    """Get the configured API version for the current client."""
+    return g.client_config.get('API_VERSION', '2.0')
 
 
 def get_api_service():
-    """
-    Get the configured Adobe Analytics service based on API_VERSION.
-
-    Services are initialised once at startup in create_app() and stored on
-    the Flask app object. This function is just a thin accessor.
-
-    Returns:
-        AdobeAnalyticsV2Service for API 2.0, or AdobeAnalyticsService for 1.4
-    """
-    if get_api_version() == '2.0':
-        return current_app.codex_api_service_v2
-    return current_app.codex_api_service_v14
+    """Get the primary Adobe Analytics service for the current client."""
+    return g.api
 
 
 def get_api_service_v14() -> AdobeAnalyticsService:
-    """
-    Get the API 1.4 service (used for processing rules which aren't in 2.0).
-
-    Returns:
-        AdobeAnalyticsService configured for API 1.4
-    """
-    return current_app.codex_api_service_v14
+    """Get the API 1.4 service for the current client (used for processing rules)."""
+    return g.api_v14
 
 
 def get_rsid() -> str:
-    """Get configured report suite ID"""
-    return current_app.config['AW_REPORTSUITE_ID']
+    """Get the report suite ID for the current client."""
+    return g.client_config['AW_REPORTSUITE_ID']
 
 
 def get_cached_data(key: str, fetch_func, ttl_hours: float = None):
@@ -140,17 +163,15 @@ def get_cached_data(key: str, fetch_func, ttl_hours: float = None):
         fetch_func: Callable that fetches fresh data on cache miss
         ttl_hours: Optional TTL override (default uses CacheService default)
     """
-    rsid = get_rsid()
     kwargs = {}
     if ttl_hours is not None:
         kwargs['ttl_hours'] = ttl_hours
-    return cache.get_or_set(rsid, key, fetch_func, **kwargs)
+    return g.cache.get_or_set(get_rsid(), key, fetch_func, **kwargs)
 
 
 def get_cache_info() -> dict:
-    """Get cache information for footer"""
-    rsid = get_rsid()
-    return cache.get_info(rsid)
+    """Get cache information for the current client."""
+    return g.cache.get_info(get_rsid())
 
 
 def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, preformatted_columns=None, dt_column_widths=None, **kwargs):
@@ -725,8 +746,8 @@ def _relative_time(iso_str):
         return ''
 
 
-@main_bp.route('/')
-@main_bp.route('/overview')
+@main_bp.route('/<client>/')
+@main_bp.route('/<client>/overview')
 def overview():
     """Report suite summary overview page"""
     rsid = get_rsid()
@@ -821,7 +842,7 @@ def overview():
     return response
 
 
-@main_bp.route('/core')
+@main_bp.route('/<client>/core')
 def core():
     """Display core/out-of-the-box dimensions"""
     api = get_api_service()
@@ -859,7 +880,7 @@ def core():
     return render_listing('Core', data, list(CORE_COLUMNS.values()), 'core', cache_key='dimensions')
 
 
-@main_bp.route('/core/export')
+@main_bp.route('/<client>/core/export')
 def core_export():
     """Export core dimensions as CSV"""
     api = get_api_service()
@@ -894,7 +915,7 @@ def core_export():
     return generate_csv(data, f'{rsid}_core.csv')
 
 
-@main_bp.route('/core/<dimension_id>')
+@main_bp.route('/<client>/core/<dimension_id>')
 def core_detail(dimension_id: str):
     """Display detail page for a specific core dimension"""
     api = get_api_service()
@@ -982,7 +1003,7 @@ def core_detail(dimension_id: str):
     )
 
 
-@main_bp.route('/props')
+@main_bp.route('/<client>/props')
 def props():
     """Display traffic variables (props)"""
     api = get_api_service()
@@ -1010,7 +1031,7 @@ def props():
     return render_listing('Props', data, list(PROPS_COLUMNS.values()), 'props', cache_key='dimensions')
 
 
-@main_bp.route('/props/export')
+@main_bp.route('/<client>/props/export')
 def props_export():
     """Export props as CSV"""
     api = get_api_service()
@@ -1033,7 +1054,7 @@ def props_export():
     return generate_csv(data, f'{rsid}_props.csv')
 
 
-@main_bp.route('/props/<prop_id>')
+@main_bp.route('/<client>/props/<prop_id>')
 def prop_detail(prop_id: str):
     """Display detail page for a specific prop"""
     api = get_api_service()
@@ -1121,7 +1142,7 @@ def prop_detail(prop_id: str):
     )
 
 
-@main_bp.route('/evars')
+@main_bp.route('/<client>/evars')
 def evars():
     """Display conversion variables (eVars)"""
     api = get_api_service()
@@ -1152,7 +1173,7 @@ def evars():
     return render_listing('eVars', data, list(EVARS_COLUMNS.values()), 'evars', cache_key='dimensions')
 
 
-@main_bp.route('/evars/export')
+@main_bp.route('/<client>/evars/export')
 def evars_export():
     """Export eVars as CSV"""
     api = get_api_service()
@@ -1175,7 +1196,7 @@ def evars_export():
     return generate_csv(data, f'{rsid}_evars.csv')
 
 
-@main_bp.route('/evars/<evar_id>')
+@main_bp.route('/<client>/evars/<evar_id>')
 def evar_detail(evar_id: str):
     """Display detail page for a specific eVar"""
     api = get_api_service()
@@ -1309,7 +1330,7 @@ def evar_detail(evar_id: str):
     )
 
 
-@main_bp.route('/events')
+@main_bp.route('/<client>/events')
 def events():
     """Display success events"""
     api = get_api_service()
@@ -1321,7 +1342,7 @@ def events():
     return render_listing('Events', data, list(EVENTS_COLUMNS.values()), 'events', cache_key='events')
 
 
-@main_bp.route('/events/export')
+@main_bp.route('/<client>/events/export')
 def events_export():
     """Export events as CSV"""
     api = get_api_service()
@@ -1333,7 +1354,7 @@ def events_export():
     return generate_csv(data, f'{rsid}_events.csv')
 
 
-@main_bp.route('/events/<event_id>')
+@main_bp.route('/<client>/events/<event_id>')
 def event_detail(event_id: str):
     """Display detail page for a specific event"""
     api = get_api_service()
@@ -1395,7 +1416,7 @@ def event_detail(event_id: str):
     )
 
 
-@main_bp.route('/listvars')
+@main_bp.route('/<client>/listvars')
 def listvars():
     """Display list variables (uses API 1.4 for full config data)"""
     # List variable config is better exposed in API 1.4
@@ -1408,7 +1429,7 @@ def listvars():
     return render_listing('ListVars', data, list(LISTVARS_COLUMNS.values()), 'listvars', cache_key='listvars')
 
 
-@main_bp.route('/listvars/export')
+@main_bp.route('/<client>/listvars/export')
 def listvars_export():
     """Export list variables as CSV (uses API 1.4)"""
     api = get_api_service_v14()
@@ -1420,7 +1441,7 @@ def listvars_export():
     return generate_csv(data, f'{rsid}_listvars.csv')
 
 
-@main_bp.route('/listvars/<listvar_name>')
+@main_bp.route('/<client>/listvars/<listvar_name>')
 def listvar_detail(listvar_name: str):
     """Display detail page for a specific list variable"""
     api_v14 = get_api_service_v14()
@@ -1505,7 +1526,7 @@ def listvar_detail(listvar_name: str):
     )
 
 
-@main_bp.route('/processing-rules')
+@main_bp.route('/<client>/processing-rules')
 def processing_rules():
     """Display processing rules (always uses API 1.4 - not available in 2.0)"""
     # Processing rules are NOT available in API 2.0, so we always use 1.4
@@ -1527,7 +1548,7 @@ def processing_rules():
     )
 
 
-@main_bp.route('/processing-rules/export')
+@main_bp.route('/<client>/processing-rules/export')
 def processing_rules_export():
     """Export processing rules as CSV (always uses API 1.4)"""
     # Processing rules are NOT available in API 2.0, so we always use 1.4
@@ -1540,7 +1561,7 @@ def processing_rules_export():
     return generate_csv(data, f'{rsid}_processing_rules.csv')
 
 
-@main_bp.route('/marketing-channels')
+@main_bp.route('/<client>/marketing-channels')
 def marketing_channels():
     """Display marketing channels (uses API 1.4 for full config data)"""
     # Marketing channel config is better exposed in API 1.4
@@ -1553,7 +1574,7 @@ def marketing_channels():
     return render_listing('Marketing Channels', data, list(MKTCHANNELS_COLUMNS.values()), 'marketing-channels', cache_key='marketing_channels')
 
 
-@main_bp.route('/marketing-channels/export')
+@main_bp.route('/<client>/marketing-channels/export')
 def marketing_channels_export():
     """Export marketing channels as CSV (uses API 1.4)"""
     api = get_api_service_v14()
@@ -1565,7 +1586,7 @@ def marketing_channels_export():
     return generate_csv(data, f'{rsid}_marketing_channels.csv')
 
 
-@main_bp.route('/channel-rules')
+@main_bp.route('/<client>/channel-rules')
 def channel_rules():
     """Display marketing channel rules (always uses API 1.4 - not available in 2.0)"""
     # Channel rules are NOT available in API 2.0, so we always use 1.4
@@ -1582,7 +1603,7 @@ def channel_rules():
     )
 
 
-@main_bp.route('/channel-rules/export')
+@main_bp.route('/<client>/channel-rules/export')
 def channel_rules_export():
     """Export channel rules as CSV (always uses API 1.4)"""
     # Channel rules are NOT available in API 2.0, so we always use 1.4
@@ -1599,7 +1620,7 @@ def channel_rules_export():
 # Calculated Metrics Routes (API 2.0)
 # =============================================================================
 
-@main_bp.route('/calculated-metrics')
+@main_bp.route('/<client>/calculated-metrics')
 def calculated_metrics():
     """Display all calculated metrics for the configured report suite (API 2.0)."""
     api = get_api_service()
@@ -1631,7 +1652,7 @@ def calculated_metrics():
     )
 
 
-@main_bp.route('/calculated-metrics/export')
+@main_bp.route('/<client>/calculated-metrics/export')
 def calculated_metrics_export():
     """Export calculated metrics as CSV (API 2.0)."""
     api = get_api_service()
@@ -1645,7 +1666,7 @@ def calculated_metrics_export():
     return generate_csv(data, f'{rsid}_calculated_metrics.csv')
 
 
-@main_bp.route('/calculated-metrics/<cm_id>')
+@main_bp.route('/<client>/calculated-metrics/<cm_id>')
 def calculated_metric_detail(cm_id: str):
     """Display detail page for a single calculated metric (API 2.0)."""
     api = get_api_service()
@@ -1671,7 +1692,7 @@ def calculated_metric_detail(cm_id: str):
     ec_url = None
     if get_api_version() == '2.0':
         try:
-            org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+            org_alias = g.client_config.get('EXPERIENCE_CLOUD_ORG') or None
             ec_url = api.get_experience_cloud_url('calculatedMetrics', cm_id, org_alias=org_alias)
         except Exception:
             pass
@@ -1697,7 +1718,7 @@ def calculated_metric_detail(cm_id: str):
 # Segments Routes (API 2.0)
 # =============================================================================
 
-@main_bp.route('/segments')
+@main_bp.route('/<client>/segments')
 def segments():
     """Display segments for the configured report suite (API 2.0)."""
     api = get_api_service()
@@ -1718,7 +1739,7 @@ def segments():
     )
 
 
-@main_bp.route('/segments/export')
+@main_bp.route('/<client>/segments/export')
 def segments_export():
     """Export segments as CSV (API 2.0)."""
     api = get_api_service()
@@ -1730,7 +1751,7 @@ def segments_export():
     return generate_csv(data, f'{rsid}_segments.csv')
 
 
-@main_bp.route('/segments/<segment_id>')
+@main_bp.route('/<client>/segments/<segment_id>')
 def segment_detail(segment_id: str):
     """Display detail page for a single segment (API 2.0)."""
     api = get_api_service()
@@ -1756,7 +1777,7 @@ def segment_detail(segment_id: str):
     ec_url = None
     if get_api_version() == '2.0':
         try:
-            org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+            org_alias = g.client_config.get('EXPERIENCE_CLOUD_ORG') or None
             ec_url = api.get_experience_cloud_url('segments', segment_id, org_alias=org_alias)
         except Exception:
             pass
@@ -1786,7 +1807,7 @@ REPORT_SUITES_COLUMNS = {
     'timezone': 'Timezone',
 }
 
-@main_bp.route('/report-suites')
+@main_bp.route('/<client>/report-suites')
 def report_suites():
     """Display all report suites accessible to this service account (API 2.0)."""
     api = get_api_service()
@@ -1814,7 +1835,7 @@ def report_suites():
     )
 
 
-@main_bp.route('/report-suites/export')
+@main_bp.route('/<client>/report-suites/export')
 def report_suites_export():
     """Export report suites as CSV (API 2.0)."""
     api = get_api_service()
@@ -1826,7 +1847,7 @@ def report_suites_export():
     return generate_csv(data, 'report_suites.csv')
 
 
-@main_bp.route('/cache')
+@main_bp.route('/<client>/cache')
 def cache_view():
     """Display cache information"""
     rsid = get_rsid()
@@ -1834,7 +1855,7 @@ def cache_view():
 
     # Build Launch section data when the feature is enabled
     launch_info = None
-    if current_app.config.get('LAUNCH_ENABLED'):
+    if g.client_config.get('LAUNCH_ENABLED'):
         # cache_info['cache_keys'] is expected to be a mapping:
         #   { cache_key: { ...metadata..., "expired": bool, ... }, ... }
         all_cache_entries = cache_info.get('cache_keys', {}) or {}
@@ -1844,8 +1865,8 @@ def cache_view():
             if key.startswith('launch_search_') and not meta.get('expired', False)
         )
         launch_info = {
-            'property_id':        current_app.config.get('LAUNCH_PROPERTY_ID', ''),
-            'launchpad_url':      current_app.config.get('LAUNCHPAD_URL', ''),
+            'property_id':        g.client_config.get('LAUNCH_PROPERTY_ID', ''),
+            'launchpad_url':      g.client_config.get('LAUNCHPAD_URL', ''),
             'search_cache_count': search_cache_count,
         }
 
@@ -1859,7 +1880,7 @@ def cache_view():
     )
 
 
-@main_bp.route('/cache/clear')
+@main_bp.route('/<client>/cache/clear')
 def cache_clear():
     """Clear cache and redirect to cache view"""
     rsid = get_rsid()
@@ -1875,7 +1896,7 @@ def cache_clear():
     )
 
 
-@main_bp.route('/cache/refresh/<cache_key>')
+@main_bp.route('/<client>/cache/refresh/<cache_key>')
 def cache_refresh(cache_key):
     """Clear a specific cache key and re-warm it."""
     from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
@@ -1950,7 +1971,7 @@ def _find_components(rsid: str, variable_id: str) -> dict:
     return {'segments': matching_segments, 'calc_metrics': matching_metrics}
 
 
-@main_bp.route('/api/components/<dimension_type>/<dimension_id>')
+@main_bp.route('/<client>/api/components/<dimension_type>/<dimension_id>')
 def api_components(dimension_type: str, dimension_id: str):
     """Return the "Components" card as an HTML fragment.
 
@@ -1988,7 +2009,7 @@ def api_components(dimension_type: str, dimension_id: str):
 # Processing Rules Fragment API
 # =============================================================================
 
-@main_bp.route('/api/related-rules/<dimension_type>/<dimension_id>')
+@main_bp.route('/<client>/api/related-rules/<dimension_type>/<dimension_id>')
 def api_related_rules(dimension_type: str, dimension_id: str):
     """Return the "Related Processing Rules" card as an HTML fragment.
 
@@ -2035,7 +2056,7 @@ def api_related_rules(dimension_type: str, dimension_id: str):
     )
 
 
-@main_bp.route('/api/related-launch-rules/<dimension_type>/<dimension_id>')
+@main_bp.route('/<client>/api/related-launch-rules/<dimension_type>/<dimension_id>')
 def api_related_launch_rules(dimension_type: str, dimension_id: str):
     """Return the 'Adobe Launch Rules' card as an HTML fragment.
 
@@ -2051,11 +2072,11 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
     if '.' in dimension_id:
         return '', 204
 
-    if not current_app.config.get('LAUNCH_ENABLED'):
+    if not g.client_config.get('LAUNCH_ENABLED'):
         return '', 204
 
-    launch_service = getattr(current_app, 'codex_launch_service', None)
-    property_id = current_app.config.get('LAUNCH_PROPERTY_ID', '')
+    launch_service = g.launch
+    property_id = g.client_config.get('LAUNCH_PROPERTY_ID', '')
     if not launch_service or not property_id:
         return '', 204
 
@@ -2093,7 +2114,7 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
     # Build Adobe Tags base URL via the Launch service (includes Reactor company ID)
     adobe_tags_base = None
     try:
-        org_alias = current_app.config.get('EXPERIENCE_CLOUD_ORG') or None
+        org_alias = g.client_config.get('EXPERIENCE_CLOUD_ORG') or None
         if launch_service and org_alias:
             adobe_tags_base = launch_service.get_tags_base_url(org_alias)
     except Exception:
@@ -2103,13 +2124,13 @@ def api_related_launch_rules(dimension_type: str, dimension_id: str):
         '_fragment_related_launch_rules.html',
         related_rules=related_rules,
         launch_available=launch_available,
-        launchpad_url=current_app.config.get('LAUNCHPAD_URL', ''),
+        launchpad_url=g.client_config.get('LAUNCHPAD_URL', ''),
         property_id=property_id,
         adobe_tags_base=adobe_tags_base,
     )
 
 
-@main_bp.route('/api/related-channel-rules/<dimension_type>/<dimension_id>')
+@main_bp.route('/<client>/api/related-channel-rules/<dimension_type>/<dimension_id>')
 def api_related_channel_rules(dimension_type: str, dimension_id: str):
     """Return the "Related Channel Rules" card as an HTML fragment.
 
@@ -2153,7 +2174,7 @@ def api_related_channel_rules(dimension_type: str, dimension_id: str):
 # Tags API Routes  (/api/tags)
 # =============================================================================
 
-@main_bp.route('/api/tags', methods=['GET'])
+@main_bp.route('/<client>/api/tags', methods=['GET'])
 def list_tags() -> Response:
     """Return the ordered list of available tag names.
 
@@ -2163,7 +2184,7 @@ def list_tags() -> Response:
     return jsonify(notes_service.get_tags())
 
 
-@main_bp.route('/api/tags', methods=['POST'])
+@main_bp.route('/<client>/api/tags', methods=['POST'])
 def create_tag() -> Response:
     """Add a new tag to the tag library.
 
@@ -2184,7 +2205,7 @@ def create_tag() -> Response:
         return jsonify({'error': str(exc)}), 409
 
 
-@main_bp.route('/api/tags/<tag_name>', methods=['DELETE'])
+@main_bp.route('/<client>/api/tags/<tag_name>', methods=['DELETE'])
 def remove_tag(tag_name: str) -> Response:
     """Remove a tag from the tag library.
 
@@ -2208,7 +2229,7 @@ def remove_tag(tag_name: str) -> Response:
 # Notes API Routes
 # =============================================================================
 
-@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['GET'])
+@main_bp.route('/<client>/api/notes/<dimension_type>/<dimension_id>', methods=['GET'])
 def get_note(dimension_type: str, dimension_id: str):
     """
     Get a note for a specific dimension.
@@ -2225,7 +2246,7 @@ def get_note(dimension_type: str, dimension_id: str):
     return jsonify(note)
 
 
-@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['POST'])
+@main_bp.route('/<client>/api/notes/<dimension_type>/<dimension_id>', methods=['POST'])
 def save_note(dimension_type: str, dimension_id: str):
     """
     Save a note for a specific dimension.
@@ -2250,7 +2271,7 @@ def save_note(dimension_type: str, dimension_id: str):
     return jsonify(note)
 
 
-@main_bp.route('/api/notes/<dimension_type>/<dimension_id>', methods=['DELETE'])
+@main_bp.route('/<client>/api/notes/<dimension_type>/<dimension_id>', methods=['DELETE'])
 def delete_note(dimension_type: str, dimension_id: str):
     """
     Delete a note for a specific dimension.
@@ -2357,7 +2378,7 @@ def _load_debug_endpoints() -> list[dict]:
     return endpoints
 
 
-@main_bp.route('/debug')
+@main_bp.route('/<client>/debug')
 def api_debug():
     """Interactive debug page for exploring Adobe Analytics API 1.4 and 2.0 endpoints."""
     endpoints = _load_debug_endpoints()
@@ -2373,7 +2394,7 @@ def api_debug():
     )
 
 
-@main_bp.route('/debug/call', methods=['POST'])
+@main_bp.route('/<client>/debug/call', methods=['POST'])
 def api_debug_call():
     """Proxy a raw API call from the debug page and return the JSON response."""
     payload = request.json or {}
@@ -2522,17 +2543,17 @@ def _load_reactor_endpoints() -> list[dict]:
     return endpoints
 
 
-@main_bp.route('/debug/reactor')
+@main_bp.route('/<client>/debug/reactor')
 def reactor_debug():
     """Interactive debug page for exploring Adobe Launch Reactor API endpoints.
 
     Requires LAUNCH_ENABLED to be configured; returns 403 otherwise (FR1).
     """
-    if not current_app.config.get('LAUNCH_ENABLED') or not getattr(current_app, 'codex_launch_service', None):
+    if not g.client_config.get('LAUNCH_ENABLED') or not g.launch:
         abort(403)
 
     endpoints = _load_reactor_endpoints()
-    property_id = current_app.config.get('LAUNCH_PROPERTY_ID', '')
+    property_id = g.client_config.get('LAUNCH_PROPERTY_ID', '')
     return render_template(
         'reactor_debug.html',
         title='Reactor Debug',
@@ -2544,16 +2565,16 @@ def reactor_debug():
     )
 
 
-@main_bp.route('/debug/reactor/call', methods=['POST'])
+@main_bp.route('/<client>/debug/reactor/call', methods=['POST'])
 def reactor_debug_call():
     """Proxy a raw Reactor API call from the debug page and return the JSON response.
 
     GET requests are always allowed. POST is whitelisted for /search only — it is a
     read-only search operation that requires POST by the Reactor API's design.
     """
-    if not current_app.config.get('LAUNCH_ENABLED'):
+    if not g.client_config.get('LAUNCH_ENABLED'):
         return jsonify({'success': False, 'error': 'Reactor API is not configured for this Codex instance'})
-    launch_svc = getattr(current_app, 'codex_launch_service', None)
+    launch_svc = g.launch
     if not launch_svc:
         return jsonify({'success': False, 'error': 'Reactor API service is not available'})
 
@@ -2596,7 +2617,7 @@ def reactor_debug_call():
         return jsonify({'success': False, 'error': str(exc), 'error_type': type(exc).__name__})
 
 
-@main_bp.route('/api/notes/options/<dimension_type>')
+@main_bp.route('/<client>/api/notes/options/<dimension_type>')
 def get_dimension_options(dimension_type: str):
     """
     Get list of dimensions for Web/App Equivalent dropdowns.

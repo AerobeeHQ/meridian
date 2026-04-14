@@ -65,3 +65,14 @@ Please inspect the images and rename each to something meaningful.
 Please ensure that the images are high resolution and optimized for web use. Consider using a tool like ImageOptim to reduce file size without sacrificing quality.
 
 Please also consider adding captions or descriptions to each image to provide context and improve accessibility.
+
+### Product Brochure Site
+
+Please create a product brochure site for the project in a new folder named `/site` in the root of the project. The site will be hosted using Cloudflare Pages. Please provide separate instructions for how to run the site locally as well as how to deploy the site to Cloudflare Pages. 
+
+The brochure site should include information about the project, its features, and how to get started. Please use the staticninja static site generator. I will run the build script locally, and then push/publish the compiled files to Cloudflare. There is no need to run the build procedure on Cloudflare. 
+
+Please ensure that the site is visually appealing. All content should be on a single page, and the site should be responsive and mobile-friendly. You can use any design or layout you think is appropriate, but it should be easy to navigate and understand. The site should have a clean and modern design, with clear and concise language, and easy-to-read typography.
+
+Please create a new branch for the site and submit a pull request. Please include a screenshot of the site in the pull request. Please generate an autopsy document in the docs/autopsies folder summarising your approach and any challenges you faced during the development of the site. (See other md files for example styles)
+

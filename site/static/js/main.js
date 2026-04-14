@@ -9,6 +9,7 @@
     nav.classList.toggle('scrolled', window.scrollY > 20);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 
   // ─── Mobile nav toggle ───────────────────────────────────────────
   const toggle  = document.getElementById('navToggle');
