@@ -16,7 +16,7 @@ Codex had no public-facing presence beyond the application itself. A product bro
 
 ### Generator choice — staticjinja
 
-The prompt specified `staticninja`, but this package does not exist on PyPI. The correct package is `staticjinja` (v5.0.0), which is the widely-documented static site generator of the same name. `staticjinja` uses Jinja2 templates, renders them to an output directory, and optionally watches for changes during development.
+Uses `staticjinja` (v5.0.0), which is a widely-documented static site generator. `staticjinja` uses Jinja2 templates, renders them to an output directory, and optionally watches for changes during development.
 
 **Note:** The `staticpaths` parameter (for copying static assets) was deprecated in `staticjinja` 5.x and triggers a warning. The build script uses `shutil.copytree` to copy the `static/` folder to `output/static/` before rendering.
 
