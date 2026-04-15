@@ -1101,6 +1101,37 @@ img { max-width: 100%; display: block; }
   margin-bottom: 16px;
 }
 
+.docker-alt-guide {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clr-indigo);
+  text-decoration: none;
+}
+
+.docker-alt-guide:hover {
+  text-decoration: underline;
+  color: var(--clr-indigo);
+}
+
+.getting-started-cta {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.cta-link-secondary {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--clr-indigo);
+  text-decoration: none;
+}
+
+.cta-link-secondary:hover {
+  text-decoration: underline;
+  color: var(--clr-indigo);
+}
+
 /* ─── Requirements ──────────────────────────────────────────────── */
 .req-layout {
   display: grid;
