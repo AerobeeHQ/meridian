@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Codex — Adobe Analytics Intelligence</title>
+  <title>Codex - Adobe Analytics Intelligence</title>
   <meta name="description" content="The complete data dictionary and configuration intelligence tool for Adobe Analytics. Browse eVars, Props, Events, Segments, and trace full data lineage across your implementation." />
-  <meta property="og:title" content="Codex — Adobe Analytics Intelligence" />
-  <meta property="og:description" content="The living data dictionary for Adobe Analytics. Full configuration visibility, data lineage, and cross-referencing — in one place." />
+  <meta property="og:title" content="Codex - Adobe Analytics Intelligence" />
+  <meta property="og:description" content="The living data dictionary for Adobe Analytics. Full configuration visibility, data lineage, and cross-referencing, all in the one place." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/css/style.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='brochure/css/style.css') }}" />
 </head>
 <body>
 
@@ -41,7 +41,7 @@
         <li><a href="#lineage">Data Lineage</a></li>
         <li><a href="#getting-started">Get Started</a></li>
         <li>
-          <a href="https://codex.maxisdev.com/maxis/" class="nav-cta" target="_blank" rel="noopener">
+          <a href="/maxis/" class="nav-cta">
             Live Demo
           </a>
         </li>
@@ -66,7 +66,7 @@
         <span class="hero-title-accent">implementation, decoded</span>
       </h1>
       <p class="hero-subtitle">
-        Codex is a living data dictionary for Adobe Analytics — giving your team
+        Codex is a living data dictionary for Adobe Analytics, giving your team
         complete visibility into every eVar, Prop, Event, Segment, and rule, with
         full cross-referencing and data lineage tracing across your implementation.
       </p>
@@ -77,7 +77,7 @@
             <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
-        <a href="https://codex.maxisdev.com/maxis/" class="btn btn-ghost" target="_blank" rel="noopener">
+        <a href="/maxis/" class="btn btn-ghost">
           View Live Demo
         </a>
       </div>
@@ -120,7 +120,7 @@
         <div class="carousel-track" id="carouselTrack">
 
           <figure class="carousel-slide" aria-hidden="false">
-            <img src="static/img/screenshots/evars-listing.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/evars-listing.webp') }}"
                  alt="eVars listing page showing all conversion variables with labels, types, and allocation settings"
                  width="1440" height="900" loading="eager" decoding="async" />
             <figcaption>
@@ -130,7 +130,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dashboard-overview.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dashboard-overview.webp') }}"
                  alt="Dashboard overview page showing configuration counts for Props, eVars, Events, and related components"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -140,7 +140,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/props-listing.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/props-listing.webp') }}"
                  alt="Props listing page showing all traffic variables with pathing, list support and delimiter settings"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -150,17 +150,17 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dimension-detail-trend.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dimension-detail-trend.webp') }}"
                  alt="Dimension detail page showing a 30-day trend chart for a traffic variable"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Dimension Detail — Trend Chart</strong>
-              30-day usage trend scoped precisely to the dimension — not total traffic — plus daily average, median, and peak.
+              30-day usage trend scoped precisely to the dimension - not total traffic - plus daily average, median, and peak.
             </figcaption>
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dimension-detail-lineage.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dimension-detail-lineage.webp') }}"
                  alt="Dimension detail page showing data lineage including Processing Rules, Marketing Channel Rules, and Adobe Launch rules"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -170,7 +170,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dimension-detail-notes.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dimension-detail-notes.webp') }}"
                  alt="Dimension detail page showing annotation notes with plain-English description and technical definition"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -180,7 +180,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dimension-detail-segments.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dimension-detail-segments.webp') }}"
                  alt="Dimension detail page showing related segments and calculated metrics that reference the variable"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -190,17 +190,17 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/dimension-trend-chart.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/dimension-trend-chart.webp') }}"
                  alt="Dimension detail showing expanded trend chart statistics with daily average, median, peak and lowest values"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>30-Day Trend Statistics</strong>
-              Detailed trend summary with daily average, median, peak, and lowest values — powered by Adobe Analytics API 2.0.
+              Detailed trend summary with daily average, median, peak, and lowest values - powered by Adobe Analytics API 2.0.
             </figcaption>
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/listvar-detail.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/listvar-detail.webp') }}"
                  alt="List Variable detail page showing configuration including delimiter settings and top values"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -210,7 +210,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/segment-detail.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/segment-detail.webp') }}"
                  alt="Segment detail page showing the segment definition, container structure, and referenced dimensions and events"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -220,7 +220,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/segments-listing.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/segments-listing.webp') }}"
                  alt="Segments listing page showing all segments with owner, modification date, and tags"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -230,7 +230,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/calculated-metrics-listing.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/calculated-metrics-listing.webp') }}"
                  alt="Calculated metrics listing page showing all metrics with type, owner and description"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -240,7 +240,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/calculated-metric-detail.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/calculated-metric-detail.webp') }}"
                  alt="Calculated metric detail page with formula, 30-day trend chart, and component cross-references"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -250,7 +250,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/calculated-metric-formula.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/calculated-metric-formula.webp') }}"
                  alt="Calculated metric formula definition showing JSON structure and formula expression"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -260,7 +260,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/processing-rules.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/processing-rules.webp') }}"
                  alt="Processing Rules listing showing rule sets with conditions, match types, and actions formatted for readability"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -270,17 +270,17 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/marketing-channels.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/marketing-channels.webp') }}"
                  alt="Marketing Channels listing showing channel names, IDs, and enabled status"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Marketing Channels</strong>
-              Channel definitions, order, and settings — with links through to channel rule conditions for attribution tracing.
+              Channel definitions, order, and settings, with links through to channel rule conditions for attribution tracing.
             </figcaption>
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/report-suites.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/report-suites.webp') }}"
                  alt="Report Suites listing showing suite IDs, names, types, and currency settings"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -290,7 +290,7 @@
           </figure>
 
           <figure class="carousel-slide" aria-hidden="true">
-            <img src="static/img/screenshots/cache-management.webp"
+            <img src="{{ url_for('static', filename='brochure/img/screenshots/cache-management.webp') }}"
                  alt="Cache management page showing per-key cache status, creation time, age, and refresh controls"
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
@@ -347,7 +347,7 @@
         <span class="section-label">Features</span>
         <h2 class="section-title">Everything you need to understand your data</h2>
         <p class="section-subtitle">
-          Codex brings all your Adobe Analytics configuration into one place —
+          Codex brings all your Adobe Analytics configuration into one place,
           with the context and cross-referencing to actually make sense of it.
         </p>
       </div>
@@ -390,7 +390,7 @@
           <h3 class="feature-title">Data Lineage Tracing</h3>
           <p class="feature-desc">
             Every dimension detail page shows exactly which Processing Rules,
-            Marketing Channel Rules, and Adobe Launch rules reference it — with
+            Marketing Channel Rules, and Adobe Launch rules reference it, with
             match type badges and variable assignment details.
           </p>
         </div>
@@ -403,8 +403,8 @@
           </div>
           <h3 class="feature-title">30-Day Trend Charts</h3>
           <p class="feature-desc">
-            Dimension-scoped trend data for every eVar, Prop, and Event —
-            scoped precisely to dimension-specific hits, not total traffic.
+            Trend data for every eVar, Prop, and Event, scoped precisely to
+            dimension-specific hits and not total traffic.
             Powered by the Adobe Analytics API 2.0.
           </p>
         </div>
@@ -418,7 +418,7 @@
           <h3 class="feature-title">Background Pre-Caching</h3>
           <p class="feature-desc">
             All configuration data is pre-warmed at startup and refreshed every
-            24 hours in the background. No waiting — every page loads instantly
+            24 hours in the background. No waiting - every page loads instantly
             from cache with a dedicated cache management interface.
           </p>
         </div>
@@ -466,7 +466,7 @@
           <h2 class="section-title">Trace every variable to its source</h2>
           <p class="section-subtitle">
             When you need to know where a variable gets its value, Codex gives you
-            the full picture — not just what's configured, but how it got there.
+            the full picture - not just what's configured, but how it got there.
           </p>
           <ul class="lineage-list">
             <li>
@@ -489,7 +489,7 @@
               </div>
               <div>
                 <strong>Processing Rules</strong>
-                <span>Which rule sets read from or write to the dimension — with conditions and actions formatted for readability.</span>
+                <span>Shows which rule sets read from or write to the dimension, with conditions and actions formatted for readability.</span>
               </div>
             </li>
             <li>
@@ -501,7 +501,7 @@
               </div>
               <div>
                 <strong>Marketing Channel Rules</strong>
-                <span>Which channel rules reference the dimension, showing attribution logic at a glance.</span>
+                <span>Shows which channel rules reference the dimension, with attribution logic formatted for readability.</span>
               </div>
             </li>
             <li>
@@ -513,7 +513,7 @@
               </div>
               <div>
                 <strong>Segments &amp; Calculated Metrics</strong>
-                <span>Every segment and metric that references this variable — including transitive references through nested containers.</span>
+                <span>Every segment and metric that references this variable, including transitive references through nested containers.</span>
               </div>
             </li>
           </ul>
@@ -523,7 +523,7 @@
           <div class="diagram-card">
             <div class="diagram-header">
               <div class="diagram-dot diagram-dot-green"></div>
-              <span>eVar5 — Page Name</span>
+              <span>eVar5 - Page Name</span>
             </div>
             <div class="diagram-body">
               <div class="diagram-section">
@@ -767,7 +767,7 @@
             <li><a href="#features">Features</a></li>
             <li><a href="#lineage">Data Lineage</a></li>
             <li><a href="#getting-started">Get Started</a></li>
-            <li><a href="https://codex.maxisdev.com/maxis/" target="_blank" rel="noopener">Live Demo</a></li>
+            <li><a href="/maxis/">Live Demo</a></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -789,6 +789,6 @@
     </div>
   </footer>
 
-  <script src="static/js/main.js"></script>
+  <script src="{{ url_for('static', filename='brochure/js/main.js') }}"></script>
 </body>
 </html>

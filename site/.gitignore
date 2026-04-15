@@ -1,8 +1,0 @@
-# Compiled output — deploy this folder to Cloudflare Pages
-output/
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-.uv/
