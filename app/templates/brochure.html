@@ -50,14 +50,20 @@
   <!-- ─── Hero ──────────────────────────────────────────────────── -->
   <section class="hero" id="home">
     <div class="hero-bg">
+      <canvas id="starCanvas" class="hero-canvas" aria-hidden="true"></canvas>
       <div class="hero-orb hero-orb-1"></div>
       <div class="hero-orb hero-orb-2"></div>
       <div class="hero-grid"></div>
     </div>
     <div class="container hero-content">
+      <div class="hero-logo">
+        <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="240" height="240" alt="Codex" />
+      </div>
       <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Adobe Analytics · Data Dictionary · Configuration Intelligence
+        <svg class="badge-star" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <path d="M6 0L7.2 4.8L12 6L7.2 7.2L6 12L4.8 7.2L0 6L4.8 4.8Z"/>
+        </svg>
+        Mission Control · Configuration Intelligence
       </div>
       <h1 class="hero-title">
         Your Adobe Analytics<br />
@@ -743,17 +749,7 @@
     <div class="container footer-inner">
       <div class="footer-brand">
         <a href="#" class="nav-logo">
-          <svg width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-            <rect width="28" height="28" rx="6" fill="url(#logoGrad2)"/>
-            <path d="M8 20L14 8L20 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10.5 15.5H17.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="logoGrad2" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#6366F1"/>
-                <stop offset="1" stop-color="#8B5CF6"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="28" height="28" alt="Codex" aria-hidden="true" />
           <span>Codex</span>
         </a>
         <p class="footer-tagline">The living data dictionary for Adobe Analytics.</p>
@@ -783,6 +779,8 @@
         <span>Codex v2 · Built with Flask &amp; Python</span>
         <span class="footer-sep">·</span>
         <span>Converted from RShiny SDR</span>
+        <span class="footer-sep">·</span>
+        <span>Part of the Mission Control suite</span>
       </div>
     </div>
   </footer>

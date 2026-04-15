@@ -3,6 +3,46 @@
 (function () {
   'use strict';
 
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ─── Star field ──────────────────────────────────────────────────
+  const starCanvas = document.getElementById('starCanvas');
+  if (starCanvas && !prefersReduced) {
+    const ctx = starCanvas.getContext('2d');
+    let stars = [];
+
+    function seedStars(w, h) {
+      const count = Math.round((w * h) / 5500);
+      stars = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 0.9 + 0.3,
+        a: Math.random() * 0.5 + 0.2,
+      }));
+    }
+
+    function drawStars() {
+      const w = starCanvas.width, h = starCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+      stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+        ctx.fill();
+      });
+    }
+
+    function resizeCanvas() {
+      starCanvas.width  = starCanvas.offsetWidth  || window.innerWidth;
+      starCanvas.height = starCanvas.offsetHeight || window.innerHeight;
+      seedStars(starCanvas.width, starCanvas.height);
+      drawStars();
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+  }
+
   // ─── Sticky nav ─────────────────────────────────────────────────
   const nav = document.getElementById('nav');
   const onScroll = () => {
@@ -134,7 +174,6 @@
 
     // Respect prefers-reduced-motion for all auto-advance entry points,
     // not only the initial startup.
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const autoAdvanceEnabled = !prefersReduced;
 
     function startProgressAnimation() {

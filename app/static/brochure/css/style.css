@@ -209,13 +209,22 @@ img { max-width: 100%; display: block; }
   transition: transform 0.3s, opacity 0.3s;
 }
 
+/* ─── Star canvas ───────────────────────────────────────────────── */
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
 /* ─── Hero ──────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  min-height: 100svh;
   display: flex;
   align-items: center;
-  padding: calc(var(--nav-h) + 48px) 0 80px;
+  padding: calc(var(--nav-h) + 32px) 0 64px;
   overflow: hidden;
 }
 
@@ -268,6 +277,21 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
+.hero-logo {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 20px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.hero-logo img {
+  width: clamp(120px, 18vw, 240px);
+  height: auto;
+  display: block;
+}
+
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -279,7 +303,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--clr-border-2);
   padding: 6px 16px;
   border-radius: 100px;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .badge-dot {
@@ -294,8 +318,19 @@ img { max-width: 100%; display: block; }
   50%       { opacity: 0.6; transform: scale(0.85); }
 }
 
+.badge-star {
+  color: var(--clr-indigo);
+  flex-shrink: 0;
+  animation: starPulse 4s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+  0%, 100% { opacity: 0.65; transform: scale(1) rotate(0deg); }
+  50%       { opacity: 1;    transform: scale(1.25) rotate(22.5deg); }
+}
+
 .hero-title {
-  font-size: clamp(36px, 6vw, 68px);
+  font-size: clamp(32px, 5.5vw, 60px);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -314,7 +349,7 @@ img { max-width: 100%; display: block; }
   font-size: clamp(16px, 2vw, 19px);
   color: var(--clr-text-2);
   max-width: 600px;
-  margin: 0 auto 40px;
+  margin: 0 auto 28px;
   line-height: 1.7;
 }
 
@@ -323,7 +358,7 @@ img { max-width: 100%; display: block; }
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 64px;
+  margin-bottom: 40px;
 }
 
 /* ─── Buttons ───────────────────────────────────────────────────── */
