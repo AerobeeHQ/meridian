@@ -73,15 +73,20 @@ These features appear on the **detail pages** for Props, eVars, Events, and List
 - Active navigation state properly reflected in all dropdown items
 - DataTables column widths enforced on wide tables (e.g. Processing Rules) to prevent long-text columns from dominating the layout
 
+### Architecture & Deployment
+
+| Improvement | Details |
+|-------------|---------|
+| **Multisite routing** | Single Codex deployment serves multiple clients; all routes prefixed `/<client>/`; credentials stored as per-client JSON files in `CODEX_SECRETS_DIR` |
+| **Brochure site** | Product landing page served at `/` from within the Flask app; client dashboards continue at `/<client>/` |
+
 ---
 
-## What's Next (Planned for v2 — not yet started)
+## What's Next (Planned)
 
 | Feature | Description |
 |---------|-------------|
-| **Marketing Channel Rules cross-linking** | Show which channel rules reference each dimension on detail pages — same pattern as processing rules |
-| **Adobe Launch (Tags) integration** | Surface which Launch rules set each variable, giving a complete picture of data collection from browser to report |
-| **Per-user OAuth login** | Replace the shared server credential with individual Adobe IMS login, enabling per-user access control |
+| **Per-user OAuth login** | Replace the shared server credential with individual Adobe IMS login, enabling per-user access control. Config scaffolding is in place; full implementation planned. |
 
 ---
 
@@ -90,8 +95,10 @@ These features appear on the **detail pages** for Props, eVars, Events, and List
 ```
 Codex
 ├── Flask web application (Python 3.13, uv)
+├── Multi-client routing (/<client>/ URL prefix, CODEX_SECRETS_DIR)
 ├── Adobe Analytics API 1.4 client (WSSE — processing rules, marketing channels)
 ├── Adobe Analytics API 2.0 client (OAuth2 — eVars, Props, Events, Segments, Calculated Metrics)
+├── Adobe Reactor API client (Launch rules, Tags integration)
 ├── JSON file-based cache with APScheduler background refresh
 ├── Jinja2 + Bootstrap 5 templates with DataTables
 └── Docker-ready (docker-compose.yml included)
@@ -101,4 +108,4 @@ Codex
 
 ---
 
-*Last updated: March 2026*
+*Last updated: April 2026*
