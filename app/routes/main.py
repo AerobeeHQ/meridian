@@ -133,6 +133,7 @@ def inject_globals():
         'app_title':   app_title,
         'client_slug': client_slug,
         'all_clients': list(current_app.codex_clients.keys()),
+        'config':      client_config,
     }
 
 
