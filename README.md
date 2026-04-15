@@ -33,6 +33,8 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 
 ## Quick Start
 
+For a detailed step-by-step walkthrough, see [docs/quick-start.md](docs/quick-start.md) (local) and [docs/quick-start-docker.md](docs/quick-start-docker.md) (Docker).
+
 ### Prerequisites
 
 - Python 3.13+
@@ -44,14 +46,18 @@ Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python
 ```bash
 # Clone the repository
 git clone https://github.com/maxisdigital/codex.git
-cd Codex
+cd codex
 
 # Install dependencies
 uv sync
 
-# Copy and configure settings
-cp config.dist.json config.json
-# Edit config.json with your credentials
+# Create a secrets directory and copy the config template
+mkdir -p ~/secrets/codex
+cp config.dist.json ~/secrets/codex/acme.json
+# Edit ~/secrets/codex/acme.json with your credentials
+
+# Point Codex to the secrets directory
+export CODEX_SECRETS_DIR=~/secrets/codex
 ```
 
 ### Running the Application
@@ -64,6 +70,8 @@ uv run run.py
 # Custom port: PORT=5011 uv run run.py
 ```
 
+The app is available at `http://127.0.0.1:5010`. The root `/` shows the brochure site; your client dashboard is at `http://127.0.0.1:5010/<client>/` (where `<client>` is the filename stem of your config, e.g. `acme`).
+
 ### Health Check
 
 ```bash
@@ -75,20 +83,32 @@ uv run verify_setup.py
 
 ## Configuration
 
-Create a `config.json` file in the project root (use `config.dist.json` as a template).
+Codex uses a **secrets directory** model: credentials are stored in per-client JSON files rather than a single `config.json`. This allows a single Codex instance to serve multiple clients.
+
+### Secrets Directory
+
+Set the `CODEX_SECRETS_DIR` environment variable to a directory containing one JSON file per client:
+
+```
+~/secrets/codex/
+├── acme.json        → accessible at /acme/
+└── another-co.json  → accessible at /another-co/
+```
+
+Use `config.dist.json` as the template for each file. Files starting with `_` are reserved and ignored.
 
 ### Required Settings
 
 | Key | Description |
 |-----|-------------|
-| `APP_TITLE` | Name displayed in the header (e.g., "Company Name") |
+| `APP_TITLE` | Name displayed in the header (e.g., "Acme Corp") |
 | `AW_REPORTSUITE_ID` | Your Adobe Analytics report suite ID |
+| `API_VERSION` | Set to `"2.0"` |
 
 ### API 2.0 (OAuth2) — Recommended
 
 | Key | Description |
 |-----|-------------|
-| `API_VERSION` | Set to `"2.0"` |
 | `CLIENT_ID` | OAuth2 Client ID from Adobe I/O Console |
 | `CLIENT_SECRET` | OAuth2 Client Secret |
 | `ORGANIZATION_ID` | Your Adobe Org ID (e.g., `ABC123@AdobeOrg`) |
@@ -101,9 +121,9 @@ Create a `config.json` file in the project root (use `config.dist.json` as a tem
 | `AW_USERNAME` | WSSE username (format: `username:company`) |
 | `AW_SECRET` | WSSE shared secret |
 
-> **Note:** Even when using API 2.0, WSSE credentials are still required for certain endpoints that haven't been migrated to 2.0 (e.g., Processing Rules).
+> **Note:** Even when using API 2.0, WSSE credentials are still required for certain endpoints not yet migrated to 2.0 (e.g., Processing Rules, Marketing Channels).
 
-### Example Configuration
+### Example Client Config (`~/secrets/codex/acme.json`)
 
 ```json
 {
@@ -119,14 +139,11 @@ Create a `config.json` file in the project root (use `config.dist.json` as a tem
     "API_V14_TIMEOUT": 5,
     "LAUNCH_ENABLED": false,
     "LAUNCH_PROPERTY_ID": "",
-    "LAUNCHPAD_URL": "",
-    "AUTH_MODE": "server",
-    "OAUTH_REDIRECT_URI": "http://localhost:5010/auth/callback",
-    "SESSION_SECRET": ""
+    "LAUNCHPAD_URL": ""
 }
 ```
 
-> **Note:** `LAUNCH_ENABLED`, `LAUNCH_PROPERTY_ID`, `LAUNCHPAD_URL` are optional. Enable to surface Adobe Launch rules on dimension detail pages. `AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET` are for per-user OAuth login (roadmap v2-004).
+> **Note:** `LAUNCH_ENABLED`, `LAUNCH_PROPERTY_ID`, and `LAUNCHPAD_URL` are optional. Enable to surface Adobe Launch rules on dimension detail pages.
 
 ---
 
@@ -138,11 +155,20 @@ Codex uses a **hybrid API approach**:
 
 - **API 1.4 (WSSE)** — Legacy method required for endpoints not yet available in API 2.0 (Processing Rules, Marketing Channels, Channel Rules). WSSE credentials can be obtained from Admin → User Management → Users in Adobe Analytics.
 
+> **Note:** Adobe has announced the deprecation of API 1.4. Codex automatically retries on alternative API domains (`api2`, `api3`, `api4.omniture.com`) if the primary endpoint is unresponsive.
+
 ---
 
 ## Docker
 
+See [docs/quick-start-docker.md](docs/quick-start-docker.md) for the full Docker setup guide.
+
 ```bash
+# Create a secrets directory next to docker-compose.yml
+mkdir -p secrets
+cp config.dist.json secrets/acme.json
+# Edit secrets/acme.json with your credentials
+
 # Build and run
 docker compose up -d --build
 
@@ -150,30 +176,52 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-> **Important:** Ensure the exports directory is mounted with read-write permissions (`:rw`) in your `docker-compose.yml`.
+The app listens on port `5010`. The `docker-compose.yml` mounts `./secrets` as a read-only volume and sets `CODEX_SECRETS_DIR` automatically.
 
 ---
 
 ## Project Structure
 
 ```
-Codex/
+codex/
 ├── app/
 │   ├── routes/          # Flask route handlers
+│   │   ├── main.py      # All client routes (prefixed /<client>/)
+│   │   └── auth.py      # Auth routes (login, callback, logout)
 │   ├── services/        # API wrappers and business logic
 │   │   ├── adobe_analytics_v2.py   # API 2.0 client (OAuth2)
 │   │   ├── adobe_analytics.py      # API 1.4 client (WSSE)
 │   │   ├── adobe_auth.py           # OAuth2 token management
+│   │   ├── adobe_launch.py         # Adobe Reactor (Tags) API client
 │   │   ├── cache.py                # JSON file-based caching
 │   │   ├── cache_warmer.py         # Background cache pre-warming (APScheduler)
+│   │   ├── config_loader.py        # Multi-client config loader (CODEX_SECRETS_DIR)
+│   │   ├── git_info.py             # Git branch/commit info for footer
 │   │   └── notes.py                # Dimension annotation storage
+│   ├── static/
+│   │   └── brochure/    # Brochure site assets (CSS, JS, images)
 │   └── templates/       # Jinja2 HTML templates
+├── assets/              # Project assets (Swagger specs, screenshots)
+│   └── swagger/         # Adobe Analytics API 1.4 and 2.0 Swagger specs
 ├── cache/               # Cached API responses (git-ignored)
 ├── exports/             # CSV exports directory
 ├── notebooks/           # Jupyter notebooks for API exploration
 ├── docs/                # Documentation and post-mortems
-└── assets/              # Images and screenshots
+└── config.dist.json     # Config template (copy to $CODEX_SECRETS_DIR/<client>.json)
 ```
+
+### URL Structure
+
+All client routes are prefixed with `/<client>/` where `<client>` is the filename stem of the config JSON:
+
+| URL | Content |
+|-----|---------|
+| `/` | Brochure site |
+| `/<client>/` | Client overview dashboard |
+| `/<client>/evars` | eVar listing |
+| `/<client>/props` | Prop listing |
+| `/<client>/events` | Event listing |
+| `/<client>/...` | All other Codex routes |
 
 ---
 
@@ -209,10 +257,12 @@ See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan 
 * [x] Marketing Channel Rules cross-linking on dimension detail pages
 * [x] Adobe Launch (Tags) integration — show which Launch rules set each variable
 * [x] Cache Management page — view cache status and force-refresh
+* [x] Multisite routing — single deployment serves multiple clients via `/<client>/` URL prefix
+* [x] Brochure site — product landing page served at `/`
 
-### Planned for v2.0
+### Planned
 
-* [ ] User OAuth login — replace server-to-server with per-user Adobe IMS login
+* [ ] User OAuth login — per-user Adobe IMS login (config scaffolding in place; full implementation planned)
 
 ---
 
@@ -247,6 +297,8 @@ Major feature release built on top of the original Flask conversion. All new fea
 | Detail page panel layout | Processing Rules, Channel Rules, and Launch panels moved to right column |
 | Accurate dimension trend charts | Trend charts scoped to dimension-specific hits; eVars use `evar<n>instances`, props use a `metricFilters` segment, events use an `event-exists` segment |
 | Launch match type badges | Action / Condition / Event badges parsed from `delegate_descriptor_id`; "Name match" badge flags rule-name-only matches as potential false positives |
+| Multisite routing | Single deployment serves multiple clients via `/<client>/` URL prefix; per-client credential files in `CODEX_SECRETS_DIR` |
+| Brochure site | Product landing page served at `/`; all client apps continue at `/<client>/` |
 | User OAuth login (partial) | Config scaffolding in place; per-user Adobe IMS login planned for a future release |
 
 ### v1.0 (December 2025)
@@ -273,4 +325,4 @@ MIT
 
 ---
 
-*Last updated: 2026-04-03*
+*Last updated: 2026-04-15*

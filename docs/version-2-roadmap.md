@@ -11,7 +11,7 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | 1 | [Processing Rules Integration](#1-processing-rules-integration) | Medium | **Done** | [v2-001](plans/v2-001-processing-rules-integration.md) |
 | 2 | [Marketing Channel Rules Integration](#2-marketing-channel-rules-integration) | Medium | **Done** | [v2-002](plans/v2-002-marketing-channel-rules-integration.md) |
 | 3 | [Adobe Launch Integration](#3-adobe-launch-integration) | High | **Done** | [autopsy 036](autopsies/036-adobe-launch-integration.md) |
-| 4 | [User OAuth Login](#4-user-oauth-login) | High | Planned | [v2-004](plans/v2-004-user-oauth-login.md) |
+| 4 | [User OAuth Login](#4-user-oauth-login) | High | Scaffolded | [v2-004](plans/v2-004-user-oauth-login.md) |
 | 5 | [Background Pre-Caching](#5-background-pre-caching) | Medium | **Done** | [v2-005](plans/v2-005-background-precaching.md) |
 | 6 | [Report Suite Overview Page](#6-report-suite-overview-page) | Low–Medium | **Done** | [v2-006](plans/v2-006-report-suite-overview.md) |
 | 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments.md) |
@@ -32,7 +32,7 @@ Start with low-risk, high-value additions before architectural changes:
 6. ~~**Interactive API debug page** (v2-009) — Browser-based explorer for all 1.4 and 2.0 endpoints, proxied through the server.~~ **Done**
 7. ~~**Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.~~ **Done**
 8. ~~**Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.~~ **Done**
-9. **User OAuth login** (v2-004) — Largest architectural change; do last.
+9. **User OAuth login** (v2-004) — Largest architectural change. Config scaffolding is in place (`AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET`); full per-user flow not yet implemented.
 
 ---
 
