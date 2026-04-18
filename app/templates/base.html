@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Apply theme before paint to prevent flash of unstyled content -->
+    <script>
+        (function() {
+            var stored = localStorage.getItem('codex-theme') || 'auto';
+            var resolved = stored;
+            if (stored === 'auto') {
+                resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-bs-theme', resolved);
+            document.documentElement.setAttribute('data-codex-theme', stored);
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - {{ app_title }}</title>
@@ -20,10 +32,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
         }
         .navbar {
-            background: linear-gradient(135deg, #179f9b 0%, #667eea 100%);
+            background: linear-gradient(135deg, #4a82d4 0%, #179f9b 100%);
             border-top: 1px solid #777777;
-            /*border-top: 1px solid #1d6c69;*/
-            /*border-bottom: 1px solid #31429a;*/
         }
         .navbar-brand {
             font-weight: 600;
@@ -199,6 +209,88 @@
             box-shadow: 0 1px 0 #dee2e6;
         }
 
+        /* ── Dark mode overrides ──────────────────────────────────────────── */
+        [data-bs-theme="dark"] .navbar {
+            background: linear-gradient(135deg, #d4622a 0%, #9b2525 100%);
+        }
+        [data-bs-theme="dark"] .btn-primary {
+            --bs-btn-bg: #c45e28;
+            --bs-btn-border-color: #c45e28;
+            --bs-btn-hover-bg: #a84f21;
+            --bs-btn-hover-border-color: #a84f21;
+            --bs-btn-active-bg: #923f1a;
+            --bs-btn-active-border-color: #923f1a;
+            --bs-btn-disabled-bg: #c45e28;
+            --bs-btn-disabled-border-color: #c45e28;
+        }
+        [data-bs-theme="dark"] .btn-outline-primary {
+            --bs-btn-color: #e07040;
+            --bs-btn-border-color: #c45e28;
+            --bs-btn-hover-bg: #c45e28;
+            --bs-btn-hover-border-color: #c45e28;
+            --bs-btn-active-bg: #a84f21;
+            --bs-btn-active-border-color: #a84f21;
+        }
+        [data-bs-theme="dark"] {
+            --bs-link-color: #e07040;
+            --bs-link-hover-color: #f08858;
+        }
+        [data-bs-theme="dark"] footer {
+            border-top-color: #444;
+            color: #aaa;
+        }
+        [data-bs-theme="dark"] footer code {
+            background-color: #2a2a3a;
+            color: #ccc;
+        }
+        [data-bs-theme="dark"] .pre-code {
+            color: #bbb;
+        }
+        [data-bs-theme="dark"] .table-hover tbody tr:hover {
+            --bs-table-bg: #2a3550 !important;
+        }
+        [data-bs-theme="dark"] .table tbody tr.selected {
+            --bs-table-bg: #1e3a5f !important;
+        }
+        [data-bs-theme="dark"] .table tbody a {
+            color: #90cdf4;
+        }
+        [data-bs-theme="dark"] .table tbody a:hover {
+            background-color: rgba(102, 126, 234, 0.25);
+            color: #bee3f8;
+        }
+        [data-bs-theme="dark"] .table tbody tr.selected a {
+            color: #fff !important;
+        }
+        [data-bs-theme="dark"] #dataTable thead th {
+            background-color: #212529;
+            box-shadow: 0 1px 0 #444;
+        }
+        [data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+            --bs-table-bg: rgba(255, 255, 255, 0.03);
+        }
+        [data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+            background-color: #2a2a3a;
+            color: #ccc;
+        }
+        [data-bs-theme="dark"] .custom-select-dropdown {
+            background: #2a2a3a;
+            border-color: #444;
+        }
+        [data-bs-theme="dark"] .custom-select-search {
+            background: #2a2a3a;
+            color: #e2e8f0;
+            border-bottom-color: #444;
+        }
+        [data-bs-theme="dark"] .custom-select-option:hover {
+            background-color: #333355;
+        }
+        [data-bs-theme="dark"] .btn-secondary {
+            --bs-btn-color: #ccc;
+            --bs-btn-bg: #2a2a3a;
+            --bs-btn-border-color: #444;
+        }
+
     </style>
 </head>
 <body>
@@ -255,8 +347,15 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active_tab in ['report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
-                        <ul class="dropdown-menu">
+                        <a class="nav-link dropdown-toggle {% if active_tab in ['settings', 'report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown" aria-label="More options">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: -0.15em;" aria-hidden="true">
+                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.474l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                            </svg>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item {% if active_tab == 'settings' %}active{% endif %}" href="/{{ client_slug }}/settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/{{ client_slug }}/report-suites">Report Suites</a></li>
                             <li><a class="dropdown-item" href="/{{ client_slug }}/cache">Cache</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -389,6 +488,18 @@
                 new bootstrap.Tooltip(el);
             });
         });
+    </script>
+
+    <!-- Theme: keep auto mode in sync if OS preference changes at runtime -->
+    <script>
+        (function() {
+            var mq = window.matchMedia('(prefers-color-scheme: dark)');
+            mq.addEventListener('change', function(e) {
+                if ((localStorage.getItem('codex-theme') || 'auto') === 'auto') {
+                    document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
     </script>
 
     {% block scripts %}{% endblock %}

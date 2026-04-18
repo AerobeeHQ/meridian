@@ -2691,3 +2691,15 @@ def get_dimension_options(dimension_type: str):
     return jsonify(options)
 
 
+@main_bp.route('/<client>/settings')
+def settings():
+    """User settings page (theme selection, future preferences)."""
+    return render_template(
+        'settings.html',
+        title='Settings',
+        rsid=get_rsid(),
+        cache_info=get_cache_info(),
+        active_tab='settings',
+    )
+
+
