@@ -1,4 +1,4 @@
-# Codex `v2.0`
+# Codex `v3.0`
 
 ### A Data Dictionary for your Adobe Analytics Report Suites
 
@@ -243,26 +243,20 @@ All client routes are prefixed with `/<client>/` where `<client>` is the filenam
 
 ## Roadmap
 
-See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full v2 plan with complexity assessments and implementation details.
+See [docs/version-3-roadmap.md](docs/version-3-roadmap.md) for the full v3 plan with complexity assessments and implementation details.
 
-### Completed in v2.0
+### v2.0 (Complete)
 
-* [x] Report Suite Overview page
-* [x] Background pre-caching (24-hour refresh, force-refresh button)
-* [x] Processing Rules cross-linking on dimension detail pages
-* [x] Segments listing and detail pages (API 2.0)
-* [x] Calculated Metrics listing and detail pages (API 2.0)
-* [x] Dimension Notes / annotations
-* [x] API Debug page — interactive explorer for all 1.4 and 2.0 endpoints
-* [x] Marketing Channel Rules cross-linking on dimension detail pages
-* [x] Adobe Launch (Tags) integration — show which Launch rules set each variable
-* [x] Cache Management page — view cache status and force-refresh
-* [x] Multisite routing — single deployment serves multiple clients via `/<client>/` URL prefix
-* [x] Brochure site — product landing page served at `/`
+All v2.0 features are complete. See [docs/version-2-roadmap.md](docs/version-2-roadmap.md) for the full list.
 
-### Planned
+### Planned for v3.0
 
-* [ ] User OAuth login — per-user Adobe IMS login (config scaffolding in place; full implementation planned)
+* [ ] API 1.4 Deprecation Strategy — Adobe is retiring API 1.4 in August 2026; research and implement mitigations
+* [ ] Unit & Integration Tests — establish a testing foundation with pytest
+* [ ] Report Suite Selection — allow users to select a report suite in Settings
+* [ ] User OAuth login — per-user Adobe IMS login (config scaffolding in place)
+* [ ] Adobe Spectrum Theme — offer Adobe's design system as a theme option
+* [ ] Self-Hosted Assets — remove dependency on third-party CDNs
 
 ---
 
@@ -273,6 +267,14 @@ No known issues at this time. See [docs/todo.md](docs/todo.md) for the full hist
 ---
 
 ## Version History
+
+### v3.0 (April 2026 –)
+
+Development version focused on:
+- Addressing API 1.4 deprecation (Adobe's August 2026 shutdown)
+- Adding automated tests
+- Settings page enhancements (report suite selection, Launch property mapping)
+- Continued infrastructure improvements
 
 ### v2.0 (March – April 2026)
 
@@ -299,6 +301,7 @@ Major feature release built on top of the original Flask conversion. All new fea
 | Launch match type badges | Action / Condition / Event badges parsed from `delegate_descriptor_id`; "Name match" badge flags rule-name-only matches as potential false positives |
 | Multisite routing | Single deployment serves multiple clients via `/<client>/` URL prefix; per-client credential files in `CODEX_SECRETS_DIR` |
 | Brochure site | Product landing page served at `/`; all client apps continue at `/<client>/` |
+| Themes & Settings | Light / Dark / Auto theme selector with Bootstrap 5.3 dark mode; Settings page with gear icon in navbar |
 | User OAuth login (partial) | Config scaffolding in place; per-user Adobe IMS login planned for a future release |
 
 ### v1.0 (December 2025)
@@ -325,4 +328,4 @@ MIT
 
 ---
 
-*Last updated: 2026-04-15*
+*Last updated: 2026-04-19*
