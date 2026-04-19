@@ -17,6 +17,7 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments.md) |
 | 8 | [Calculated Metrics](#8-calculated-metrics) | Medium | **Done** | [autopsy 027](autopsies/027-calculated-metrics.md) |
 | 9 | [Interactive API Debug Page](#9-interactive-api-debug-page) | Medium | **Done** | [autopsy 034](autopsies/034-api-debug-page.md) |
+| 10 | [Themes & Settings Page](#10-themes--settings-page) | Low–Medium | In Progress | [v2-010](plans/v2-010-themes-settings.md) |
 
 ---
 
@@ -148,3 +149,21 @@ Let me know if you need access.
 **Complexity: Medium** — no new API client needed; effort is in the Swagger parsing (including `$ref` resolution for 1.4) and the single-page JS UI.
 
 **See:** [autopsy 034](autopsies/034-api-debug-page.md)
+
+---
+
+### 10. Themes & Settings Page
+
+**Goal:** Allow users to choose a UI theme (System/Light/Dark) via a Settings page, with dark mode auto-applied for browsers that prefer it. Planned themes include a future Adobe Spectrum theme.
+
+**Why:** Dark mode is a common accessibility and comfort preference. A Settings page gives users control over the app's appearance without requiring configuration changes. Adobe Spectrum will align the app's design language with Adobe's own tools.
+
+**How:**
+- Theme preference is persisted in `localStorage` as `codex-theme` (`auto`, `light`, `dark`; future: `spectrum`).
+- Bootstrap 5.3's `data-bs-theme` attribute is applied to `<html>` at load time via an inline script in `<head>` (prevents flash of unstyled content).
+- In `auto` mode, the resolved theme follows `prefers-color-scheme` and updates dynamically if the OS theme changes.
+- A new `/settings` route and `settings.html` template provides a theme selector UI.
+- A settings icon in the navbar right-side links to the settings page.
+- Adobe Spectrum theme is scaffolded as a future option using `@adobe/spectrum-web-components`.
+
+**Complexity: Low–Medium** — no API changes needed; all state is client-side. Bootstrap 5.3 dark mode handles most component styling automatically; only a handful of custom CSS properties need explicit dark overrides.
