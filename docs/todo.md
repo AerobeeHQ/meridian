@@ -9,12 +9,16 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Consolidate this **todo.md** file into the version-3-roadmap.md file — migrate remaining active items once v3 roadmap is finalised.
 - [ ] Add unit tests for critical service layer functions (`adobe_analytics_v2.py`, `adobe_auth.py`, `cache.py`).
 - [ ] Consider adding integration tests for key routes with mocked API responses.
+- [ ] Add a `GET /health` endpoint for Docker `HEALTHCHECK` and container orchestration readiness probes (see v3-013).
+- [ ] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments.
 
 ---
 
 ## Active Bugs
 
-No known bugs at this time.
+- [ ] **Typo in navbar tooltip:** `base.html` line ~321 has `title="Traffice Variables"` — should be `"Traffic Variables"`.
+- [ ] **No custom 404/500 error pages:** Only `_api_error.html` (for Adobe API errors) exists. Flask's default HTML error pages are returned for missing routes and unhandled server errors — these leak the Flask version and look broken.
+- [ ] **CSRF exposure on write routes:** `POST /api/notes`, `DELETE /api/notes`, `POST /api/tags`, and `DELETE /api/tags` have no CSRF token validation. Requests can be forged from any origin that can reach the server (see v3-012).
 
 ---
 
@@ -35,11 +39,16 @@ No known bugs at this time.
 
 ## Suggested Improvements (for V3 consideration)
 
-- [ ] **User OAuth login (Roadmap v2-004)** — Replace server-to-server credential with per-user Adobe IMS login. Config scaffolding in place (`AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET`); full implementation planned for v3.
-- [ ] **Adobe Spectrum theme** — Add as a theme option in Settings page. Requires integration with `@adobe/spectrum-web-components`.
-- [ ] **Multi-client report suite selection** — Allow users to select a specific report suite in Settings, rather than using the config file default.
-- [ ] **Adobe Launch property mapping** — In Settings, allow users to map a specific Launch property to the selected report suite.
-- [ ] **Self-hosted assets** — Remove dependency on third-party CDNs for CSS, icons, and fonts.
+- [ ] **User OAuth login (Roadmap v3-001)** — Replace server-to-server credential with per-user Adobe IMS login. Config scaffolding in place (`AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET`); full implementation planned for v3.
+- [ ] **Adobe Spectrum theme (Roadmap v3-005)** — Add as a theme option in Settings page. Requires integration with `@adobe/spectrum-web-components`.
+- [ ] **Multi-client report suite selection (Roadmap v3-003)** — Allow users to select a specific report suite in Settings, rather than using the config file default.
+- [ ] **Adobe Launch property mapping (Roadmap v3-004)** — In Settings, allow users to map a specific Launch property to the selected report suite.
+- [ ] **Self-hosted assets (Roadmap v3-006)** — Remove dependency on third-party CDNs for CSS, icons, and fonts.
+- [ ] **Configuration change detection (Roadmap v3-009)** — Compare consecutive 24-hour cache snapshots and surface changes (renamed eVars, changed allocation/expiration) on the Overview page.
+- [ ] **Implementation health scorecard (Roadmap v3-010)** — Flag unused variables, variables missing names/notes, and duplicate display names on the Overview page.
+- [ ] **Export enhancements (Roadmap v3-011)** — Single-click multi-sheet Excel workbook export; print-friendly detail page layout.
+- [ ] **HTTP security hardening (Roadmap v3-012)** — CSRF protection on write routes; standard HTTP security headers (CSP, X-Frame-Options, etc.).
+- [ ] **Health check endpoint (Roadmap v3-013)** — `GET /health` JSON route for Docker `HEALTHCHECK` and uptime monitoring.
 
 ---
 

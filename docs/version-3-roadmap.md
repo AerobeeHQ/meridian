@@ -16,6 +16,11 @@ This document summarises the planned features for Codex v3. Each item will have 
 | 6 | [Self-Hosted Assets](#6-self-hosted-assets) | Low | Planned | — |
 | 7 | [Unit & Integration Tests](#7-unit--integration-tests) | Medium | Planned | — |
 | 8 | [Documentation Improvements](#8-documentation-improvements) | Low | Ongoing | — |
+| 9 | [Configuration Change Detection](#9-configuration-change-detection) | Medium | Planned | — |
+| 10 | [Implementation Health Scorecard](#10-implementation-health-scorecard) | Medium | Planned | — |
+| 11 | [Export Enhancements](#11-export-enhancements) | Low | Planned | — |
+| 12 | [HTTP Security Hardening](#12-http-security-hardening) | Medium | Planned | — |
+| 13 | [Health Check Endpoint](#13-health-check-endpoint) | Low | Planned | — |
 
 ---
 
@@ -31,6 +36,11 @@ Start with architectural improvements before user-facing features:
 6. **User OAuth Login** (v3-001) — Largest architectural change. Scaffolding is in place; full implementation.
 7. **Adobe Spectrum Theme** (v3-005) — Nice-to-have polish once core features are stable.
 8. **Documentation Improvements** (v3-008) — Ongoing throughout v3 development.
+9. **Configuration Change Detection** (v3-009) — Low-effort, high-value safety net for detecting accidental configuration changes.
+10. **Implementation Health Scorecard** (v3-010) — Builds on existing Overview page data; no new API calls required.
+11. **Export Enhancements** (v3-011) — Multi-sheet Excel workbook from existing CSV data; printable detail page.
+12. **HTTP Security Hardening** (v3-012) — Address CSRF exposure on write routes and missing security response headers.
+13. **Health Check Endpoint** (v3-013) — Trivial route addition; required for Docker/Kubernetes deployments.
 
 ---
 
@@ -167,7 +177,82 @@ These endpoints have no API 2.0 equivalents. Without a mitigation strategy, thes
 
 ---
 
-## Technical Debt (Carry-over from v2)
+### 9. Configuration Change Detection
+
+**Goal:** Detect and surface changes to Adobe Analytics configuration between cache refreshes — for example, when an eVar's name, allocation, or expiration changes, or when a new event is enabled.
+
+**Why:** Adobe Analytics configurations are modified in the Admin Console and changes are not versioned or audited natively. Analysts often discover unexpected changes only when reports break. Codex already fetches configuration data on a 24-hour schedule; comparing consecutive snapshots is a natural extension.
+
+**How:**
+1. When the cache warmer writes a new snapshot, compare it against the previous snapshot for key fields (name, type, allocation, expiration, enabled state).
+2. Store a diff log as a lightweight JSON file alongside the cache.
+3. Surface detected changes on the Overview page as a "Recent Changes" panel with timestamps.
+
+**Complexity: Medium** — Cache write logic is in `cache_warmer.py`. The diff logic is straightforward; the main effort is in deciding which fields to watch and presenting diffs readably.
+
+---
+
+### 10. Implementation Health Scorecard
+
+**Goal:** Extend the Overview page with an actionable health report: unused variables (no data in the last 30 days), variables missing names or notes, duplicate display names, and classification coverage.
+
+**Why:** The Overview page already aggregates counts and cache status. A health scorecard adds qualitative insight — flagging variables that should probably be decommissioned, or names that are too generic to be useful. This is the kind of documentation audit that currently has to be done manually.
+
+**How:**
+1. Use the Reporting API (`get_dimension_trend`) to check which variables have had zero traffic in the last 30 days.
+2. Cross-reference with the notes service to identify variables with no `plain_description`.
+3. Render flagged items as collapsible warning panels on the Overview page, grouped by severity.
+
+**Complexity: Medium** — Requires Reporting API calls for each variable type (could be slow on large report suites); results should be cached separately with a longer TTL (e.g., 48 hours) since they are expensive to compute.
+
+---
+
+### 11. Export Enhancements
+
+**Goal:** Offer a single-click export of all listing pages as a multi-sheet Excel workbook, and improve the print layout of detail pages for documentation and audit sharing.
+
+**Why:** The current CSV exports are one-per-section and require multiple clicks to compile a full configuration snapshot. A combined Excel workbook (one sheet per dimension type) is the format most commonly expected in audit documents and handover packs.
+
+**How:**
+1. Add an `openpyxl` (or `xlsxwriter`) dependency to generate `.xlsx` files server-side.
+2. Add a `/export/full` route that compiles all dimension types into a single workbook.
+3. Add `@media print` CSS to detail page templates for clean printed output.
+
+**Complexity: Low** — Data already exists in memory from existing export routes; the main effort is wiring up the new library and adding one combined route.
+
+---
+
+### 12. HTTP Security Hardening
+
+**Goal:** Protect write routes (notes and tags POST/DELETE endpoints) against CSRF attacks, and add standard HTTP security response headers to all routes.
+
+**Why:** Currently no security headers are set (Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) and the write API routes (`/api/notes`, `/api/tags`) have no CSRF protection. While the app is typically deployed internally, hardening against these vectors is low-cost and good practice — especially if User OAuth Login (v3-001) brings broader access.
+
+**How:**
+1. Add `Flask-Talisman` (or equivalent) to inject security headers on every response.
+2. Add CSRF token validation to all non-GET routes using `Flask-WTF` or a lightweight token-in-header pattern.
+3. Scope the Content-Security-Policy to permit the CDN sources currently used (Bootstrap, DataTables, Chart.js), or resolve after Self-Hosted Assets (v3-006).
+
+**Complexity: Medium** — Straightforward for headers; CSRF requires care around the JavaScript-driven API routes that use `fetch()`.
+
+---
+
+### 13. Health Check Endpoint
+
+**Goal:** Add a `/health` JSON endpoint that reports application status for container orchestration and uptime monitoring.
+
+**Why:** Docker and Kubernetes use health probes to decide when to restart a container. Without a `HEALTHCHECK` instruction or readiness probe, a container that has booted but is broken (e.g., missing config, failed cache warmer) is indistinguishable from a healthy one. External uptime monitors also benefit from a status endpoint.
+
+**How:**
+1. Add a `GET /health` route (no client prefix — global) that returns `{"status": "ok", "version": "..."}`.
+2. Optionally include cache status (last warmed timestamp) and API reachability (ping Adobe IMS).
+3. Add `HEALTHCHECK CMD curl --fail http://localhost:5010/health` to the Dockerfile.
+
+**Complexity: Low** — Simple route addition; the optional API ping should be non-blocking to avoid slow health checks causing false failures.
+
+---
+
+
 
 These items were identified in [autopsy 035](autopsies/035-pre-launch-architecture-review.md) but deferred:
 
@@ -180,4 +265,4 @@ These items were identified in [autopsy 035](autopsies/035-pre-launch-architectu
 
 ---
 
-*Last updated: 2026-04-19*
+*Last updated: 2026-04-19 (added v3-009 through v3-013)*
