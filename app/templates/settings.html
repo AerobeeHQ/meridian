@@ -107,12 +107,6 @@
             });
         });
 
-        // Keep auto in sync with OS
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-            if ((localStorage.getItem('codex-theme') || 'auto') === 'auto') {
-                document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
-            }
-        });
     })();
 </script>
 {% endblock %}

@@ -26,7 +26,7 @@ Give users control over the app's appearance via a Settings page. Phase 1 delive
 - A "Coming Soon" section previews the Adobe Spectrum theme.
 
 ### Navbar
-- A gear icon (Bootstrap Icons `bi-gear`) added to the right-side `navbar-nav`, linking to `/<client>/settings`.
+- An inline SVG gear icon added to the right-side `navbar-nav`, linking to `/<client>/settings`. Inline SVG avoids adding Bootstrap Icons as a CDN dependency.
 - Highlighted (`.active`) when `active_tab == 'settings'`.
 
 ---
