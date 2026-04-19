@@ -1,6 +1,8 @@
 # Version 2 Roadmap
 
-This document summarises the planned features for Codex v2. Each item has a detailed implementation plan in `docs/plans/`.
+**Status: Complete** — All v2 features have been implemented. Development has transitioned to [Version 3](version-3-roadmap.md).
+
+This document summarises the features built for Codex v2. Each item has a detailed implementation plan or autopsy in `docs/plans/` or `docs/autopsies/`.
 
 ---
 
@@ -11,19 +13,19 @@ This document summarises the planned features for Codex v2. Each item has a deta
 | 1 | [Processing Rules Integration](#1-processing-rules-integration) | Medium | **Done** | [v2-001](plans/v2-001-processing-rules-integration.md) |
 | 2 | [Marketing Channel Rules Integration](#2-marketing-channel-rules-integration) | Medium | **Done** | [v2-002](plans/v2-002-marketing-channel-rules-integration.md) |
 | 3 | [Adobe Launch Integration](#3-adobe-launch-integration) | High | **Done** | [autopsy 036](autopsies/036-adobe-launch-integration.md) |
-| 4 | [User OAuth Login](#4-user-oauth-login) | High | Scaffolded | [v2-004](plans/v2-004-user-oauth-login.md) |
+| 4 | [User OAuth Login](#4-user-oauth-login) | High | Moved to v3 | [v3-001](version-3-roadmap.md#1-user-oauth-login) |
 | 5 | [Background Pre-Caching](#5-background-pre-caching) | Medium | **Done** | [v2-005](plans/v2-005-background-precaching.md) |
 | 6 | [Report Suite Overview Page](#6-report-suite-overview-page) | Low–Medium | **Done** | [v2-006](plans/v2-006-report-suite-overview.md) |
-| 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments.md) |
+| 7 | [Segments](#7-segments) | Low–Medium | **Done** | [autopsy 025](autopsies/025-segments-listing.md) |
 | 8 | [Calculated Metrics](#8-calculated-metrics) | Medium | **Done** | [autopsy 027](autopsies/027-calculated-metrics.md) |
 | 9 | [Interactive API Debug Page](#9-interactive-api-debug-page) | Medium | **Done** | [autopsy 034](autopsies/034-api-debug-page.md) |
-| 10 | [Themes & Settings Page](#10-themes--settings-page) | Low–Medium | In Progress | [v2-010](plans/v2-010-themes-settings.md) |
+| 10 | [Themes & Settings Page](#10-themes--settings-page) | Low–Medium | **Done** | [autopsy 056](autopsies/056-themes-settings.md) |
 
 ---
 
-## Suggested Implementation Order
+## Implementation Order (Completed)
 
-Start with low-risk, high-value additions before architectural changes:
+All v2 features were implemented in this order:
 
 1. ~~**Overview page** (v2-006) — New page only, no risk to existing features.~~ **Done**
 2. ~~**Background pre-caching** (v2-005) — Makes the whole app feel faster; improves UX for all users.~~ **Done**
@@ -33,7 +35,8 @@ Start with low-risk, high-value additions before architectural changes:
 6. ~~**Interactive API debug page** (v2-009) — Browser-based explorer for all 1.4 and 2.0 endpoints, proxied through the server.~~ **Done**
 7. ~~**Marketing Channel Rules integration** (v2-002) — Identical pattern to v2-001; reuses code.~~ **Done**
 8. ~~**Adobe Launch integration** (v2-003) — New API client; higher effort, requires spike first.~~ **Done**
-9. **User OAuth login** (v2-004) — Largest architectural change. Config scaffolding is in place (`AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET`); full per-user flow not yet implemented.
+9. ~~**Themes & Settings page** (v2-010) — Light/Dark/Auto theme selector in Settings.~~ **Done**
+10. **User OAuth login** (v2-004) — Moved to v3; config scaffolding is in place (`AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET`).
 
 ---
 
