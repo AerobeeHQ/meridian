@@ -9,7 +9,7 @@ This document summarises the planned features for Codex v3. Each item will have 
 | # | Feature | Complexity | Status | Plan |
 |---|---------|------------|--------|------|
 | 1 | [User OAuth Login](#1-user-oauth-login) | High | Scaffolded | [v2-004](plans/v2-004-user-oauth-login.md) |
-| 2 | [API 1.4 Deprecation Strategy](#2-api-14-deprecation-strategy) | High | Planned | — |
+| 2 | [API 1.4 Deprecation Strategy](#2-api-14-deprecation-strategy) | High | Planned | [v3-002](plans/v3-002-api-14-deprecation-strategy.md) |
 | 3 | [Report Suite Selection in Settings](#3-report-suite-selection-in-settings) | Medium | Planned | — |
 | 4 | [Adobe Launch Property Mapping](#4-adobe-launch-property-mapping) | Low | Planned | — |
 | 5 | [Adobe Spectrum Theme](#5-adobe-spectrum-theme) | Medium | Scaffolded | — |
@@ -74,7 +74,7 @@ Start with architectural improvements before user-facing features:
 These endpoints have no API 2.0 equivalents. Without a mitigation strategy, these features will stop working.
 
 **Options to explore:**
-1. **Manual data upload** — Users export configuration from Adobe Analytics UI and upload to Codex.
+1. **Manual data upload** — Users export configuration from Adobe Analytics UI and upload to Codex. Note, that the UI doesn't offer any direct export functionality, so it might require users to copy-paste from the UI or take screenshots. YUCK!
 2. **AI agent extraction** — An AI agent (or Playwright script) logs into Adobe Analytics on the user's behalf and extracts configuration data from the UI.
 3. **Adobe Admin Console API** — Some configuration may be accessible via Adobe Admin APIs (needs investigation).
 4. **Feature deprecation** — Accept that some features will no longer be available post-August 2026.
