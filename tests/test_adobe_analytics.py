@@ -12,7 +12,7 @@ import gzip
 import json
 import zlib
 import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 import requests
 
 from app.services.adobe_analytics import AdobeAnalyticsService
