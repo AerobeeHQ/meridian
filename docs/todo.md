@@ -11,13 +11,13 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Consider adding integration tests for key routes with mocked API responses.
 - [ ] Add a `GET /health` endpoint for Docker `HEALTHCHECK` and container orchestration readiness probes (see v3-013).
 - [ ] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments.
-- [ ] Persist the search term between prop,eVar, events, and listVar listing pages. If the ux feels natural, extend the idea to the Segments, Metrics, Proc Rule pages. Search will need to be automatically run when the users switches between pages. Consider an easy mechanism for the user to clear the search. Perhaps by hitting the escape key? The idea is to make is simpler/faster to search for a common keyword across a range of data dimensions.
+- [x] Persist the search term between prop,eVar, events, and listVar listing pages. Extended to Segments and Calculated Metrics pages too. Escape key clears the search. **[autopsy 058](autopsies/058-persist-listing-search.md)**
 
 ---
 
 ## Active Bugs
 
-- [ ] **Typo in navbar tooltip:** `base.html` line ~321 has `title="Traffice Variables"` — should be `"Traffic Variables"`.
+- [x] **Typo in navbar tooltip:** `base.html` line ~321 has `title="Traffice Variables"` — fixed to `"Traffic Variables"`. **[autopsy 058](autopsies/058-persist-listing-search.md)**
 - [ ] **No custom 404/500 error pages:** Only `_api_error.html` (for Adobe API errors) exists. Flask's default HTML error pages are returned for missing routes and unhandled server errors — these leak the Flask version and look broken.
 - [ ] **CSRF exposure on write routes:** `POST /api/notes`, `DELETE /api/notes`, `POST /api/tags`, and `DELETE /api/tags` have no CSRF token validation. Requests can be forged from any origin that can reach the server (see v3-012).
 
