@@ -15,6 +15,7 @@ import pytest
 
 import app.services.notes as notes_module
 from app.services.notes import (
+    _resolve_notes_dir,
     get_empty_note,
     get,
     set as notes_set,
@@ -33,6 +34,23 @@ def isolated_notes_dir(tmp_path, monkeypatch):
     """Redirect NOTES_DIR to a fresh temp directory for every test."""
     monkeypatch.setattr(notes_module, "NOTES_DIR", str(tmp_path))
     yield tmp_path
+
+
+# ---------------------------------------------------------------------------
+# _resolve_notes_dir
+# ---------------------------------------------------------------------------
+
+class TestResolveNotesDir:
+    def test_uses_secrets_dir_when_env_is_set(self, monkeypatch, tmp_path):
+        monkeypatch.setenv('CODEX_SECRETS_DIR', str(tmp_path))
+        result = _resolve_notes_dir()
+        assert result == os.path.join(str(tmp_path), 'notes')
+
+    def test_falls_back_to_project_root_when_env_not_set(self, monkeypatch):
+        monkeypatch.delenv('CODEX_SECRETS_DIR', raising=False)
+        result = _resolve_notes_dir()
+        assert result.endswith(os.sep + 'notes')
+        assert 'CODEX_SECRETS_DIR' not in result
 
 
 # ---------------------------------------------------------------------------
