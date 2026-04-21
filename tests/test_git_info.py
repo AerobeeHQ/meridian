@@ -14,54 +14,48 @@ import app.services.git_info as git_info_module
 from app.services.git_info import _read_git_info_file, get_git_info
 
 
+def _patch_module_file(monkeypatch, tmp_path):
+    """
+    Redirect git_info_module.__file__ so that _read_git_info_file resolves
+    git_info.txt relative to tmp_path (the fake project root).
+
+    _read_git_info_file uses os.path.dirname(__file__) three times to climb
+    from  app/services/git_info.py  →  app/services/  →  app/  →  <project root>.
+    We replicate that structure inside tmp_path.
+    """
+    fake_services = tmp_path / "app" / "services"
+    fake_services.mkdir(parents=True)
+    monkeypatch.setattr(
+        git_info_module, "__file__", str(fake_services / "git_info.py")
+    )
+
+
 # ---------------------------------------------------------------------------
 # _read_git_info_file
 # ---------------------------------------------------------------------------
 
 class TestReadGitInfoFile:
     def test_reads_branch_and_commit(self, tmp_path, monkeypatch):
-        git_info_file = tmp_path / "git_info.txt"
-        git_info_file.write_text("branch=main\ncommit=abc1234567890\n")
-        # Point the module's base_dir resolution to tmp_path by patching __file__
-        monkeypatch.setattr(git_info_module, "__file__",
-                            str(tmp_path / "fake" / "services" / "git_info.py"))
-        # Re-derive path manually and call function directly with a helper
-        info = _parse_git_info_file(str(git_info_file))
+        _patch_module_file(monkeypatch, tmp_path)
+        (tmp_path / "git_info.txt").write_text("branch=main\ncommit=abc1234567890\n")
+
+        info = _read_git_info_file()
         assert info["branch"] == "main"
         assert info["commit"] == "abc1234567890"
 
     def test_returns_nones_when_file_absent(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(git_info_module, "__file__",
-                            str(tmp_path / "app" / "services" / "git_info.py"))
-        # No git_info.txt in tmp_path — should gracefully return empty
+        _patch_module_file(monkeypatch, tmp_path)
+        # No git_info.txt created — should gracefully return empty
         info = _read_git_info_file()
         assert info == {"branch": None, "commit": None}
 
     def test_returns_nones_on_partial_file(self, tmp_path, monkeypatch):
-        git_info_file = tmp_path / "git_info.txt"
-        git_info_file.write_text("branch=feature/xyz\n")  # no commit line
-        # We call the helper directly since we can't easily redirect __file__
-        info = _parse_git_info_file(str(git_info_file))
+        _patch_module_file(monkeypatch, tmp_path)
+        (tmp_path / "git_info.txt").write_text("branch=feature/xyz\n")  # no commit line
+
+        info = _read_git_info_file()
         assert info["branch"] == "feature/xyz"
         assert info["commit"] is None
-
-
-def _parse_git_info_file(filepath: str) -> dict:
-    """Minimal re-implementation of the file-reading logic for test purposes."""
-    info = {"branch": None, "commit": None}
-    if not os.path.exists(filepath):
-        return info
-    try:
-        with open(filepath, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("branch="):
-                    info["branch"] = line.split("=", 1)[1]
-                elif line.startswith("commit="):
-                    info["commit"] = line.split("=", 1)[1]
-    except Exception:
-        pass
-    return info
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +69,7 @@ class TestGetGitInfo:
         assert "commit" in info
         assert "commit_full" in info
 
-    def test_short_commit_is_7_chars_when_full_hash_known(self, tmp_path, monkeypatch):
+    def test_short_commit_is_7_chars_when_full_hash_known(self, monkeypatch):
         """When subprocess returns a full SHA, commit should be truncated to 7."""
         full_sha = "a" * 40
 
@@ -92,7 +86,7 @@ class TestGetGitInfo:
         assert info["commit_full"] == full_sha
         assert info["branch"] == "main"
 
-    def test_falls_back_to_file_when_subprocess_fails(self, tmp_path, monkeypatch):
+    def test_falls_back_to_file_when_subprocess_fails(self, monkeypatch):
         """When git subprocess returns None, info is read from git_info.txt."""
         monkeypatch.setattr(git_info_module, "_run_git_command", lambda _args: None)
 
@@ -118,3 +112,4 @@ class TestGetGitInfo:
         assert info["branch"] is None
         assert info["commit"] is None
         assert info["commit_full"] is None
+

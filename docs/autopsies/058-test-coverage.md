@@ -9,7 +9,7 @@
 
 Added a comprehensive automated test suite to Codex, establishing the testing foundation identified as Priority #2 in the v3 roadmap (autopsy 057). The project previously had zero automated tests and relied exclusively on `verify_setup.py` (integration smoke-check) and manual browser testing.
 
-**Result: 129 passing tests across 5 test modules, 0 failures.**
+**Result: 129 passing tests across 6 test modules, 0 failures.**
 
 ---
 

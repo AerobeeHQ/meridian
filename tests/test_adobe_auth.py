@@ -149,7 +149,7 @@ class TestFetchToken:
             auth._fetch_token()
         mock_post.assert_called_once()
         call_url = mock_post.call_args[0][0]
-        assert "adobelogin.com" in call_url
+        assert call_url == OAuth2Auth.TOKEN_ENDPOINT
 
     def test_fetch_token_sends_client_credentials(self, auth):
         with patch("app.services.adobe_auth.requests.post",
