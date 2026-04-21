@@ -7,7 +7,6 @@ Covers:
 - get_git_info: falls back to file when subprocess unavailable
 - get_git_info: truncates full commit to 7-char short hash
 """
-import os
 import pytest
 
 import app.services.git_info as git_info_module
