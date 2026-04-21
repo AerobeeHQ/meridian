@@ -10,7 +10,6 @@ Covers:
 - load_clients returns alphabetically sorted dict
 """
 import json
-import os
 import pytest
 from pathlib import Path
 
