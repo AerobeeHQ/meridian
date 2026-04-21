@@ -9,8 +9,23 @@ import json
 import os
 from datetime import datetime, timezone
 
-# Notes directory path (relative to project root)
-NOTES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'notes')
+def _resolve_notes_dir() -> str:
+    """Resolve the notes storage directory.
+
+    Prefers ``$CODEX_SECRETS_DIR/notes`` so that notes survive container
+    redeploys (the secrets volume is mounted outside the image).  Falls back
+    to ``{project_root}/notes`` for local development where the env var is
+    not set.
+    """
+    secrets_dir = os.environ.get('CODEX_SECRETS_DIR')
+    if secrets_dir:
+        return os.path.join(secrets_dir, 'notes')
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'notes')
+
+
+# Notes directory — resolved once at module import time.
+# Tests override this via ``monkeypatch.setattr(notes_module, "NOTES_DIR", ...)``.
+NOTES_DIR = _resolve_notes_dir()
 
 # Squad options for Journey Squad Owner field
 SQUAD_OPTIONS = [

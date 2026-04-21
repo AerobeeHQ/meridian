@@ -10,7 +10,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Add unit tests for critical service layer functions (`adobe_analytics_v2.py`, `adobe_auth.py`, `cache.py`).
 - [ ] Consider adding integration tests for key routes with mocked API responses.
 - [ ] Add a `GET /health` endpoint for Docker `HEALTHCHECK` and container orchestration readiness probes (see v3-013).
-- [ ] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments.
+- [x] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments. Also fixed per-client cache dirs in `app/__init__.py`. **[autopsy 059](autopsies/059-persistent-data-dirs.md)**
 - [x] Persist the search term between prop,eVar, events, and listVar listing pages. Extended to Segments and Calculated Metrics pages too. Escape key clears the search. **[autopsy 058](autopsies/058-persist-listing-search.md)**
 
 ---
