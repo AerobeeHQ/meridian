@@ -104,7 +104,8 @@ class TestNoteCRUD:
 
     def test_delete_existing_note_returns_true(self):
         notes_set("rsid1", "evar", "evar1", {})
-        assert delete("rsid1", "evar", "evar1") is True
+        deleted = delete("rsid1", "evar", "evar1")
+        assert deleted is True
 
     def test_delete_removes_file(self, tmp_path):
         notes_set("rsid1", "evar", "evar1", {})
