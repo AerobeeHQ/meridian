@@ -11,7 +11,6 @@ Covers:
 import json
 import pytest
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from app.services.cache import CacheService, DEFAULT_TTL_HOURS, CONFIG_TTL_HOURS
 
