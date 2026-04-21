@@ -9,7 +9,6 @@ Covers:
 - Corrupt / missing file resilience
 """
 import json
-import time
 import pytest
 from datetime import datetime, timedelta
 from pathlib import Path
