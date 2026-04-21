@@ -113,7 +113,8 @@ class TestNoteCRUD:
         assert not (tmp_path / "rsid1_evar_evar1.json").exists()
 
     def test_delete_nonexistent_returns_false(self):
-        assert delete("rsid1", "evar", "evar99") is False
+        result = delete("rsid1", "evar", "evar99")
+        assert result is False
 
     def test_different_dimension_types_are_isolated(self):
         notes_set("rsid1", "evar", "evar1", {"plain_description": "eVar note"})
