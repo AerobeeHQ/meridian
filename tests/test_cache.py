@@ -12,7 +12,7 @@ import json
 import pytest
 from datetime import datetime, timedelta
 
-from app.services.cache import CacheService, DEFAULT_TTL_HOURS, CONFIG_TTL_HOURS
+from app.services.cache import CacheService, CONFIG_TTL_HOURS
 
 
 @pytest.fixture
