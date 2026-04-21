@@ -21,10 +21,11 @@
 - **User Profile**: Strong JavaScript background, **Beginner in Python**.
   - *Action*: Explain Python concepts clearly. Avoid overly "pythonic" code if a JS-style approach is readable.
 - **Philosophy**: **Post MVP Velocity**. We are now working on version 2. There should be more emphasis on architechture and scaling for future enhancements. Watch for opportunities to refactor and simplify code.
-  - *Testing*: Currently there is only **Manual testing**. No unit tests. Reliant on `verify_setup.py`. Devise a testing strategy that is **fast and reliable**.
+  - *Testing*: A **pytest unit test suite** exists in `tests/` (129 tests, 6 modules, ~0.2s). See `docs/testing.md` for full details. Reliant on `verify_setup.py` for live environment checks.
 
 ## 4. Critical Workflows
 - **Install/Sync**: `uv sync`.
+- **Run Tests**: `uv run pytest` — must pass before any commit or PR.
 - **Startup**: `CODEX_SECRETS_DIR=$(pwd)/secrets uv run run.py` (Default: http://127.0.0.1:5010).
 - **Health Check**: `CODEX_SECRETS_DIR=$(pwd)/secrets uv run verify_setup.py` (checks config, directories, imports).
 - **Docker**: `docker compose up -d --build`.
@@ -49,7 +50,22 @@
 - **Security**:
   - Never log credentials. Ensure `exports/` is writable.
 
-## 6. Review & Preview
+## 6. Unit Testing
+
+### Running the suite
+```bash
+uv run pytest          # all 129 tests
+uv run pytest -v       # verbose output
+uv run pytest --cov=app --cov-report=term-missing  # with coverage
+```
+
+### Rules
+- **Before every PR**: run `uv run pytest` and confirm all tests pass. Do not open a PR with a failing test suite.
+- **When adding or changing service-layer code**: add or update the corresponding tests in `tests/test_<module>.py`. Tests should cover new behaviour and any edge cases introduced.
+- **Scope**: unit tests cover `app/services/` only — no Flask app context, no real API calls, no network. Use `tmp_path` for file I/O and `unittest.mock.patch` for external calls.
+- See `docs/testing.md` for a full description of each test module and guidance on writing new tests.
+
+## 7. Review & Preview
 
 After completing a feature implementation, or whenever the user needs to review changes visually:
 
@@ -70,7 +86,7 @@ After completing a feature implementation, or whenever the user needs to review 
 **Tailscale IP**: `100.78.114.119` — M4's stable Tailscale address.
 The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
 
-## 7. Key Files
+## 8. Key Files
 - `app/routes/main.py`: Core application logic and routes.
 - `app/routes/auth.py`: Authentication routes (login, callback, logout) for per-user OAuth.
 - `app/services/adobe_analytics_v2.py`: API 2.0 wrapper.
