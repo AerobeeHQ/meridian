@@ -14,7 +14,7 @@ import os
 import pytest
 from pathlib import Path
 
-from app.services.config_loader import get_secrets_dir, load_clients, REQUIRED_KEYS
+from app.services.config_loader import get_secrets_dir, load_clients
 
 
 # Minimal valid config satisfying REQUIRED_KEYS
