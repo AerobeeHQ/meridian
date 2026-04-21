@@ -60,7 +60,9 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    $('#dataTable').DataTable({
+    var SEARCH_KEY = 'codex-listing-search';
+
+    var table = $('#dataTable').DataTable({
         pageLength: -1,
         paging: false,
         orderClasses: true,
@@ -84,6 +86,42 @@ $(document).ready(function() {
         language: {
             search: "Filter:",
             info: "Showing _TOTAL_ entries"
+        }
+    });
+
+    function syncSearchHighlight() {
+        $('.dt-search input').toggleClass('search-active', !!table.search());
+    }
+
+    // Restore persisted search term and keep it in sync across listing pages.
+    var storedSearch = localStorage.getItem(SEARCH_KEY) || '';
+    if (storedSearch) {
+        table.search(storedSearch).draw();
+    }
+    syncSearchHighlight();
+
+    // Save search term whenever DataTables updates it.
+    $('#dataTable').on('search.dt', function() {
+        var term = table.search();
+        if (term) {
+            localStorage.setItem(SEARCH_KEY, term);
+        } else {
+            localStorage.removeItem(SEARCH_KEY);
+        }
+        syncSearchHighlight();
+    });
+
+    // Escape key clears the search and removes the stored term.
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var $input = $('.dt-search input');
+            if ($input.length && (table.search() || $input.val())) {
+                table.search('').draw();
+                $input.val('');
+                localStorage.removeItem(SEARCH_KEY);
+                syncSearchHighlight();
+                $input.trigger('focus');
+            }
         }
     });
 

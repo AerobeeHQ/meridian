@@ -291,6 +291,17 @@
             --bs-btn-border-color: #444;
         }
 
+        /* Active search filter indicator — cross-theme accent colours */
+        .dt-search input.search-active {
+            outline: 2px solid #d4622a;
+            box-shadow: 0 0 7px rgba(212, 98, 42, 0.35);
+            transition: outline 0.15s ease, box-shadow 0.15s ease;
+        }
+        [data-bs-theme="dark"] .dt-search input.search-active {
+            outline: 2px solid #179f9b;
+            box-shadow: 0 0 7px rgba(23, 159, 155, 0.35);
+        }
+
     </style>
 </head>
 <body>
@@ -318,7 +329,7 @@
                         <a class="nav-link {% if active_tab == 'core' %}active{% endif %}" href="/{{ client_slug }}/core" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Out of the box dimensions">Core</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/{{ client_slug }}/props" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Traffice Variables">Props</a>
+                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/{{ client_slug }}/props" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Traffic Variables">Props</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_tab == 'evars' %}active{% endif %}" href="/{{ client_slug }}/evars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Conversion Variables">eVars</a>
