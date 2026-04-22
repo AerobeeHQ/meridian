@@ -48,15 +48,19 @@ Start with architectural improvements before user-facing features:
 
 ### 1. User OAuth Login
 
-**Goal:** Replace the server-to-server credential model with individual user login via Adobe IMS OAuth Authorization Code flow.
+**Goal:** Add user login via Adobe IMS OAuth Authorization Code flow as an opt-in authentication mode, using a hybrid token strategy.
 
-**Why:** Enables per-user access control (users only see report suites they have access to), removes the need to share a service account credential, and is required if Codex is ever deployed for a wider audience.
+**Why:** Enables per-user access control (users only see the Analytics report suites they personally have access to) and puts the app behind a login wall without requiring a separate credential store. Removes the need to share a service account for Analytics data access.
 
-**How:** Add OAuth Authorization Code flow (login/callback/logout routes exist as stubs in `app/routes/auth.py`), Flask session management (secret key already configured), and a `before_request` login guard. Keep server-to-server as the default; user auth is opt-in via `AUTH_MODE` config.
+**Constraint (discovered 2026-04-22):** Adobe's **Reactor (Tags/Launch) API does not support User OAuth** — it requires Server-to-Server credentials. A full replacement of S2S is therefore impossible while Launch integration exists. The revised architecture uses a **hybrid model**: user tokens for Analytics API calls, S2S token for Reactor API calls.
+
+**How:** Implement OAuth Authorization Code flow (`/auth/login`, `/auth/callback`, `/auth/logout` routes already stubbed in `app/routes/auth.py`). Add a `UserAuth` class alongside the existing `OAuth2Auth` in `adobe_auth.py`. Wire per-request token selection: Analytics service receives the user's session token; Launch service continues to use the S2S token from config. Add user name + logout link to the nav. Document the Launch service-account limitation in the Settings page. Keep `AUTH_MODE: "server"` as the default; user auth is opt-in.
 
 **Config Scaffolding:** `AUTH_MODE`, `OAUTH_REDIRECT_URI`, `SESSION_SECRET` already in `config.dist.json`.
 
-**Complexity: High** — touches auth, sessions, API calls, and deployment configuration. Requires Adobe I/O Console setup before coding begins.
+**Dependency:** v3-012 (HTTP Security Hardening / CSRF) should be in place before or alongside this feature.
+
+**Complexity: High** — touches auth, sessions, API calls, and deployment configuration. Requires Adobe I/O Console setup before coding begins. See [plan v2-004](plans/v2-004-user-oauth-login.md) for full architecture, security analysis, and code outline.
 
 ---
 
@@ -265,4 +269,4 @@ These items were identified in [autopsy 035](autopsies/035-pre-launch-architectu
 
 ---
 
-*Last updated: 2026-04-19 (added v3-009 through v3-013)*
+*Last updated: 2026-04-22 (v3-001 revised — hybrid auth architecture after Reactor OAuth constraint discovered)*
