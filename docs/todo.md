@@ -12,6 +12,11 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Add a `GET /health` endpoint for Docker `HEALTHCHECK` and container orchestration readiness probes (see v3-013).
 - [x] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments. Also fixed per-client cache dirs in `app/__init__.py`. **[autopsy 059](autopsies/059-persistent-data-dirs.md)**
 - [x] Persist the search term between prop,eVar, events, and listVar listing pages. Extended to Segments and Calculated Metrics pages too. Escape key clears the search. **[autopsy 058](autopsies/058-persist-listing-search.md)**
+- [ ] Add Tags as a column to the Props/eVars/Events/ListVars listing pages, so that the user can search for them.
+- [ ] Add a Report Suite selector to the NavBar? Needs research to get the right ux.
+- [ ] The Adobe Launch section of the Props/eVars/Events detail pages should display ALL properties that set/modify that data dimension. Only the currently published production library should be searched.
+- [ ] Update the dashboard page to call out any anomalies in data collection. Investigate whether API 2.0 offers this. Anomalies would be data dimensions suddenly reporting zero, suddenly reporting a new top 10 values, suddenly reporting a much higher volume. (But what timeframe, and some data is very spiky, so how to define "anomaly"??)
+- [ ] Can this project be distributed as an exectutable installable app? exe or mac .app? Would it be electron (blech) or native (eeek)?
 
 ---
 
@@ -21,6 +26,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] **No custom 404/500 error pages:** Only `_api_error.html` (for Adobe API errors) exists. Flask's default HTML error pages are returned for missing routes and unhandled server errors — these leak the Flask version and look broken.
 - [ ] **CSRF exposure on write routes:** `POST /api/notes`, `DELETE /api/notes`, `POST /api/tags`, and `DELETE /api/tags` have no CSRF token validation. Requests can be forged from any origin that can reach the server (see v3-012).
 - [ ] If there is a problem with the Adobe API2 credentials then the props/eVars/events/listVars listing pages will fail to load and show an error message about Adobe Analytics API 1.4 Unavailable, which is misleading. The app should detect which API is having issues and show a more accurate error message (see autopsy 046 for API debug page improvements, which would also help surface these issues).
+- [ ] Tags on Prop/eVar/Event pages appear to be broken. It displays a message: "Failed to save", and trying to add a new one doesn't work, and doesn't show an error. (It doesn't need error handling, it just needs to work)
 
 ---
 
