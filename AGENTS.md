@@ -83,8 +83,10 @@ After completing a feature implementation, or whenever the user needs to review 
    [http://100.78.114.119:5010](http://100.78.114.119:5010)
    ```
 
-**Tailscale IP**: `100.78.114.119` — M4's stable Tailscale address.
-The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
+  **Tailscale IP**: `100.78.114.119` — M4's stable Tailscale address.
+  The app must be started with `HOST=0.0.0.0` to be reachable via Tailscale (default binds to `127.0.0.1` only).
+
+4. At the conclusion of tasks, summarise the actions taken into a new file at `../docs/autopsies/<issue-number>.md` using existing files in the `./docs/autopsies/` folder as a template.
 
 ## 8. Key Files
 - `app/routes/main.py`: Core application logic and routes.
