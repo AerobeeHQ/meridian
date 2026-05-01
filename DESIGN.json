@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-01T00:00:00.000Z",
+  "title": "Design System: Codex",
+  "extensions": {
+    "colorMeta": {
+      "bg":                  { "role": "neutral",   "displayName": "Deep Space",          "canonical": "#0A0C10", "tonalRamp": ["#0A0C10","#111318","#191D27","#21273A","#2A334D","#374260","#4A5878","#6B7A9A"] },
+      "surface":             { "role": "neutral",   "displayName": "Observatory Floor",   "canonical": "#0F1117", "tonalRamp": ["#0F1117","#161B24","#1E2533","#2A3347","#384260","#4A5878","#6B7A9A","#9AA3B2"] },
+      "surface-2":           { "role": "neutral",   "displayName": "Instrument Panel",    "canonical": "#161B24", "tonalRamp": ["#0D1017","#161B24","#1E2533","#2A3347","#384260","#4A5878","#6B7A9A","#9AA3B2"] },
+      "border":              { "role": "neutral",   "displayName": "Partition Line",       "canonical": "#1E2533", "tonalRamp": ["#111620","#1E2533","#2A3347","#384260","#4A5878","#6B7A9A","#9AA3B2","#C5CAD8"] },
+      "border-2":            { "role": "neutral",   "displayName": "Elevated Partition",  "canonical": "#2A3347", "tonalRamp": ["#1E2533","#2A3347","#384260","#4A5878","#6B7A9A","#9AA3B2","#C5CAD8","#E8EAF0"] },
+      "text-primary":        { "role": "neutral",   "displayName": "Primary Text",        "canonical": "#E8EAF0", "tonalRamp": ["#5E6B82","#9AA3B2","#BDC4D0","#D0D5E0","#DEE2EA","#E8EAF0","#F2F4F7","#FAFBFC"] },
+      "text-secondary":      { "role": "neutral",   "displayName": "Secondary Text",      "canonical": "#9AA3B2", "tonalRamp": ["#3A4455","#5E6B82","#7A8699","#9AA3B2","#BDC4D0","#D0D5E0","#E8EAF0","#F2F4F7"] },
+      "text-muted":          { "role": "neutral",   "displayName": "Muted Text",          "canonical": "#5E6B82", "tonalRamp": ["#2A3347","#3A4455","#4A5878","#5E6B82","#7A8699","#9AA3B2","#BDC4D0","#D0D5E0"] },
+      "indigo":              { "role": "primary",   "displayName": "Station Indigo",      "canonical": "#6366F1", "tonalRamp": ["#1E1F6B","#2D2F9F","#3E40C8","#5254CC","#6366F1","#818CF8","#A5B4FC","#C7D2FE"] },
+      "violet":              { "role": "secondary", "displayName": "Variable Violet",     "canonical": "#8B5CF6", "tonalRamp": ["#2D1B69","#4C1D95","#6D28D9","#7C3AED","#8B5CF6","#A78BFA","#C4B5FD","#DDD6FE"] },
+      "blue":                { "role": "tertiary",  "displayName": "Config Blue",         "canonical": "#3B82F6", "tonalRamp": ["#1E3A8A","#1D4ED8","#2563EB","#3B82F6","#60A5FA","#93C5FD","#BFDBFE","#DBEAFE"] },
+      "emerald":             { "role": "tertiary",  "displayName": "Data Feed Green",     "canonical": "#10B981", "tonalRamp": ["#064E3B","#065F46","#047857","#059669","#10B981","#34D399","#6EE7B7","#A7F3D0"] },
+      "amber":               { "role": "tertiary",  "displayName": "Processing Amber",    "canonical": "#F59E0B", "tonalRamp": ["#78350F","#92400E","#B45309","#D97706","#F59E0B","#FCD34D","#FDE68A","#FEF3C7"] },
+      "rose":                { "role": "tertiary",  "displayName": "Annotation Rose",     "canonical": "#F43F5E", "tonalRamp": ["#881337","#9F1239","#BE123C","#E11D48","#F43F5E","#FB7185","#FDA4AF","#FECDD3"] },
+      "app-light-nav-start": { "role": "tertiary",  "displayName": "App Nav Blue",        "canonical": "#4A82D4", "tonalRamp": ["#1E3A8A","#1D4ED8","#2563EB","#3B82F6","#4A82D4","#60A5FA","#93C5FD","#BFDBFE"] },
+      "app-light-nav-end":   { "role": "tertiary",  "displayName": "App Nav Teal",        "canonical": "#179F9B", "tonalRamp": ["#134E4A","#115E59","#0F766E","#0D9488","#179F9B","#2DD4BF","#5EEAD4","#99F6E4"] },
+      "app-dark-accent":     { "role": "tertiary",  "displayName": "Dark Mode Orange",    "canonical": "#D4622A", "tonalRamp": ["#7C2D12","#9A3412","#C2410C","#D4622A","#EA580C","#FB923C","#FDBA74","#FED7AA"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display",  "purpose": "Hero headline only. One per surface." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles. Sets the topic of a content block." },
+      "title":    { "displayName": "Title",    "purpose": "Feature card headings, step panel headings." },
+      "body":     { "displayName": "Body",     "purpose": "Running prose, descriptions, subtitles. Max 65–75ch." },
+      "label":    { "displayName": "Label",    "purpose": "Uppercase section overlines, category headers, diagram labels." },
+      "mono":     { "displayName": "Mono",     "purpose": "All variable names, config values, API keys, terminal output. The data face." }
+    },
+    "shadows": [
+      { "name": "shadow-sm",    "value": "0 1px 3px rgba(0,0,0,0.4)",   "purpose": "Subtle grounding for inline elevated elements." },
+      { "name": "shadow",       "value": "0 4px 16px rgba(0,0,0,0.5)",  "purpose": "Default card-level depth at rest." },
+      { "name": "shadow-lg",    "value": "0 12px 40px rgba(0,0,0,0.6)", "purpose": "Hover state on feature cards; resting state on carousel and diagram card." },
+      { "name": "inset-indigo", "value": "0 0 0 1px rgba(99,102,241,0.1) inset", "purpose": "Indigo halo on signature showcase elements (carousel, diagram card) only." }
+    ],
+    "motion": [
+      { "name": "ease-standard",   "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Carousel track transitions, step panel fades." },
+      { "name": "ease-out",        "value": "ease",                          "purpose": "Default for hover state transitions (0.2s)." },
+      { "name": "ease-observe",    "value": "ease",                          "purpose": "Scroll-reveal: opacity + translateY(20px) to 0, 0.55s." },
+      { "name": "duration-fast",   "value": "0.2s",                          "purpose": "Hover states, button transitions." },
+      { "name": "duration-medium", "value": "0.3–0.55s",                     "purpose": "Nav scroll transition, scroll-reveal animations." },
+      { "name": "duration-slow",   "value": "12–16s",                        "purpose": "Ambient orb float animations on hero canvas." }
+    ],
+    "breakpoints": [
+      { "name": "lg", "value": "1024px", "purpose": "Features grid collapses to 2-col; lineage/req stack to 1-col." },
+      { "name": "md", "value": "768px",  "purpose": "Nav toggles to mobile; sections compress to 64px vertical padding." },
+      { "name": "sm", "value": "480px",  "purpose": "Hero actions stack vertically; hero stats stack vertically." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary CTA. Indigo fill, white text, inline arrow icon. Used in hero and step panels.",
+      "html": "<button class=\"ds-btn-primary\">Get Started <svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><path d=\"M3 8h10M9 4l4 4-4 4\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; font-family: Inter, system-ui, sans-serif; font-size: 15px; font-weight: 600; padding: 12px 24px; border-radius: 10px; background: #6366F1; color: #ffffff; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 0 0 0 rgba(99,102,241,0.4); transition: background 0.2s, transform 0.2s, box-shadow 0.2s; } .ds-btn-primary:hover { background: #5254CC; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); } .ds-btn-primary:focus-visible { outline: 2px solid #6366F1; outline-offset: 3px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary CTA. Surface-2 fill, muted text, border. Used alongside Primary Button in hero actions.",
+      "html": "<button class=\"ds-btn-ghost\">View Live Demo</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-family: Inter, system-ui, sans-serif; font-size: 15px; font-weight: 600; padding: 12px 24px; border-radius: 10px; background: #161B24; color: #9AA3B2; border: 1px solid #2A3347; cursor: pointer; text-decoration: none; transition: background 0.2s, color 0.2s; } .ds-btn-ghost:hover { background: #1F2535; color: #E8EAF0; text-decoration: none; } .ds-btn-ghost:focus-visible { outline: 2px solid #6366F1; outline-offset: 3px; }"
+    },
+    {
+      "name": "Feature Tag / Chip",
+      "kind": "chip",
+      "refersTo": "feature-card",
+      "description": "Capability chip inside feature cards. Indigo tinted background, pill radius.",
+      "html": "<span class=\"ds-chip\">eVars &amp; Props</span>",
+      "css": ".ds-chip { display: inline-block; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; padding: 4px 10px; background: rgba(99,102,241,0.12); color: #6366F1; border: 1px solid rgba(99,102,241,0.2); border-radius: 100px; }"
+    },
+    {
+      "name": "Feature Card",
+      "kind": "card",
+      "refersTo": "feature-card",
+      "description": "Primary content card. Observatory Floor background, structural shadow, lifts on hover.",
+      "html": "<div class=\"ds-feature-card\"><div class=\"ds-feature-icon ds-feature-icon-indigo\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\" stroke=\"currentColor\" stroke-width=\"1.75\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\" stroke=\"currentColor\" stroke-width=\"1.75\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\" stroke=\"currentColor\" stroke-width=\"1.75\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\" stroke=\"currentColor\" stroke-width=\"1.75\"/></svg></div><h3 class=\"ds-feature-title\">Complete Configuration Browser</h3><p class=\"ds-feature-desc\">Browse every eVar, Prop, Success Event, and Segment in a fast, searchable interface.</p></div>",
+      "css": ".ds-feature-card { background: #0F1117; border: 1px solid #1E2533; border-radius: 16px; padding: 32px; transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s; box-shadow: 0 4px 16px rgba(0,0,0,0.5); } .ds-feature-card:hover { border-color: #2A3347; transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.6); } .ds-feature-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; } .ds-feature-icon-indigo { background: rgba(99,102,241,0.12); color: #6366F1; } .ds-feature-title { font-family: Inter, system-ui, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: #E8EAF0; margin: 0 0 10px; } .ds-feature-desc { font-family: Inter, system-ui, sans-serif; font-size: 14px; color: #9AA3B2; line-height: 1.7; margin: 0; }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Uppercase overline above section headings. Indigo, letter-spaced, 12px.",
+      "html": "<span class=\"ds-section-label\">Features</span>",
+      "css": ".ds-section-label { display: inline-block; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6366F1; margin-bottom: 12px; }"
+    },
+    {
+      "name": "Terminal Block",
+      "kind": "custom",
+      "refersTo": "mono",
+      "description": "Monospace code block with macOS-style title bar. Used in getting started steps.",
+      "html": "<div class=\"ds-terminal\"><div class=\"ds-terminal-bar\"><span class=\"ds-td ds-td-red\"></span><span class=\"ds-td ds-td-yellow\"></span><span class=\"ds-td ds-td-green\"></span><span class=\"ds-terminal-title\">Terminal</span></div><div class=\"ds-terminal-body\"><div class=\"ds-t-line\"><span class=\"ds-t-prompt\">$</span> uv run verify_setup.py</div><div class=\"ds-t-output ds-t-success\">✓ Config loaded · ✓ API reachable</div></div></div>",
+      "css": ".ds-terminal { background: #0D1117; border: 1px solid #2A3347; border-radius: 16px; overflow: hidden; font-family: 'JetBrains Mono', 'Fira Code', monospace; } .ds-terminal-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid #1E2533; } .ds-td { width: 12px; height: 12px; border-radius: 50%; } .ds-td-red { background: #FF5F57; } .ds-td-yellow { background: #FEBC2E; } .ds-td-green { background: #28C840; } .ds-terminal-title { margin: 0 auto; font-size: 12px; color: #5E6B82; font-family: Inter, system-ui, sans-serif; } .ds-terminal-body { padding: 20px; display: flex; flex-direction: column; gap: 6px; } .ds-t-line { display: flex; align-items: baseline; gap: 10px; font-size: 13.5px; color: #E8EAF0; } .ds-t-prompt { color: #6366F1; user-select: none; } .ds-t-output { font-size: 13px; color: #9AA3B2; padding-left: 20px; } .ds-t-success { color: #10B981; }"
+    },
+    {
+      "name": "Hero Badge",
+      "kind": "chip",
+      "refersTo": "label",
+      "description": "Pill badge in the hero section. Instrument Panel background, elevated border, star icon animates.",
+      "html": "<span class=\"ds-hero-badge\"><svg class=\"ds-badge-star\" width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6 0L7.2 4.8L12 6L7.2 7.2L6 12L4.8 7.2L0 6L4.8 4.8Z\"/></svg>Mission Control · Configuration Intelligence</span>",
+      "css": ".ds-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #9AA3B2; background: #161B24; border: 1px solid #2A3347; padding: 6px 16px; border-radius: 100px; } .ds-badge-star { color: #6366F1; flex-shrink: 0; animation: ds-star-pulse 4s ease-in-out infinite; } @keyframes ds-star-pulse { 0%, 100% { opacity: 0.65; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.25) rotate(22.5deg); } } @media (prefers-reduced-motion: reduce) { .ds-badge-star { animation: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Analyst's Observatory",
+    "overview": "Codex is not a dashboard and it is not a reporting tool. It is an observatory: a precision instrument for practitioners who already know what they are looking for, and want to find it fast. The visual language reflects this. Dark canvas, indigo as the primary signal colour, a full categorical palette for the six variable types (indigo, violet, blue, emerald, amber, rose), Inter for reading and JetBrains Mono for data. The density is intentional; the interface trusts its users to read it.\n\nThe two surfaces, brochure and product app, share one voice. The brochure expresses the Observatory metaphor outward, with a star-field canvas, glowing orbs, and scrolling feature reveals. The product app expresses it inward, as a compressed, reference-weight tool where the data is the entirety of the point. Both dark. Both indigo. Both authoritative. Neither decorative.\n\nThis system explicitly rejects generic SaaS dashboard aesthetics: blue-gradient heroes with metric cards and 'Transform your data' copy. It also rejects consumer-app warmth: rounded bubbles, pastel gradients, and emoji-heavy affordances.",
+    "keyCharacteristics": [
+      "Dark-first: the base surface is near-black (#0A0C10), not charcoal grey",
+      "Full categorical palette: six semantic accent colours, each assigned a variable type",
+      "Indigo is the interactive signal: links, prompts, active states, progress, CTAs",
+      "Monospace is the data language: JetBrains Mono for all variable names, values, and code",
+      "Structural shadows, not decorative: cards always have a shadow; hover deepens it"
+    ],
+    "rules": [
+      { "name": "The One Signal Rule",       "body": "Indigo (#6366F1) is the interactive signal on the brochure. Every element that can be clicked or is active uses indigo. The categorical colours categorise; they do not call to action.", "section": "colors" },
+      { "name": "The Tonal Layering Rule",   "body": "Depth is expressed through four tonal surface steps (bg / surface / surface-2 / terminal-bg), not through drop shadows alone. Shadows reinforce; tonal steps establish.", "section": "colors" },
+      { "name": "The Mono Contract",         "body": "Any value that came from an API, database, or configuration file is rendered in JetBrains Mono. Variable IDs, report suite identifiers, dimension names in data contexts, code output: all mono.", "section": "typography" },
+      { "name": "The Scale Rule",            "body": "Every type step is at minimum 1.3x the step below it. No flat type scales.", "section": "typography" },
+      { "name": "The Structural Shadow Rule","body": "Cards rest with a shadow. Hover deepens the shadow and lifts the card (translateY(-3px) plus shadow-lg). Shadow is never added purely as decoration.", "section": "elevation" },
+      { "name": "The Dark Absorption Rule",  "body": "On dark surfaces, heavy shadows (rgba 0.5–0.6) read clearly as depth. Do not translate these to light surfaces without re-evaluating opacity values.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use indigo (#6366F1) as the single primary interactive signal on the brochure surface.",
+      "Do render all variable names, IDs, API values, and configuration data in JetBrains Mono.",
+      "Do apply structural shadows to cards. Cards rest at shadow; hover deepens to shadow-lg with 3px lift.",
+      "Do use the categorical accent set (violet, blue, emerald, amber, rose) for categorisation and status only.",
+      "Do maintain four tonal surface steps: bg (#0A0C10), surface (#0F1117), surface-2 (#161B24), terminal (#0D1117).",
+      "Do use the pill radius (100px) for chips, tags, and status badges.",
+      "Do honour prefers-reduced-motion. All animations have a media query that collapses them to near-instant.",
+      "Do cap prose line lengths at 65–75ch."
+    ],
+    "donts": [
+      "Don't use background-clip: text with a gradient. Gradient text is decorative and meaningless.",
+      "Don't use border-left greater than 1px as a coloured accent stripe on any list item, card, or callout.",
+      "Don't create generic SaaS-style hero sections: blue-gradient backgrounds, big metric numbers with small labels, 'Transform your data' copy.",
+      "Don't apply consumer-app aesthetics: pastel gradients, rounded-bubble components, emoji-heavy labels.",
+      "Don't use pure black (#000) or pure white (#fff). The base is #0A0C10; text primary is #E8EAF0.",
+      "Don't add decorative glass effects (backdrop-filter blur) outside the navigation bar.",
+      "Don't translate the brochure's dark-mode shadow values directly to light-mode surfaces.",
+      "Don't use the app shell's dark-mode orange accent (#D4622A) on the brochure surface."
+    ]
+  }
+}
