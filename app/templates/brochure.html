@@ -16,9 +16,6 @@
   <meta name="twitter:description" content="The living data dictionary for Adobe Analytics. Full configuration visibility, data lineage, and cross-referencing, all in the one place." />
   <meta name="twitter:image" content="{{ url_for('static', filename='brochure/img/screenshots/dashboard-overview.webp', _external=True) }}" />
   <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='brochure/css/style.css') }}" />
 </head>
 <body>
@@ -27,7 +24,7 @@
   <nav class="nav" id="nav">
     <div class="nav-inner">
       <a href="#" class="nav-logo">
-        <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="28" height="28" alt="Codex" aria-hidden="true" />
+        <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="22" height="22" alt="Codex" aria-hidden="true" />
         <span>Codex</span>
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
@@ -39,9 +36,7 @@
         <li><a href="#lineage">Data Lineage</a></li>
         <li><a href="#getting-started">Get Started</a></li>
         <li>
-          <a href="/maxis/" class="nav-cta">
-            Live Demo
-          </a>
+          <a href="/maxis/" class="nav-cta">Live Demo</a>
         </li>
       </ul>
     </div>
@@ -49,64 +44,64 @@
 
   <!-- ─── Hero ──────────────────────────────────────────────────── -->
   <section class="hero" id="home">
-    <div class="hero-bg">
-      <canvas id="starCanvas" class="hero-canvas" aria-hidden="true"></canvas>
-      <div class="hero-orb hero-orb-1"></div>
-      <div class="hero-orb hero-orb-2"></div>
-      <div class="hero-grid"></div>
-    </div>
-    <div class="container hero-content">
-      <div class="hero-logo">
-        <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="240" height="240" alt="Codex" />
-      </div>
-      <div class="hero-badge">
-        <svg class="badge-star" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-          <path d="M6 0L7.2 4.8L12 6L7.2 7.2L6 12L4.8 7.2L0 6L4.8 4.8Z"/>
-        </svg>
-        Mission Control · Configuration Intelligence
-      </div>
-      <h1 class="hero-title">
-        Your Adobe Analytics<br />
-        <span class="hero-title-accent">implementation, decoded</span>
-      </h1>
-      <p class="hero-subtitle">
-        Codex is a living data dictionary for Adobe Analytics, giving your team
-        complete visibility into every eVar, Prop, Event, Segment, and rule, with
-        full cross-referencing and data lineage tracing across your implementation.
-      </p>
-      <div class="hero-actions">
-        <a href="#getting-started" class="btn btn-primary">
-          Get Started
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-        <a href="/maxis/" class="btn btn-ghost">
-          View Live Demo
-        </a>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="stat-number">10+</span>
-          <span class="stat-label">Configuration types</span>
+    <div class="container">
+      <div class="hero-layout">
+
+        <div class="hero-text">
+          <div class="hero-badge">
+            <span class="hero-badge-dot" aria-hidden="true"></span>
+            Mission Control &middot; Configuration Intelligence
+          </div>
+          <h1 class="hero-title">
+            Your Adobe Analytics<br>implementation, decoded.
+          </h1>
+          <p class="hero-subtitle">
+            Codex is a living data dictionary for Adobe Analytics, giving your team
+            complete visibility into every eVar, Prop, Event, Segment, and rule, with
+            full data lineage tracing across your implementation.
+          </p>
+          <div class="hero-actions">
+            <a href="#getting-started" class="btn btn-primary">
+              Get Started
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a href="/maxis/" class="btn btn-ghost">View Live Demo</a>
+          </div>
         </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="stat-number">3</span>
-          <span class="stat-label">API integrations</span>
+
+        <div class="hero-visual">
+          <img
+            src="{{ url_for('static', filename='brochure/img/codex-hero.png') }}"
+            alt="Codex — living data dictionary interface showing the configuration hub with cross-referenced eVars, Props, Segments, and data lineage connections across an Adobe Analytics implementation"
+            class="hero-image"
+            width="1169"
+            height="663"
+            loading="eager"
+            decoding="async"
+          />
         </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="stat-number">v2</span>
-          <span class="stat-label">Current release</span>
-        </div>
+
       </div>
-    </div>
-    <div class="hero-scroll-hint">
-      <div class="scroll-arrow"></div>
     </div>
   </section>
 
+  <!-- ─── Trust bar ──────────────────────────────────────────────── -->
+  <section class="trust-bar">
+    <div class="container">
+      <p class="trust-label">Built for teams working with</p>
+      <div class="trust-logos">
+        <span class="trust-item">Adobe Analytics</span>
+        <span class="trust-sep">&middot;</span>
+        <span class="trust-item">Adobe Experience Cloud</span>
+        <span class="trust-sep">&middot;</span>
+        <span class="trust-item">Adobe Launch / Tags</span>
+        <span class="trust-sep">&middot;</span>
+        <span class="trust-item">Adobe Experience Platform</span>
+      </div>
+    </div>
+  </section>
 
   <!-- ─── Screenshot carousel ─────────────────────────────────────── -->
   <section class="section section-alt" id="screenshots">
@@ -159,7 +154,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Dimension Detail — Trend Chart</strong>
-              30-day usage trend scoped precisely to the dimension - not total traffic - plus daily average, median, and peak.
+              30-day usage trend scoped precisely to the dimension, not total traffic, plus daily average, median, and peak.
             </figcaption>
           </figure>
 
@@ -199,7 +194,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>30-Day Trend Statistics</strong>
-              Detailed trend summary with daily average, median, peak, and lowest values - powered by Adobe Analytics API 2.0.
+              Detailed trend summary with daily average, median, peak, and lowest values, powered by Adobe Analytics API 2.0.
             </figcaption>
           </figure>
 
@@ -229,7 +224,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Segments Listing</strong>
-              Browse all segments with owner, last modified date, tags, and type — filterable and exportable to CSV.
+              Browse all segments with owner, last modified date, tags, and type, filterable and exportable to CSV.
             </figcaption>
           </figure>
 
@@ -239,7 +234,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Calculated Metrics Listing</strong>
-              All calculated metrics with type, owner, and description — including cross-references to referenced segments and dimensions.
+              All calculated metrics with type, owner, and description, including cross-references to referenced segments and dimensions.
             </figcaption>
           </figure>
 
@@ -259,7 +254,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Calculated Metric Formula</strong>
-              Raw formula definition with JSON structure — useful for auditing complex metrics and debugging unexpected values.
+              Raw formula definition with JSON structure, useful for auditing complex metrics and debugging unexpected values.
             </figcaption>
           </figure>
 
@@ -269,7 +264,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Processing Rules</strong>
-              All processing rule sets with conditions and actions formatted for readability — dimension references highlighted in bold.
+              All processing rule sets with conditions and actions formatted for readability, dimension references highlighted in bold.
             </figcaption>
           </figure>
 
@@ -289,7 +284,7 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Report Suites</strong>
-              List all report suites with key configuration settings — useful for organisations with multiple suites.
+              List all report suites with key configuration settings, useful for organisations with multiple suites.
             </figcaption>
           </figure>
 
@@ -299,47 +294,28 @@
                  width="1440" height="900" loading="lazy" decoding="async" />
             <figcaption>
               <strong>Cache Management</strong>
-              Per-key cache status with creation time and age — force-refresh any individual cache key without restarting the app.
+              Per-key cache status with creation time and age, force-refresh any individual cache key without restarting the app.
             </figcaption>
           </figure>
 
         </div><!-- /.carousel-track -->
 
-        <!-- Controls -->
         <button class="carousel-btn carousel-btn-prev" id="carouselPrev" aria-label="Previous screenshot">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M13 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 3l-5 5 5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
         <button class="carousel-btn carousel-btn-next" id="carouselNext" aria-label="Next screenshot">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
 
-        <!-- Dot indicators -->
         <div class="carousel-dots" role="group" aria-label="Screenshot navigation" id="carouselDots"></div>
 
-        <!-- Progress bar -->
         <div class="carousel-progress" aria-hidden="true">
           <div class="carousel-progress-bar" id="carouselProgress"></div>
         </div>
-      </div><!-- /.carousel -->
-    </div>
-  </section>
-
-  <!-- ─── Trusted by section ────────────────────────────────────── -->
-  <section class="trust-bar">
-    <div class="container">
-      <p class="trust-label">Built for teams working with</p>
-      <div class="trust-logos">
-        <span class="trust-item">Adobe Analytics</span>
-        <span class="trust-sep">·</span>
-        <span class="trust-item">Adobe Experience Cloud</span>
-        <span class="trust-sep">·</span>
-        <span class="trust-item">Adobe Launch / Tags</span>
-        <span class="trust-sep">·</span>
-        <span class="trust-item">Adobe Experience Platform</span>
       </div>
     </div>
   </section>
@@ -356,108 +332,71 @@
         </p>
       </div>
 
-      <div class="features-grid">
+      <dl class="feature-list">
 
-        <div class="feature-card feature-card-wide">
-          <div class="feature-icon-wrap feature-icon-indigo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-              <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-              <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-              <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Complete Configuration Browser</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>Complete Configuration Browser</dt>
+          <dd>
             Browse every eVar, Prop, Success Event, List Variable, Segment,
-            Calculated Metric, Processing Rule, and Marketing Channel — all
-            in a fast, searchable, filterable interface with CSV export.
-          </p>
-          <ul class="feature-tags">
-            <li>eVars &amp; Props</li>
-            <li>Success Events</li>
-            <li>List Variables</li>
-            <li>Segments</li>
-            <li>Calculated Metrics</li>
-            <li>Processing Rules</li>
-          </ul>
+            Calculated Metric, Processing Rule, and Marketing Channel in a fast,
+            searchable, filterable interface with CSV export.
+            <ul class="feature-tags">
+              <li>eVars &amp; Props</li>
+              <li>Success Events</li>
+              <li>List Variables</li>
+              <li>Segments</li>
+              <li>Calculated Metrics</li>
+              <li>Processing Rules</li>
+            </ul>
+          </dd>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon-wrap feature-icon-violet">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.75"/>
-              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Data Lineage Tracing</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>Data Lineage Tracing</dt>
+          <dd>
             Every dimension detail page shows exactly which Processing Rules,
             Marketing Channel Rules, and Adobe Launch rules reference it, with
             match type badges and variable assignment details.
-          </p>
+          </dd>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon-wrap feature-icon-blue">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">30-Day Trend Charts</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>30-Day Trend Charts</dt>
+          <dd>
             Trend data for every eVar, Prop, and Event, scoped precisely to
-            dimension-specific hits and not total traffic.
+            dimension-specific hits, not total traffic.
             Powered by the Adobe Analytics API 2.0.
-          </p>
+          </dd>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon-wrap feature-icon-emerald">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Background Pre-Caching</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>Background Pre-Caching</dt>
+          <dd>
             All configuration data is pre-warmed at startup and refreshed every
-            24 hours in the background. No waiting - every page loads instantly
-            from cache with a dedicated cache management interface.
-          </p>
+            24 hours in the background. No waiting: every page loads instantly
+            from cache, with a dedicated cache management interface.
+          </dd>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon-wrap feature-icon-amber">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">API Explorer</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>API Explorer</dt>
+          <dd>
             Interactive debug pages for all Adobe Analytics API 1.4 and 2.0
-            endpoints, plus the Adobe Launch Reactor API — browse, inspect
+            endpoints, plus the Adobe Launch Reactor API. Browse, inspect
             parameters, and fire read-only proxied requests from the browser.
-          </p>
+          </dd>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon-wrap feature-icon-rose">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Dimension Notes &amp; Tags</h3>
-          <p class="feature-desc">
+        <div class="feature-item">
+          <dt>Dimension Notes &amp; Tags</dt>
+          <dd>
             Annotate any dimension with plain-English descriptions, technical
-            context, and searchable tags — stored locally and available across
+            context, and searchable tags, stored locally and available across
             your whole team without requiring an external CMS.
-          </p>
+          </dd>
         </div>
 
-      </div>
+      </dl>
     </div>
   </section>
 
@@ -470,7 +409,7 @@
           <h2 class="section-title">Trace every variable to its source</h2>
           <p class="section-subtitle">
             When you need to know where a variable gets its value, Codex gives you
-            the full picture - not just what's configured, but how it got there.
+            the full picture: not just what's configured, but how it got there.
           </p>
           <ul class="lineage-list">
             <li>
@@ -481,7 +420,7 @@
               </div>
               <div>
                 <strong>Adobe Launch / Tags</strong>
-                <span>See which rules set the variable, with exact variable→value assignments and component type badges (Action, Condition, Event).</span>
+                <span>See which rules set the variable, with exact variable&rarr;value assignments and component type badges (Action, Condition, Event).</span>
               </div>
             </li>
             <li>
@@ -524,10 +463,10 @@
         </div>
 
         <div class="lineage-diagram">
-          <div class="diagram-card">
+          <div class="diagram-card observe">
             <div class="diagram-header">
-              <div class="diagram-dot diagram-dot-green"></div>
-              <span>eVar5 - Page Name</span>
+              <div class="diagram-dot"></div>
+              <span>eVar5 &mdash; Page Name</span>
             </div>
             <div class="diagram-body">
               <div class="diagram-section">
@@ -536,7 +475,7 @@
                   <span class="diagram-badge badge-action">Action</span>
                   <span class="diagram-rule-name">Set Page Variables on Load</span>
                 </div>
-                <div class="diagram-assignment">eVar5 → <span class="diagram-token">%pageName%</span></div>
+                <div class="diagram-assignment">eVar5 &rarr; <span class="diagram-token">%pageName%</span></div>
               </div>
               <div class="diagram-section">
                 <div class="diagram-section-label">Processing Rules</div>
@@ -593,7 +532,7 @@
           <div class="step-panel active" data-panel="0">
             <div class="step-desc">
               <h3>Clone the repository and install dependencies</h3>
-              <p>Codex uses <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a> for fast, reliable Python dependency management. Install uv first if you haven't already.</p>
+              <p>Codex uses <a href="https://docs.astral.sh/uv/">uv</a> for fast, reliable Python dependency management. Install uv first if you haven't already.</p>
             </div>
             <div class="terminal">
               <div class="terminal-bar">
@@ -606,7 +545,7 @@
                 <div class="t-line"><span class="t-prompt">$</span> git clone https://github.com/maxisdigital/codex.git</div>
                 <div class="t-line"><span class="t-prompt">$</span> cd codex</div>
                 <div class="t-line t-gap"><span class="t-prompt">$</span> uv sync</div>
-                <div class="t-comment"># All dependencies installed — no virtualenv setup needed</div>
+                <div class="t-comment"># All dependencies installed &mdash; no virtualenv setup needed</div>
               </div>
             </div>
           </div>
@@ -656,7 +595,7 @@
               <div class="terminal-body">
                 <div class="t-line t-comment"># Verify your setup first</div>
                 <div class="t-line"><span class="t-prompt">$</span> uv run verify_setup.py</div>
-                <div class="t-output t-success">✓ Config loaded · ✓ API reachable · ✓ All checks passed</div>
+                <div class="t-output t-success">&#10003; Config loaded &middot; &#10003; API reachable &middot; &#10003; All checks passed</div>
                 <div class="t-line t-gap"><span class="t-prompt">$</span> uv run run.py</div>
                 <div class="t-output">Running on http://127.0.0.1:5010</div>
               </div>
@@ -666,15 +605,14 @@
       </div>
 
       <div class="getting-started-cta">
-        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start.md" target="_blank" rel="noopener" class="cta-link-secondary">
+        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start.md" class="cta-link-secondary">
           Read the full quick-start guide &rarr;
         </a>
       </div>
 
-      <!-- Docker alternative -->
       <div class="docker-alt">
         <div class="docker-alt-label">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <rect x="2" y="8" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
             <rect x="8" y="8" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
             <rect x="8" y="2" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
@@ -689,7 +627,7 @@
             <div class="t-comment"># Available at http://localhost:5010</div>
           </div>
         </div>
-        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start-docker.md" target="_blank" rel="noopener" class="docker-alt-guide">
+        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start-docker.md" class="docker-alt-guide">
           Docker quick-start guide &rarr;
         </a>
       </div>
@@ -709,19 +647,19 @@
           </p>
         </div>
         <div class="req-cards">
-          <div class="req-card">
+          <div class="req-card observe">
             <div class="req-card-icon">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                 <circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.75"/>
                 <path d="M7 11l3 3 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h4>Python 3.13+</h4>
+            <h4>Python 3.12+</h4>
             <p>With the <code>uv</code> package manager</p>
           </div>
-          <div class="req-card">
+          <div class="req-card observe">
             <div class="req-card-icon">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                 <circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.75"/>
                 <path d="M7 11l3 3 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -729,9 +667,9 @@
             <h4>Adobe Analytics access</h4>
             <p>Report suite ID and API credentials</p>
           </div>
-          <div class="req-card">
+          <div class="req-card observe">
             <div class="req-card-icon">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                 <circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.75"/>
                 <path d="M7 11l3 3 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -739,14 +677,14 @@
             <h4>Adobe Developer Console</h4>
             <p>OAuth2 client credentials (API 2.0)</p>
           </div>
-          <div class="req-card req-card-optional">
+          <div class="req-card req-card-optional observe">
             <div class="req-card-icon">
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                 <circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.75" stroke-dasharray="3 2"/>
               </svg>
             </div>
             <h4>Adobe Launch property</h4>
-            <p>Optional — for Launch data lineage</p>
+            <p>Optional: for Launch data lineage</p>
           </div>
         </div>
       </div>
@@ -755,10 +693,10 @@
 
   <!-- ─── Footer ────────────────────────────────────────────────── -->
   <footer class="footer">
-    <div class="container footer-inner">
+    <div class="footer-inner">
       <div class="footer-brand">
         <a href="#" class="nav-logo">
-          <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="28" height="28" alt="Codex" aria-hidden="true" />
+          <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="22" height="22" alt="Codex" aria-hidden="true" />
           <span>Codex</span>
         </a>
         <p class="footer-tagline">The living data dictionary for Adobe Analytics.</p>
@@ -776,23 +714,37 @@
         <div class="footer-col">
           <h5>Resources</h5>
           <ul>
-            <li><a href="https://github.com/maxisdigital/codex" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv docs</a></li>
-            <li><a href="https://developer.adobe.com/analytics-apis/docs/2.0/" target="_blank" rel="noopener">Adobe Analytics API</a></li>
+            <li><a href="https://github.com/maxisdigital/codex">GitHub</a></li>
+            <li><a href="https://docs.astral.sh/uv/">uv docs</a></li>
+            <li><a href="https://developer.adobe.com/analytics-apis/docs/2.0/">Adobe Analytics API</a></li>
           </ul>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
       <div class="container">
-        <span>Codex v2 · Built with <a href="https://flask.palletsprojects.com/">Flask</a> &amp; <a href="https://www.python.org/">Python</a></span>
-        <span class="footer-sep">·</span>
+        <span>Codex v2 &middot; Built with <a href="https://flask.palletsprojects.com/">Flask</a> &amp; <a href="https://www.python.org/">Python</a></span>
+        <span class="footer-sep">&middot;</span>
         <span>Converted from <a href="https://github.com/Brontojoris/rshiny-sdr">RShiny SDR</a></span>
-        <span class="footer-sep">·</span>
+        <span class="footer-sep">&middot;</span>
         <span>Part of the <a href="https://github.com/maxisdigital/mission-control">Mission Control suite</a></span>
       </div>
     </div>
   </footer>
+
+  <!-- ─── Lightbox ──────────────────────────────────────────────── -->
+  <div class="lb-overlay" id="lbOverlay" role="dialog" aria-modal="true" aria-label="Image viewer" hidden>
+    <button class="lb-close" id="lbClose" aria-label="Close">&times; close</button>
+    <div class="lb-box">
+      <img class="lb-img" id="lbImg" src="" alt="" />
+      <div class="lb-caption">
+        <span class="lb-caption-text" id="lbCaption"></span>
+        <span class="lb-counter" id="lbCounter"></span>
+      </div>
+      <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous image">&#8249;</button>
+      <button class="lb-nav lb-next" id="lbNext" aria-label="Next image">&#8250;</button>
+    </div>
+  </div>
 
   <script src="{{ url_for('static', filename='brochure/js/main.js') }}"></script>
 </body>

@@ -5,44 +5,6 @@
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ─── Star field ──────────────────────────────────────────────────
-  const starCanvas = document.getElementById('starCanvas');
-  if (starCanvas && !prefersReduced) {
-    const ctx = starCanvas.getContext('2d');
-    let stars = [];
-
-    function seedStars(w, h) {
-      const count = Math.round((w * h) / 5500);
-      stars = Array.from({ length: count }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        r: Math.random() * 0.9 + 0.3,
-        a: Math.random() * 0.5 + 0.2,
-      }));
-    }
-
-    function drawStars() {
-      const w = starCanvas.width, h = starCanvas.height;
-      ctx.clearRect(0, 0, w, h);
-      stars.forEach(s => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
-        ctx.fill();
-      });
-    }
-
-    function resizeCanvas() {
-      starCanvas.width  = starCanvas.offsetWidth  || window.innerWidth;
-      starCanvas.height = starCanvas.offsetHeight || window.innerHeight;
-      seedStars(starCanvas.width, starCanvas.height);
-      drawStars();
-    }
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas, { passive: true });
-  }
-
   // ─── Sticky nav ─────────────────────────────────────────────────
   const nav = document.getElementById('nav');
   const onScroll = () => {
@@ -212,21 +174,66 @@
     startProgressAnimation();
   }
 
-  // ─── Intersection observer — fade-in on scroll ───────────────────
-  const observerOpts = { threshold: 0.08, rootMargin: '0px 0px -20px 0px' };
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, observerOpts);
+  // ─── Lightbox ────────────────────────────────────────────────────
+  const lbOverlay = document.getElementById('lbOverlay');
+  const lbImg     = document.getElementById('lbImg');
+  const lbCaption = document.getElementById('lbCaption');
+  const lbCounter = document.getElementById('lbCounter');
+  const lbClose   = document.getElementById('lbClose');
+  const lbPrev    = document.getElementById('lbPrev');
+  const lbNext    = document.getElementById('lbNext');
 
-  document.querySelectorAll('.feature-card, .lineage-list li, .req-card, .diagram-card').forEach((el, i) => {
-    el.classList.add('observe');
-    el.style.setProperty('--delay', `${i * 60}ms`);
-    observer.observe(el);
-  });
+  if (lbOverlay) {
+    const gallery = [];
+
+    // Hero image — index 0
+    const heroImg = document.querySelector('.hero-image');
+    if (heroImg) {
+      gallery.push({ src: heroImg.src, alt: heroImg.alt, caption: 'Codex \u2014 Configuration Hub' });
+      heroImg.addEventListener('click', () => openLightbox(0));
+    }
+
+    // Carousel slides — indices 1 … n
+    document.querySelectorAll('.carousel-slide').forEach((fig, i) => {
+      const img    = fig.querySelector('img');
+      const strong = fig.querySelector('figcaption strong');
+      gallery.push({ src: img.src, alt: img.alt, caption: strong ? strong.textContent : '' });
+      fig.addEventListener('click', () => openLightbox(i + 1));
+    });
+
+    let lbCurrent = 0;
+
+    function openLightbox(idx) {
+      lbCurrent = (idx + gallery.length) % gallery.length;
+      const item = gallery[lbCurrent];
+      lbImg.src = item.src;
+      lbImg.alt = item.alt;
+      lbCaption.textContent = item.caption;
+      lbCounter.textContent = 'Image ' + (lbCurrent + 1) + ' of ' + gallery.length;
+      lbOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lbOverlay.hidden = true;
+      lbImg.src = '';
+      document.body.style.overflow = '';
+    }
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbPrev.addEventListener('click',  () => openLightbox(lbCurrent - 1));
+    lbNext.addEventListener('click',  () => openLightbox(lbCurrent + 1));
+
+    lbOverlay.addEventListener('click', (e) => {
+      if (e.target === lbOverlay) closeLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (lbOverlay.hidden) return;
+      if (e.key === 'Escape')     closeLightbox();
+      if (e.key === 'ArrowLeft')  openLightbox(lbCurrent - 1);
+      if (e.key === 'ArrowRight') openLightbox(lbCurrent + 1);
+    });
+  }
 
 })();
