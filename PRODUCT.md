@@ -4,31 +4,44 @@
 
 both
 
+## Surface Personalities
+
+Codex has two distinct surfaces with intentionally different visual identities. They share voice and values but not aesthetics.
+
+- **Brochure** (`/`): The warm face. Feels like a senior practitioner's personal site circa 2001 — handmade, deliberate, trustworthy. Georgia serif, visible structure, horizontal rules as section dividers, links that look like links. The "Personal Webmaster" register: A List Apart meets a specialist's domain.
+- **Application** (`/<client>/`): The capable hands. Feels like purpose-built desktop software running in a browser. jQuery UI Themeroller era — floating panels with drag chrome, hard drop shadows, tab strips, status bar, dense windowed layout. Visible affordances everywhere.
+
 ## Users
 
-Adobe Analytics practitioners: admins, implementation consultants, and developers who manage report suite configuration day-to-day. They are technically fluent, comfortable with API concepts, and use Codex as a working reference — not a one-time lookup. They know what eVars and Props are; the tool does not need to explain them. Secondary audience: analysts who need to understand what a variable means or how a segment is constructed, but who don't manage the implementation.
+Adobe Analytics practitioners: admins, implementation consultants, and developers who manage report suite configuration day-to-day. Technically fluent, comfortable with API concepts, use Codex as a working reference — not a one-time lookup. They know what eVars and Props are. The tool does not explain them.
+
+Secondary: analysts who need to understand what a variable means or how a segment is constructed, but who don't manage the implementation.
 
 ## Product Purpose
 
-Codex is a living data dictionary and configuration intelligence tool for Adobe Analytics. It surfaces the complete picture of a report suite — every eVar, Prop, Event, Segment, Calculated Metric, Processing Rule, and Marketing Channel — in a fast, searchable interface with full data lineage tracing across the implementation. Success looks like: a practitioner can answer "where does this variable get its value?" in under 30 seconds without touching the Adobe UI.
+Codex is a living data dictionary and configuration intelligence tool for Adobe Analytics. It surfaces the complete picture of a report suite — every eVar, Prop, Event, Segment, Calculated Metric, Processing Rule, and Marketing Channel — in a fast, searchable interface with full data lineage tracing across the implementation. Success: a practitioner can answer "where does this variable get its value?" in under 30 seconds without touching the Adobe UI.
 
 ## Brand Personality
 
-Intelligent and exploratory. Codex surfaces connections and invites discovery — it knows more than it shows upfront, and rewards curiosity. The metaphor already established in the product is "Mission Control": calm, precise authority over complex systems. Three words: decoded, connected, authoritative.
+Warm expertise. The practitioner's reference — trustworthy because it was built by someone who has done this work, not by a marketing team. Three words: decoded, trustworthy, capable.
+
+The brochure surface reads like a craftsperson's personal domain: handmade choices, visible structure, no SaaS gloss. The app surface reads like specialized software: dense, capable, every affordance visible and purposeful.
 
 ## Anti-references
 
-- Generic SaaS dashboards: blue-gradient heroes, hero-metric cards, "Transform your data" headline copy, the Tableau / Looker aesthetic. Codex is a practitioner tool, not a marketing site for a BI platform.
-- Consumer-app playful: rounded bubbles, pastel gradients, emoji-heavy UI. Wrong register for a technical reference tool used by implementers.
+- AI-generated design aesthetic: smooth symmetric layouts, indigo/violet gradient palettes, perfectly balanced asymmetric grids, star canvas backgrounds, CSS counter feature rows. If a teenager can clock it in three seconds, it's failed.
+- Generic SaaS landing pages: hero-metric cards, "Transform your data" copy, Vercel/Stripe/Linear visual language. Codex is a practitioner tool built by a practitioner.
+- Consumer-app playful: pastel gradients, rounded bubbles, emoji-heavy UI, large card grids.
+- Modern flat design in the app: the iOS/Material You aesthetic of borderless, spacious, depth-free layouts. The app needs visible chrome, real borders, and layered depth.
 
 ## Design Principles
 
-1. **Show the connections.** The tool's core value is cross-referencing — design should make relationships between variables, rules, and components immediately visible, not buried.
-2. **Expert confidence.** The interface assumes competence. No hand-holding, no tooltips explaining what an eVar is. Density is appropriate; clutter is not.
-3. **Both surfaces, one voice.** The brochure and the product app share the Mission Control metaphor. The landing page should feel like a product made by the same team that made the app — not a separate marketing effort.
-4. **Data is the star.** Chrome, decoration, and structure exist to direct attention to data — never to fill space or signal effort.
-5. **Dark and light are equals.** The tool ships with auto dark/light mode. Both themes must be fully resolved — dark is not an afterthought.
+1. **Two surfaces, two registers.** The brochure is warm and handmade; the app is dense and capable. They share voice but not aesthetics. Do not flatten them toward each other.
+2. **Handmade conviction.** Every choice should feel chosen by a human who cares, not generated by an optimization process. Deliberate asymmetry, texture, and specific quirk over smooth perfection.
+3. **Data is the hero.** In both surfaces, structure exists to surface data. Decoration serves orientation, not atmosphere.
+4. **Expert confidence, no hand-holding.** Users know what an eVar is. The interface doesn't explain; it shows. Density is appropriate.
+5. **Visible affordances.** In the app especially: if something is interactive, it looks interactive. Chrome, borders, and depth communicate capability, not clutter.
 
 ## Accessibility & Inclusion
 
-Best-effort. No formal WCAG target, but focus states, sufficient contrast, and keyboard navigation should be maintained as baseline hygiene. Reduced-motion support via `prefers-reduced-motion` where animations are used.
+Best-effort. No formal WCAG target, but focus states, sufficient contrast, and keyboard navigation maintained as baseline hygiene. Reduced-motion support via `prefers-reduced-motion` where animations are used.
