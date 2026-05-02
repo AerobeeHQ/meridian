@@ -184,13 +184,31 @@
   const lbNext    = document.getElementById('lbNext');
 
   if (lbOverlay) {
-    const gallery = [];
+    const gallery  = [];
+    let lbCurrent  = 0;
+    let lbOpener   = null;  // element that triggered the open — restored on close
+
+    // Focus-trap: the three interactive controls inside the dialog
+    const lbFocusable = [lbClose, lbPrev, lbNext];
+
+    // Make a non-interactive element keyboard-activatable (Enter / Space)
+    function makeActivatable(el, handler) {
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+      el.addEventListener('click', handler);
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handler();
+        }
+      });
+    }
 
     // Hero image — index 0
     const heroImg = document.querySelector('.hero-image');
     if (heroImg) {
       gallery.push({ src: heroImg.src, alt: heroImg.alt, caption: 'Codex \u2014 Configuration Hub' });
-      heroImg.addEventListener('click', () => openLightbox(0));
+      makeActivatable(heroImg, () => openLightbox(0));
     }
 
     // Carousel slides — indices 1 … n
@@ -198,12 +216,11 @@
       const img    = fig.querySelector('img');
       const strong = fig.querySelector('figcaption strong');
       gallery.push({ src: img.src, alt: img.alt, caption: strong ? strong.textContent : '' });
-      fig.addEventListener('click', () => openLightbox(i + 1));
+      makeActivatable(fig, () => openLightbox(i + 1));
     });
 
-    let lbCurrent = 0;
-
     function openLightbox(idx) {
+      lbOpener  = document.activeElement;   // save so we can restore on close
       lbCurrent = (idx + gallery.length) % gallery.length;
       const item = gallery[lbCurrent];
       lbImg.src = item.src;
@@ -212,12 +229,19 @@
       lbCounter.textContent = 'Image ' + (lbCurrent + 1) + ' of ' + gallery.length;
       lbOverlay.hidden = false;
       document.body.style.overflow = 'hidden';
+      lbClose.focus();    // move focus into the dialog immediately
     }
 
     function closeLightbox() {
       lbOverlay.hidden = true;
       lbImg.src = '';
       document.body.style.overflow = '';
+      // Only restore focus if the opener is still in the document (it could have
+      // been removed or disabled while the lightbox was open)
+      if (lbOpener && document.body.contains(lbOpener)) {
+        lbOpener.focus();
+      }
+      lbOpener = null;
     }
 
     lbClose.addEventListener('click', closeLightbox);
@@ -230,9 +254,19 @@
 
     document.addEventListener('keydown', (e) => {
       if (lbOverlay.hidden) return;
-      if (e.key === 'Escape')     closeLightbox();
-      if (e.key === 'ArrowLeft')  openLightbox(lbCurrent - 1);
-      if (e.key === 'ArrowRight') openLightbox(lbCurrent + 1);
+      if (e.key === 'Escape')     { closeLightbox(); return; }
+      if (e.key === 'ArrowLeft')  { openLightbox(lbCurrent - 1); return; }
+      if (e.key === 'ArrowRight') { openLightbox(lbCurrent + 1); return; }
+      // Focus trap: keep Tab cycling within the dialog controls.
+      // If focus is somehow outside the list (idx === -1), default to first.
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const idx  = lbFocusable.indexOf(document.activeElement);
+        const next = e.shiftKey
+          ? (idx <= 0 ? lbFocusable.length - 1 : idx - 1)
+          : (idx + 1) % lbFocusable.length;
+        lbFocusable[next].focus();
+      }
     });
   }
 

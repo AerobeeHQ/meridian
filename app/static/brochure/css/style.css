@@ -1066,7 +1066,8 @@ img         { max-width: 100%; display: block; }
   z-index: 9001;
 }
 
-.lb-close:hover { background: rgba(160, 20, 20, 0.80); }
+.lb-close:hover,
+.lb-close:focus-visible { background: rgba(160, 20, 20, 0.80); outline: 2px solid #fff; outline-offset: 2px; }
 
 .lb-box {
   position: relative;
@@ -1112,7 +1113,7 @@ img         { max-width: 100%; display: block; }
   width: 52px;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0);
+  color: rgba(255, 255, 255, 0.55);
   font-size: 44px;
   font-family: Georgia, serif;
   line-height: 1;
@@ -1124,9 +1125,12 @@ img         { max-width: 100%; display: block; }
   transition: color 0.12s, background 0.12s;
 }
 
-.lb-nav:hover {
+.lb-nav:hover,
+.lb-nav:focus-visible {
   color: #fff;
   background: rgba(0, 0, 0, 0.38);
+  outline: 2px solid #fff;
+  outline-offset: -2px;
 }
 
 .lb-prev { left: 0; }
