@@ -32,9 +32,11 @@ Two distinct surface identities that share hue family and font stack but resolve
 - Diffuse modern drop shadows — structural hard shadows only.
 
 **Kept patterns:**
-- IntersectionObserver scroll reveal for `.lineage-list li`, `.req-card`, `.diagram-card` — still present, removed `.feature-card` selector (no longer exists), `.feature-item` uses its own CSS transitions.
 - Screenshot carousel with progress bar, keyboard/touch/hover pause — unchanged.
 - Step tabs for getting-started section — unchanged.
+
+**Removed patterns:**
+- IntersectionObserver scroll reveal (`animate.js` / `.observe` / `.visible` rules) — stripped entirely. All entrance animation CSS removed from `style.css`. The `main.js` rewrite does not create an IntersectionObserver. Sections are visible immediately on load, matching the period-correct "documents appear instantly" aesthetic of the reference era.
 
 **Color system:**
 OKLCH custom properties. Near-white page background (`oklch(99% 0.003 220)`), panel blue-gray surface (`oklch(94% 0.016 222)`), institutional web-era blue primary (`oklch(42% 0.145 264)`), dark nav strip (`oklch(32% 0.07 255)`). Chroma kept low on neutrals, high only on primary/accent.
