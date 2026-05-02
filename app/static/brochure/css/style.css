@@ -877,7 +877,6 @@ img         { max-width: 100%; display: block; }
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: bold;
-  color: var(--clr-text-2);
   white-space: nowrap;
   color: var(--clr-primary);
 }
