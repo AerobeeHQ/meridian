@@ -6,21 +6,21 @@ This document summarises the planned features for Codex v3. Each item will have 
 
 ## Feature Overview
 
-| # | Feature | Complexity | Status | Plan |
-|---|---------|------------|--------|------|
-| 1 | [User OAuth Login](#1-user-oauth-login) | High | Scaffolded | [v2-004](plans/v2-004-user-oauth-login.md) |
-| 2 | [API 1.4 Deprecation Strategy](#2-api-14-deprecation-strategy) | High | Planned | [v3-002](plans/v3-002-api-14-deprecation-strategy.md) |
-| 3 | [Report Suite Selection in Settings](#3-report-suite-selection-in-settings) | Medium | Planned | — |
-| 4 | [Adobe Launch Property Mapping](#4-adobe-launch-property-mapping) | Low | Planned | — |
-| 5 | [Adobe Spectrum Theme](#5-adobe-spectrum-theme) | Medium | Scaffolded | — |
-| 6 | [Self-Hosted Assets](#6-self-hosted-assets) | Low | Planned | — |
-| 7 | [Unit & Integration Tests](#7-unit--integration-tests) | Medium | Planned | — |
-| 8 | [Documentation Improvements](#8-documentation-improvements) | Low | Ongoing | — |
-| 9 | [Configuration Change Detection](#9-configuration-change-detection) | Medium | Planned | — |
-| 10 | [Implementation Health Scorecard](#10-implementation-health-scorecard) | Medium | Planned | — |
-| 11 | [Export Enhancements](#11-export-enhancements) | Low | Planned | — |
-| 12 | [HTTP Security Hardening](#12-http-security-hardening) | Medium | Planned | — |
-| 13 | [Health Check Endpoint](#13-health-check-endpoint) | Low | Planned | — |
+| # | Feature                                                                      | Complexity  | Status     | Plan                                                  |
+|---|------------------------------------------------------------------------------|-------------|------------|-------------------------------------------------------|
+| 1 | [User OAuth Login](#1-user-oauth-login)                                      | High        | Scaffolded | [v2-004](plans/v2-004-user-oauth-login.md)            |
+| 2 | [API 1.4 Deprecation Strategy](#2-api-14-deprecation-strategy)               | High        | Planned    | [v3-002](plans/v3-002-api-14-deprecation-strategy.md) |
+| 3 | [Report Suite Selection in Settings](#3-report-suite-selection-in-settings)  | Medium      | Planned    | —                                                     |
+| 4 | [Adobe Launch Property Mapping](#4-adobe-launch-property-mapping)            | Low         | Planned    | —                                                     |
+| 5 | [Adobe Spectrum Theme](#5-adobe-spectrum-theme)                              | Medium      | Scaffolded | —                                                     |
+| 6 | [Self-Hosted Assets](#6-self-hosted-assets)                                  | Low         | Planned    | —                                                     |
+| 7 | [Unit & Integration Tests](#7-unit--integration-tests)                       | Medium      | Planned    | —                                                     |
+| 8 | [Documentation Improvements](#8-documentation-improvements)                  | Low         | Ongoing    | —                                                     |
+| 9 | [Configuration Change Detection](#9-configuration-change-detection)          | Medium      | Planned    | —                                                     |
+| 10| [Implementation Health Scorecard](#10-implementation-health-scorecard)       | Medium      | Planned    | —                                                     |
+| 11| [Export Enhancements](#11-export-enhancements)                               | Low         | Planned    | —                                                     |
+| 12| [HTTP Security Hardening](#12-http-security-hardening)                       | Medium      | Planned    | —                                                     |
+| 13| [Health Check Endpoint](#13-health-check-endpoint)                           | Low         | Planned    | —                                                     |
 
 ---
 
