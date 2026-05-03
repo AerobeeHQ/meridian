@@ -1,15 +1,16 @@
 /* ─── Codex Application Chrome ───────────────────────────────────────────── */
 /*                                                                            */
-/* Two-layer architecture:                                                    */
-/*   1. Always-on — structural layout, app chrome, and default visual tokens.*/
-/*      All themes share this chrome. Future themes override the CSS tokens.  */
-/*   2. Classic theme — data-codex-theme="classic". Scopes only the Bootstrap */
-/*      component overrides: gradient buttons, flat badges, table and         */
-/*      accordion styling.                                                    */
+/* Three-layer architecture:                                                  */
+/*   1. Token layer — :root with Classic defaults; themes override below.    */
+/*   2. Always-on — structural layout and nav chrome using those tokens.     */
+/*      Hardcoded surface colors use Bootstrap vars (--bs-body-bg etc.)      */
+/*      so they adapt to Bootstrap's own light/dark mode switching.          */
+/*   3. Classic overrides — compact typography, warm-gray body, jQuery UI    */
+/*      gradient buttons, flat badges, table and accordion reskins.          */
 
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* 1. ALWAYS-ON — structural, chrome, tokens                                  */
+/* TOKEN LAYER                                                                 */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -17,31 +18,79 @@
   --nav-h: 36px;
   --sb-h:  24px;
 
-  /* Typography */
+  /* Typography (Classic values; Light/Dark inherit Bootstrap's system stack) */
   --font: Verdana, Arial, Helvetica, sans-serif;
   --mono: Consolas, 'Lucida Console', 'Courier New', monospace;
 
-  /* Default visual tokens — Classic values.                                  */
-  /* Future themes (Spectrum etc.) override these under their own selector.   */
+  /* Classic nav — compact navy blue */
   --nav-bg:     oklch(32%  0.07   255);
   --nav-hover:  oklch(28%  0.065  255);
   --nav-border: oklch(26%  0.060  255);
   --nav-text:   oklch(95%  0.003  220);
-  --chrome:     oklch(94%  0.008   55);
-  --sb-bg:      oklch(88%  0.010   55);
-  --border:     oklch(75%  0.018  225);
-  --primary:    oklch(42%  0.145  264);
+
+  /* Classic chrome — warm gray */
+  --chrome:  oklch(94%  0.008   55);
+  --sb-bg:   oklch(88%  0.010   55);
+  --border:  oklch(75%  0.018  225);
+  --primary: oklch(42%  0.145  264);
 }
+
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+html[data-codex-theme="light"] {
+  --nav-h:      44px;
+  --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
+  --nav-hover:  oklch(38% 0.14 218 / 0.40);
+  --nav-border: oklch(37% 0.14 228);
+  --nav-text:   oklch(99% 0.003 200);
+  --sb-bg:      oklch(94% 0.004 215);
+  --border:     oklch(81% 0.011 215);
+  --primary:    oklch(44% 0.17 265);
+}
+
+/* ── Dark theme ──────────────────────────────────────────────────────────── */
+html[data-codex-theme="dark"] {
+  --nav-h:      44px;
+  --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
+  --nav-hover:  oklch(50% 0.15 28 / 0.40);
+  --nav-border: oklch(41% 0.16 25);
+  --nav-text:   oklch(98% 0.008 46);
+  --sb-bg:      oklch(21% 0.010 255);
+  --border:     oklch(35% 0.012 255);
+  --primary:    oklch(64% 0.14 265);
+}
+
+/* ── Auto — mirrors OS preference ───────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  html[data-codex-theme="auto"] {
+    --nav-h:      44px;
+    --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
+    --nav-hover:  oklch(38% 0.14 218 / 0.40);
+    --nav-border: oklch(37% 0.14 228);
+    --nav-text:   oklch(99% 0.003 200);
+    --sb-bg:      oklch(94% 0.004 215);
+    --border:     oklch(81% 0.011 215);
+    --primary:    oklch(44% 0.17 265);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  html[data-codex-theme="auto"] {
+    --nav-h:      44px;
+    --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
+    --nav-hover:  oklch(50% 0.15 28 / 0.40);
+    --nav-border: oklch(41% 0.16 25);
+    --nav-text:   oklch(98% 0.008 46);
+    --sb-bg:      oklch(21% 0.010 255);
+    --border:     oklch(35% 0.012 255);
+    --primary:    oklch(64% 0.14 265);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* 1. ALWAYS-ON — structural layout, app chrome                               */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
-html, body {
-  font-family: var(--font) !important;
-  font-size:   13px !important;
-  line-height: 1.45;
-  background:  var(--chrome) !important;
-  color:       #333 !important;
-}
-
 body {
   padding-top:    var(--nav-h) !important;
   padding-bottom: var(--sb-h) !important;
@@ -74,7 +123,6 @@ body {
   display:         flex;
   align-items:     center;
   padding:         3px 10px 0 12px;
-  font-family:     var(--font);
   font-size:       12px;
   font-weight:     bold;
   color:           var(--nav-text);
@@ -88,7 +136,7 @@ body {
 }
 
 .app-client-btn:hover,
-.app-client-btn:focus       { background: var(--nav-hover); color: var(--nav-text); text-decoration: none; }
+.app-client-btn:focus         { background: var(--nav-hover); color: var(--nav-text); text-decoration: none; }
 .app-client-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .app-client-btn:focus:not(:focus-visible) { outline: none; }
 
@@ -97,8 +145,8 @@ body {
   position:   fixed;
   top:        var(--nav-h);
   left:       0;
-  background: #fff;
-  border:     1px solid var(--border);
+  background: var(--bs-body-bg, #fff);
+  border:     1px solid var(--bs-border-color, var(--border));
   box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
   min-width:  130px;
   z-index:    200;
@@ -109,9 +157,8 @@ body {
 .app-client-menu a {
   display:         block;
   padding:         4px 10px;
-  font-family:     var(--font);
   font-size:       12px;
-  color:           #333;
+  color:           var(--bs-body-color, #333);
   text-decoration: none;
   text-transform:  capitalize;
 }
@@ -145,7 +192,6 @@ body {
   display:         flex;
   align-items:     center;
   padding:         5px 12px 0;
-  font-family:     var(--font);
   font-size:       12px;
   font-weight:     bold;
   color:           var(--nav-text);
@@ -165,10 +211,10 @@ body {
 }
 
 .app-tab.active {
-  background:    #fff;
-  color:         #333;
+  background:    var(--bs-body-bg, #fff);
+  color:         var(--bs-body-color, #333);
   opacity:       1;
-  border-bottom: 2px solid #fff;
+  border-bottom: 2px solid var(--bs-body-bg, #fff);
   margin-bottom: -2px;
 }
 
@@ -184,8 +230,8 @@ body {
   position:   fixed;
   top:        var(--nav-h);
   left:       0;
-  background: #fff;
-  border:     1px solid var(--border);
+  background: var(--bs-body-bg, #fff);
+  border:     1px solid var(--bs-border-color, var(--border));
   box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
   min-width:  155px;
   z-index:    200;
@@ -197,25 +243,23 @@ body {
 .app-drop-menu a {
   display:         block;
   padding:         4px 10px;
-  font-family:     var(--font);
   font-size:       12px;
-  color:           #333;
+  color:           var(--bs-body-color, #333);
   text-decoration: none;
   white-space:     nowrap;
 }
 
 .app-drop-menu a:hover  { background: oklch(93% 0.015 264); }
 .app-drop-menu a.active { font-weight: bold; color: var(--primary); }
-.app-drop-menu hr       { margin: 3px 0; border-color: #ddd; }
+.app-drop-menu hr       { margin: 3px 0; border-color: var(--bs-border-color, #ddd); }
 
 .drop-menu-hd {
   padding:        4px 10px 2px;
-  font-family:    var(--font);
   font-size:      10px;
   font-weight:    bold;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color:          #999;
+  color:          var(--bs-secondary-color, #999);
 }
 
 /* Right-side nav icons */
@@ -230,7 +274,6 @@ body {
   display:         flex;
   align-items:     center;
   padding:         0 10px;
-  font-family:     var(--font);
   font-size:       12px;
   color:           var(--nav-text);
   opacity:         0.75;
@@ -259,9 +302,8 @@ body {
   display:     flex;
   align-items: center;
   padding:     0 10px;
-  font-family: var(--font);
   font-size:   11px;
-  color:       #555;
+  color:       var(--bs-secondary-color, #555);
   overflow:    hidden;
   white-space: nowrap;
 }
@@ -270,7 +312,7 @@ body {
   font-family: var(--mono);
   font-size:   11px;
   background:  none;
-  color:       #333;
+  color:       var(--bs-body-color, #333);
   padding:     0;
   border:      none;
 }
@@ -279,22 +321,12 @@ body {
 
 /* ─── Content area ───────────────────────────────────────────────────────── */
 .app-content {
-  background:  #fff;
-  border-top:  1px solid var(--border);
-  min-height:  calc(100vh - var(--nav-h) - var(--sb-h));
-  padding:     12px 16px;
+  border-top: 1px solid var(--border);
+  min-height: calc(100vh - var(--nav-h) - var(--sb-h));
+  padding:    12px 16px;
 }
 
-/* ─── Typography overrides ───────────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6    { font-family: var(--font) !important; }
-.form-control, .form-select { font-family: var(--font) !important; font-size: 12px !important; }
-.btn                        { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
-.monospace, .pre-code       { font-family: var(--mono) !important; font-size: 11px !important; }
-code                        { font-family: var(--mono) !important; font-size: 11px !important; }
-
 /* ─── Table ──────────────────────────────────────────────────────────────── */
-.table { font-family: var(--font) !important; font-size: 12px !important; }
-
 #dataTable thead th {
   position: sticky !important;
   top:      var(--nav-h) !important;
@@ -317,16 +349,15 @@ code                        { font-family: var(--mono) !important; font-size: 11
   top:           100%;
   left: 0; right: 0;
   z-index:       1050;
-  background:    #fff;
-  border:        1px solid #ced4da;
+  background:    var(--bs-body-bg, #fff);
+  border:        1px solid var(--bs-border-color, #ced4da);
   border-radius: 2px;
   margin-top:    2px;
   box-shadow:    2px 3px 6px rgba(0,0,0,0.18);
-  font-family:   var(--font);
   font-size:     12px;
 }
 
-.custom-select-search       { border: none; border-bottom: 1px solid #dee2e6; border-radius: 0; margin: 0; }
+.custom-select-search       { border: none; border-bottom: 1px solid var(--bs-border-color, #dee2e6); border-radius: 0; margin: 0; }
 .custom-select-search:focus { box-shadow: none; border-bottom-color: var(--primary); }
 
 .custom-select-options               { max-height: 240px; overflow-y: auto; }
@@ -337,10 +368,39 @@ code                        { font-family: var(--mono) !important; font-size: 11
 
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* 2. CLASSIC THEME — Bootstrap component overrides                           */
+/* 2. CLASSIC THEME — compact typography + Bootstrap component overrides      */
 /*    Activated by: data-codex-theme="classic" on <html>                      */
-/*    Nav/chrome/fonts above are always-on and shared across all themes.      */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Base and typography ────────────────────────────────────────────────── */
+html[data-codex-theme="classic"],
+html[data-codex-theme="classic"] body {
+  font-family: var(--font) !important;
+  font-size:   13px !important;
+  line-height: 1.45;
+  background:  var(--chrome) !important;
+  color:       #333 !important;
+}
+
+html[data-codex-theme="classic"] .app-content { background: #fff; }
+
+html[data-codex-theme="classic"] h1,
+html[data-codex-theme="classic"] h2,
+html[data-codex-theme="classic"] h3,
+html[data-codex-theme="classic"] h4,
+html[data-codex-theme="classic"] h5,
+html[data-codex-theme="classic"] h6 { font-family: var(--font) !important; }
+
+html[data-codex-theme="classic"] .form-control,
+html[data-codex-theme="classic"] .form-select { font-family: var(--font) !important; font-size: 12px !important; }
+
+html[data-codex-theme="classic"] .btn { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
+
+html[data-codex-theme="classic"] .monospace,
+html[data-codex-theme="classic"] .pre-code,
+html[data-codex-theme="classic"] code { font-family: var(--mono) !important; font-size: 11px !important; }
+
+html[data-codex-theme="classic"] .table { font-family: var(--font) !important; font-size: 12px !important; }
 
 /* ─── Table ──────────────────────────────────────────────────────────────── */
 html[data-codex-theme="classic"] #dataTable thead th {
