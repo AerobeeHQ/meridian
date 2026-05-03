@@ -9,15 +9,20 @@
     <!-- Pre-paint theme init — must run before CSS to avoid FOUC -->
     <script>
         (function () {
-            var stored = localStorage.getItem('codex-theme') || 'auto';
-            var resolved = stored === 'auto'
-                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                : stored;
-            document.documentElement.setAttribute('data-bs-theme', resolved);
+            var stored = localStorage.getItem('codex-theme') || 'classic';
+            var bsTheme;
+            if (stored === 'classic') {
+                bsTheme = 'light';      // Bootstrap base under Classic; Classic CSS handles visuals
+            } else if (stored === 'auto') {
+                bsTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            } else {
+                bsTheme = stored;       // 'light' or 'dark'
+            }
+            document.documentElement.setAttribute('data-bs-theme', bsTheme);
             document.documentElement.setAttribute('data-codex-theme', stored);
-            // Always register the media query listener; only acts when 'auto' is the stored preference
+            // Media query listener — only relevant when 'auto' is active
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-                if ((localStorage.getItem('codex-theme') || 'auto') === 'auto') {
+                if ((localStorage.getItem('codex-theme') || 'classic') === 'auto') {
                     document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
                 }
             });

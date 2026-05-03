@@ -18,6 +18,13 @@
                 </p>
                 <div class="d-flex gap-3 flex-wrap" id="themeSelector">
                     <button type="button" class="btn btn-outline-secondary theme-btn d-flex align-items-center gap-2"
+                            data-theme="classic" style="min-width: 130px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5V12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12V3.5zM1.5 3a.5.5 0 0 0-.5.5V5h14V3.5a.5.5 0 0 0-.5-.5h-13zM15 6H1v6a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5V6z"/>
+                        </svg>
+                        Classic
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary theme-btn d-flex align-items-center gap-2"
                             data-theme="auto" style="min-width: 130px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -70,17 +77,22 @@
 <script>
     (function () {
         var descriptions = {
-            auto:  'Follows your OS or browser setting. Switches automatically if you change your system preference.',
-            light: 'Always use the light theme.',
-            dark:  'Always use the dark theme.'
+            classic: 'The jQuery UI-era look: web-era blue nav, warm gray chrome, gradient buttons. The default Codex design.',
+            auto:    'Follows your OS or browser setting. Switches automatically if you change your system preference.',
+            light:   'Bootstrap default light theme.',
+            dark:    'Bootstrap default dark theme.'
         };
 
         function applyTheme(stored) {
-            var resolved = stored;
-            if (stored === 'auto') {
-                resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            var bsTheme;
+            if (stored === 'classic') {
+                bsTheme = 'light';
+            } else if (stored === 'auto') {
+                bsTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            } else {
+                bsTheme = stored;
             }
-            document.documentElement.setAttribute('data-bs-theme', resolved);
+            document.documentElement.setAttribute('data-bs-theme', bsTheme);
             document.documentElement.setAttribute('data-codex-theme', stored);
             localStorage.setItem('codex-theme', stored);
 
@@ -97,7 +109,7 @@
         }
 
         // Init on load
-        var current = localStorage.getItem('codex-theme') || 'auto';
+        var current = localStorage.getItem('codex-theme') || 'classic';
         applyTheme(current);
 
         // Button clicks
