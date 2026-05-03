@@ -64,7 +64,7 @@ body {
 .app-client-btn {
   display:       flex;
   align-items:   center;
-  padding:       0 10px 0 12px;
+  padding:       3px 10px 0 12px;
   font-family:   var(--font);
   font-size:     12px;
   font-weight:   bold;
@@ -87,8 +87,8 @@ body {
 
 .app-client-menu {
   display:    none;
-  position:   absolute;
-  top:        100%;
+  position:   fixed;
+  top:        var(--nav-h);
   left:       0;
   background: #fff;
   border:     1px solid var(--border);
@@ -128,10 +128,17 @@ body {
 
 .app-tabs::-webkit-scrollbar { display: none; }
 
+/* Make each <li> a flex container so the <a.app-tab> stretches to full nav height */
+.app-tabs > li {
+  display:     flex;
+  align-items: stretch;
+  margin-top: -2px;
+}
+
 .app-tab {
   display:     flex;
   align-items: center;
-  padding:     0 12px;
+  padding:     5px 12px 0;
   font-family: var(--font);
   font-size:   12px;
   font-weight: bold;
@@ -168,8 +175,8 @@ body {
 
 .app-drop-menu {
   display:    none;
-  position:   absolute;
-  top:        100%;
+  position:   fixed;
+  top:        var(--nav-h);
   left:       0;
   background: #fff;
   border:     1px solid var(--border);
@@ -348,3 +355,102 @@ code                        { font-family: var(--mono) !important; font-size: 11
 .custom-select-option:hover   { background: oklch(93% 0.015 264); }
 .custom-select-option.selected { background: var(--primary); color: #fff; }
 .custom-select-option.selected:hover { background: oklch(36% 0.12 264); }
+
+/* ─── jQuery UI-era button overrides ────────────────────────────────────────── */
+/* Target outline buttons used in detail views — keeps DataTables buttons intact */
+.btn-outline-primary,
+.btn-outline-secondary {
+  background:    linear-gradient(to bottom, #f5f5f5 0%, #e2e2e2 100%) !important;
+  border:        1px solid #a8a8a8 !important;
+  color:         #333 !important;
+  box-shadow:    none !important;
+  text-shadow:   none !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  background:    linear-gradient(to bottom, #ebebeb 0%, #d4d4d4 100%) !important;
+  border-color:  #888 !important;
+  color:         #222 !important;
+  box-shadow:    none !important;
+}
+
+.btn-outline-primary:active,
+.btn-outline-secondary:active {
+  background:    linear-gradient(to bottom, #d4d4d4 0%, #ebebeb 100%) !important;
+  box-shadow:    inset 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+
+.btn-outline-primary:focus-visible,
+.btn-outline-secondary:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+
+.btn-outline-primary:disabled,
+.btn-outline-secondary:disabled {
+  background:   linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%) !important;
+  border-color: #c8c8c8 !important;
+  color:        #999 !important;
+  opacity:      1 !important;
+}
+
+/* ─── jQuery UI-era badge overrides ─────────────────────────────────────────── */
+/* Replaces Bootstrap's pill badges with flat, bordered period-appropriate labels */
+.badge {
+  font-family:    var(--font) !important;
+  font-size:      10px !important;
+  font-weight:    normal !important;
+  border-radius:  2px !important;
+  padding:        2px 5px !important;
+  letter-spacing: 0 !important;
+  line-height:    1.4 !important;
+}
+
+.badge.bg-primary {
+  background-color: #d4e5f5 !important;
+  color:            #1a4f7a !important;
+  border:           1px solid #a8c8e8 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #e8e8e8 !important;
+  color:            #555 !important;
+  border:           1px solid #c8c8c8 !important;
+}
+
+.badge.bg-success {
+  background-color: #dff0d8 !important;
+  color:            #3a6b3a !important;
+  border:           1px solid #c3e6cb !important;
+}
+
+.badge.bg-info {
+  background-color: #d4edf7 !important;
+  color:            #2a6e8a !important;
+  border:           1px solid #b0d8eb !important;
+}
+
+.badge.bg-warning {
+  background-color: #fdf5d8 !important;
+  color:            #7a5c1a !important;
+  border:           1px solid #f0d98a !important;
+}
+
+.badge.bg-danger,
+.badge.bg-danger-subtle {
+  background-color: #f5dede !important;
+  color:            #8a3030 !important;
+  border:           1px solid #e8c4c4 !important;
+}
+
+.badge.bg-light,
+.badge.text-dark.bg-light {
+  background-color: #f5f5f5 !important;
+  color:            #555 !important;
+  border:           1px solid #c8c8c8 !important;
+}
+
+/* Undo Bootstrap's text-danger-emphasis override on danger-subtle badges */
+.badge.text-danger-emphasis { color: #8a3030 !important; }
