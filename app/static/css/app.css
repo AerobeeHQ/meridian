@@ -82,6 +82,14 @@ body {
   background: var(--nav-hover);
   color: var(--nav-text);
   text-decoration: none;
+}
+
+.app-client-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.app-client-btn:focus:not(:focus-visible) {
   outline: none;
 }
 

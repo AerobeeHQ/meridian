@@ -6,6 +6,24 @@
     <title>{{ title }} - {{ app_title }}</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png">
 
+    <!-- Pre-paint theme init — must run before CSS to avoid FOUC -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('codex-theme') || 'auto';
+            var resolved = stored === 'auto'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : stored;
+            document.documentElement.setAttribute('data-bs-theme', resolved);
+            document.documentElement.setAttribute('data-codex-theme', stored);
+            // Always register the media query listener; only acts when 'auto' is the stored preference
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+                if ((localStorage.getItem('codex-theme') || 'auto') === 'auto') {
+                    document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
+    </script>
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -25,7 +43,7 @@
         <!-- Client switcher -->
         <div class="app-client">
             {% if all_clients | length > 1 %}
-            <button class="app-client-btn" data-drop="clientMenu" aria-haspopup="true" title="{{ suite_name }} ({{ rsid }})">
+            <button class="app-client-btn" data-drop="clientMenu" aria-haspopup="true" aria-expanded="false" aria-controls="clientMenu" title="{{ suite_name }} ({{ rsid }})">
                 {{ client_slug }} <span aria-hidden="true">&#9662;</span>
             </button>
             <div class="app-client-menu" id="clientMenu">
@@ -49,21 +67,21 @@
             <li><a class="app-tab {% if active_tab == 'calculated-metrics' %}active{% endif %}" href="/{{ client_slug }}/calculated-metrics">Metrics</a></li>
             <li><a class="app-tab {% if active_tab == 'processing-rules' %}active{% endif %}" href="/{{ client_slug }}/processing-rules">Proc Rules</a></li>
             <li class="app-tab-wrap">
-                <a class="app-tab {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-drop="channelMenu" aria-haspopup="true">Channels &#9662;</a>
-                <div class="app-drop-menu" id="channelMenu">
+                <a class="app-tab {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-drop="channelMenu" aria-haspopup="true" aria-expanded="false" aria-controls="channelMenu">Channels &#9662;</a>
+                <div class="app-drop-menu" id="channelMenu" role="menu">
                     <div class="drop-menu-hd">Marketing Channels</div>
                     <a class="{% if active_tab == 'marketing-channels' %}active{% endif %}" href="/{{ client_slug }}/marketing-channels">Channel Setup</a>
                     <a class="{% if active_tab == 'channel-rules' %}active{% endif %}" href="/{{ client_slug }}/channel-rules">Channel Rules</a>
                 </div>
             </li>
             <li class="app-tab-wrap">
-                <a class="app-tab {% if active_tab in ['settings', 'report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-drop="gearMenu" aria-label="More options" aria-haspopup="true">
+                <a class="app-tab {% if active_tab in ['settings', 'report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-drop="gearMenu" aria-label="More options" aria-haspopup="true" aria-expanded="false" aria-controls="gearMenu">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" style="vertical-align:-0.1em;">
                         <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
                         <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.474l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
                     </svg>
                 </a>
-                <div class="app-drop-menu app-drop-menu-right" id="gearMenu">
+                <div class="app-drop-menu app-drop-menu-right" id="gearMenu" role="menu">
                     <a class="{% if active_tab == 'settings' %}active{% endif %}" href="/{{ client_slug }}/settings">Settings</a>
                     <hr>
                     <a href="/{{ client_slug }}/report-suites">Report Suites</a>
@@ -85,8 +103,8 @@
             {% if config.AUTH_MODE == 'user' %}
             {% if session.get('user_email') %}
             <div class="app-tab-wrap">
-                <a class="app-nav-icon" href="#" data-drop="userMenu" aria-haspopup="true">{{ session.get('user_email') }} &#9662;</a>
-                <div class="app-drop-menu app-drop-menu-right" id="userMenu">
+                <a class="app-nav-icon" href="#" data-drop="userMenu" aria-haspopup="true" aria-expanded="false" aria-controls="userMenu">{{ session.get('user_email') }} &#9662;</a>
+                <div class="app-drop-menu app-drop-menu-right" id="userMenu" role="menu">
                     <a href="{{ url_for('auth.logout') }}">Logout</a>
                 </div>
             </div>
@@ -147,10 +165,34 @@
     <!-- Nav dropdowns -->
     <script>
         (function () {
+            var scrollListenerActive = false;
+
+            function onScrollClose() {
+                closeAll();
+            }
+
+            function attachScrollListener() {
+                if (!scrollListenerActive) {
+                    window.addEventListener('scroll', onScrollClose, true);
+                    scrollListenerActive = true;
+                }
+            }
+
+            function detachScrollListener() {
+                if (scrollListenerActive) {
+                    window.removeEventListener('scroll', onScrollClose, true);
+                    scrollListenerActive = false;
+                }
+            }
+
             function closeAll() {
                 document.querySelectorAll('.app-drop-menu.open, .app-client-menu.open').forEach(function (m) {
                     m.classList.remove('open');
                 });
+                document.querySelectorAll('[data-drop]').forEach(function (t) {
+                    t.setAttribute('aria-expanded', 'false');
+                });
+                detachScrollListener();
             }
 
             document.querySelectorAll('[data-drop]').forEach(function (trigger) {
@@ -173,9 +215,19 @@
                             menu.style.right = 'auto';
                         }
                         menu.classList.add('open');
+                        trigger.setAttribute('aria-expanded', 'true');
+                        attachScrollListener();
                     }
                 });
             });
+
+            // Close on Escape
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeAll();
+            });
+
+            // Close on resize (menus use fixed positioning so coordinates become stale)
+            window.addEventListener('resize', closeAll);
 
             document.addEventListener('click', closeAll);
         })();
