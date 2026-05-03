@@ -1,0 +1,350 @@
+/* ─── Codex Application Chrome ───────────────────────────────────────────── */
+/* Product register — Themeroller / jQuery UI era, web-era blue palette       */
+
+:root {
+  --nav-h:      36px;
+  --sb-h:       24px;
+
+  /* Nav strip */
+  --nav-bg:     oklch(32%  0.07   255);
+  --nav-hover:  oklch(28%  0.065  255);
+  --nav-border: oklch(26%  0.060  255);
+  --nav-text:   oklch(95%  0.003  220);
+
+  /* App chrome — warm gray */
+  --chrome:     oklch(94%  0.008   55);
+  --sb-bg:      oklch(88%  0.010   55);
+  --border:     oklch(75%  0.018  225);
+
+  /* Accent — web-era blue */
+  --primary:    oklch(42%  0.145  264);
+
+  /* Typography */
+  --font: Verdana, Arial, Helvetica, sans-serif;
+  --mono: Consolas, 'Lucida Console', 'Courier New', monospace;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+html, body {
+  font-family: var(--font) !important;
+  font-size:   13px !important;
+  line-height: 1.45;
+  background:  var(--chrome) !important;
+  color:       #333 !important;
+}
+
+body {
+  padding-top:    var(--nav-h) !important;
+  padding-bottom: var(--sb-h) !important;
+}
+
+/* ─── App Nav ────────────────────────────────────────────────────────────── */
+.app-nav {
+  position:    fixed;
+  top: 0; left: 0; right: 0;
+  z-index:     1030;
+  height:      var(--nav-h);
+  background:  var(--nav-bg);
+  border-bottom: 2px solid var(--nav-border);
+  display:     flex;
+  align-items: stretch;
+  overflow:    hidden;
+  white-space: nowrap;
+}
+
+/* Client switcher */
+.app-client {
+  position:      relative;
+  display:       flex;
+  align-items:   stretch;
+  border-right:  1px solid var(--nav-border);
+  flex-shrink:   0;
+}
+
+.app-client-btn {
+  display:       flex;
+  align-items:   center;
+  padding:       0 10px 0 12px;
+  font-family:   var(--font);
+  font-size:     12px;
+  font-weight:   bold;
+  color:         var(--nav-text);
+  background:    none;
+  border:        none;
+  cursor:        pointer;
+  gap:           5px;
+  text-transform: capitalize;
+  text-decoration: none;
+  white-space:   nowrap;
+}
+
+.app-client-btn:hover, .app-client-btn:focus {
+  background: var(--nav-hover);
+  color: var(--nav-text);
+  text-decoration: none;
+  outline: none;
+}
+
+.app-client-menu {
+  display:    none;
+  position:   absolute;
+  top:        100%;
+  left:       0;
+  background: #fff;
+  border:     1px solid var(--border);
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
+  min-width:  130px;
+  z-index:    200;
+}
+
+.app-client-menu.open { display: block; }
+
+.app-client-menu a {
+  display:         block;
+  padding:         4px 10px;
+  font-family:     var(--font);
+  font-size:       12px;
+  color:           #333;
+  text-decoration: none;
+  text-transform:  capitalize;
+}
+
+.app-client-menu a:hover  { background: oklch(93% 0.015 264); }
+.app-client-menu a.active { font-weight: bold; color: var(--primary); }
+
+/* Tab strip */
+.app-tabs {
+  list-style: none;
+  margin:     0;
+  padding:    0;
+  display:    flex;
+  align-items: stretch;
+  flex:       1;
+  min-width:  0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.app-tabs::-webkit-scrollbar { display: none; }
+
+.app-tab {
+  display:     flex;
+  align-items: center;
+  padding:     0 12px;
+  font-family: var(--font);
+  font-size:   12px;
+  font-weight: bold;
+  color:       var(--nav-text);
+  text-decoration: none;
+  opacity:     0.82;
+  border-right: 1px solid var(--nav-border);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:  background 0.1s;
+}
+
+.app-tab:hover {
+  background:      var(--nav-hover);
+  color:           var(--nav-text);
+  opacity:         1;
+  text-decoration: none;
+}
+
+.app-tab.active {
+  background:    #fff;
+  color:         #333;
+  opacity:       1;
+  border-bottom: 2px solid #fff;
+  margin-bottom: -2px; /* cancels the nav's 2px bottom border */
+}
+
+/* Dropdown tab wrapper */
+.app-tab-wrap {
+  position:    relative;
+  display:     flex;
+  align-items: stretch;
+}
+
+.app-drop-menu {
+  display:    none;
+  position:   absolute;
+  top:        100%;
+  left:       0;
+  background: #fff;
+  border:     1px solid var(--border);
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
+  min-width:  155px;
+  z-index:    200;
+}
+
+.app-drop-menu.open    { display: block; }
+.app-drop-menu-right   { left: auto; right: 0; }
+
+.app-drop-menu a {
+  display:         block;
+  padding:         4px 10px;
+  font-family:     var(--font);
+  font-size:       12px;
+  color:           #333;
+  text-decoration: none;
+  white-space:     nowrap;
+}
+
+.app-drop-menu a:hover  { background: oklch(93% 0.015 264); }
+.app-drop-menu a.active { font-weight: bold; color: var(--primary); }
+.app-drop-menu hr       { margin: 3px 0; border-color: #ddd; }
+
+.drop-menu-hd {
+  padding:        4px 10px 2px;
+  font-family:    var(--font);
+  font-size:      10px;
+  font-weight:    bold;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color:          #999;
+}
+
+/* Right-side nav icons */
+.app-nav-right {
+  display:     flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.app-nav-icon {
+  display:     flex;
+  align-items: center;
+  padding:     0 10px;
+  font-family: var(--font);
+  font-size:   12px;
+  color:       var(--nav-text);
+  opacity:     0.75;
+  text-decoration: none;
+  border-left: 1px solid var(--nav-border);
+  gap:         5px;
+  white-space: nowrap;
+  transition:  background 0.1s, opacity 0.1s;
+}
+
+.app-nav-icon:hover {
+  background:      var(--nav-hover);
+  opacity:         1;
+  color:           var(--nav-text);
+  text-decoration: none;
+}
+
+/* ─── Status Bar ─────────────────────────────────────────────────────────── */
+.app-sb {
+  position:   fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index:    1030;
+  height:     var(--sb-h);
+  background: var(--sb-bg);
+  border-top: 1px solid var(--border);
+  display:    flex;
+  align-items: center;
+  padding:    0 10px;
+  font-family: var(--font);
+  font-size:  11px;
+  color:      #555;
+  overflow:   hidden;
+  white-space: nowrap;
+}
+
+.app-sb code {
+  font-family: var(--mono);
+  font-size:   11px;
+  background:  none;
+  color:       #333;
+  padding:     0;
+  border:      none;
+}
+
+.sb-sep { margin: 0 8px; color: var(--border); }
+
+/* ─── Content area ───────────────────────────────────────────────────────── */
+.app-content {
+  background:  #fff;
+  border-top:  1px solid var(--border);
+  min-height:  calc(100vh - var(--nav-h) - var(--sb-h));
+  padding:     12px 16px;
+}
+
+/* ─── Typography overrides ───────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6    { font-family: var(--font) !important; }
+.form-control, .form-select { font-family: var(--font) !important; font-size: 12px !important; }
+.btn                        { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
+.monospace, .pre-code       { font-family: var(--mono) !important; font-size: 11px !important; }
+code                        { font-family: var(--mono) !important; font-size: 11px !important; }
+
+/* ─── Table ──────────────────────────────────────────────────────────────── */
+.table { font-family: var(--font) !important; font-size: 12px !important; }
+
+#dataTable thead th {
+  position:         sticky !important;
+  top:              var(--nav-h) !important;
+  z-index:          2;
+  background-color: oklch(95% 0.006 55) !important;
+  font-family:      var(--font) !important;
+  font-size:        12px !important;
+  font-weight:      bold !important;
+  color:            #333 !important;
+  box-shadow:       0 1px 0 var(--border) !important;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg: rgba(0,0,0,0.02); }
+.table-hover tbody tr:hover                 { --bs-table-bg: oklch(94% 0.015 220) !important; }
+.table tbody tr.selected                    { --bs-table-bg: oklch(88% 0.030 264) !important; }
+.table tbody a                              { color: var(--primary); font-weight: bold; text-decoration: none; }
+.table tbody a:hover                        { text-decoration: underline; }
+.table tbody tr.selected a                  { color: #fff !important; }
+
+/* ─── DataTables controls ────────────────────────────────────────────────── */
+.dataTables_filter label { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 0; }
+.dataTables_filter input { flex: 1; min-width: 120px; }
+.dataTables_wrapper .dt-buttons .btn { margin-right: 4px; }
+.dt-buttons { margin-bottom: 0; }
+
+.btn-secondary {
+  --bs-btn-color:        #444;
+  --bs-btn-bg:           #ececec;
+  --bs-btn-border-color: #cacaca;
+}
+
+.dt-search input.search-active {
+  outline:    2px solid var(--primary);
+  box-shadow: 0 0 6px rgba(42, 95, 143, 0.28);
+}
+
+/* ─── Accordion ──────────────────────────────────────────────────────────── */
+.accordion-button:not(.collapsed) { background-color: oklch(95% 0.006 55); color: #444; }
+
+/* ─── Custom searchable select ───────────────────────────────────────────── */
+.searchable-select-wrapper { position: relative; }
+.custom-searchable-select  { position: relative; width: 100%; }
+.custom-select-display     { width: 100%; text-align: left; cursor: pointer; }
+
+.custom-select-dropdown {
+  position:   absolute;
+  top:        100%;
+  left: 0; right: 0;
+  z-index:    1050;
+  background: #fff;
+  border:     1px solid #ced4da;
+  border-radius: 2px;
+  margin-top: 2px;
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.18);
+  font-family: var(--font);
+  font-size:  12px;
+}
+
+.custom-select-search { border: none; border-bottom: 1px solid #dee2e6; border-radius: 0; margin: 0; }
+.custom-select-search:focus { box-shadow: none; border-bottom-color: var(--primary); }
+
+.custom-select-options     { max-height: 240px; overflow-y: auto; }
+.custom-select-option      { padding: 4px 10px; cursor: pointer; transition: background 0.1s; }
+.custom-select-option:hover   { background: oklch(93% 0.015 264); }
+.custom-select-option.selected { background: var(--primary); color: #fff; }
+.custom-select-option.selected:hover { background: oklch(36% 0.12 264); }

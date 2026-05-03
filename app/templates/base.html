@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Apply theme before paint to prevent flash of unstyled content -->
-    <script>
-        (function() {
-            var stored = localStorage.getItem('codex-theme') || 'auto';
-            var resolved = stored;
-            if (stored === 'auto') {
-                resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            document.documentElement.setAttribute('data-bs-theme', resolved);
-            document.documentElement.setAttribute('data-codex-theme', stored);
-        })();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - {{ app_title }}</title>
@@ -26,400 +14,109 @@
     <link href="https://cdn.datatables.net/buttons/3.2.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/colreorder/2.1.0/css/colReorder.bootstrap5.min.css" rel="stylesheet">
 
-    <style>
-        body {
-            padding-top: 56px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-        }
-        .navbar {
-            background: linear-gradient(135deg, #4a82d4 0%, #179f9b 100%);
-            border-top: 1px solid #777777;
-        }
-        .navbar-brand {
-            font-weight: 600;
-        }
-        .nav-link{
-            color: #fff !important;
-            text-shadow: 1px 1px 5px rgba(25, 99, 99, 0.75);
-        }
-        .nav-link.active{
-            font-weight: bold;
-            color: #fff !important;
-            text-shadow: 1px 1px 5px rgba(25, 99, 99, 1);
-        }
-        .table-container {
-            padding: 20px;
-        }
-        footer {
-            border-top: 1px solid #ddd;
-            padding: 10px 0;
-            margin: 15px;
-            font-size: 11px;
-            color: #888;
-        }
-        footer code {
-            background-color: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-        .notes-status {
-            font-size: 11px;
-            color: #888;
-        }
-        .monospace {
-            font-family: 'Courier New', monospace;
-            font-size: 0.875em;
-        }
-        .pre-code {
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.875em;
-            color: #444;
-        }
-        .dt-buttons {
-            margin-bottom: 0;
-        }
-
-        /* Listing toolbar: stretch filter label+input across its flex-grow-1 container */
-        .dataTables_filter label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            width: 100%;
-            margin-bottom: 0;
-        }
-        .dataTables_filter input {
-            flex: 1;
-            min-width: 120px;
-        }
-        .btn-secondary {
-            --bs-btn-color: #444;
-            --bs-btn-bg: #ececec;
-            --bs-btn-border-color: #cacaca;
-        }
-        .dataTables_wrapper .dt-buttons .btn {
-            margin-right: 5px;
-        }
-        .table-hover tbody tr:hover {
-            --bs-table-bg: #EFF4FA !important;
-        }
-        /* Selected row styling (click to toggle) */
-        .table tbody tr.selected {
-            --bs-table-bg: #d4e5f7 !important;
-        }
-        /* Subtle clickable links for detail pages */
-        .table tbody a {
-            color: #2c5282;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 2px 6px;
-            margin: -2px -6px;
-            border-radius: 4px;
-            transition: background-color 0.15s ease;
-        }
-        .table tbody a:hover {
-            background-color: rgba(102, 126, 234, 0.15);
-            color: #1a365d;
-        }
-        /* Link color when row is selected */
-        .table tbody tr.selected a {
-            color: #fff !important;
-        }
-
-        /* Custom Searchable Select Styles */
-        .searchable-select-wrapper {
-            position: relative;
-        }
-
-        .custom-searchable-select {
-            position: relative;
-            width: 100%;
-        }
-
-        .custom-select-display {
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-        }
-
-        .custom-select-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            z-index: 1050;
-            background: white;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            margin-top: 2px;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-
-        .custom-select-search {
-            border: none;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 0;
-            margin: 0;
-        }
-
-        .custom-select-search:focus {
-            box-shadow: none;
-            border-bottom-color: #86b7fe;
-        }
-
-        .custom-select-options {
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .custom-select-option {
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
-        }
-
-        .custom-select-option:hover {
-            background-color: #f8f9fa;
-        }
-
-        .custom-select-option.selected {
-            background-color: #0d6efd;
-            color: white;
-        }
-
-        .custom-select-option.selected:hover {
-            background-color: #0b5ed7;
-        }
-
-        .accordion-button:not(.collapsed) {
-            background-color: #f5f5f5;  /* light gray */
-            color: #444;
-        }
-
-        /* Listing page: lighter stripe (half Bootstrap default of rgba(0,0,0,0.05)) */
-        .table-striped > tbody > tr:nth-of-type(odd) > * {
-            --bs-table-bg: rgba(0, 0, 0, 0.025);
-        }
-
-        /* Listing page: sticky column headers below the fixed navbar */
-        #dataTable thead th {
-            position: sticky;
-            top: 56px; /* matches body padding-top for fixed navbar */
-            z-index: 2;
-            background-color: #fff;
-            box-shadow: 0 1px 0 #dee2e6;
-        }
-
-        /* ── Dark mode overrides ──────────────────────────────────────────── */
-        [data-bs-theme="dark"] .navbar {
-            background: linear-gradient(135deg, #d4622a 0%, #9b2525 100%);
-        }
-        [data-bs-theme="dark"] .btn-primary {
-            --bs-btn-bg: #c45e28;
-            --bs-btn-border-color: #c45e28;
-            --bs-btn-hover-bg: #a84f21;
-            --bs-btn-hover-border-color: #a84f21;
-            --bs-btn-active-bg: #923f1a;
-            --bs-btn-active-border-color: #923f1a;
-            --bs-btn-disabled-bg: #c45e28;
-            --bs-btn-disabled-border-color: #c45e28;
-        }
-        [data-bs-theme="dark"] .btn-outline-primary {
-            --bs-btn-color: #e07040;
-            --bs-btn-border-color: #c45e28;
-            --bs-btn-hover-bg: #c45e28;
-            --bs-btn-hover-border-color: #c45e28;
-            --bs-btn-active-bg: #a84f21;
-            --bs-btn-active-border-color: #a84f21;
-        }
-        [data-bs-theme="dark"] {
-            --bs-link-color: #e07040;
-            --bs-link-hover-color: #f08858;
-        }
-        [data-bs-theme="dark"] footer {
-            border-top-color: #444;
-            color: #aaa;
-        }
-        [data-bs-theme="dark"] footer code {
-            background-color: #2a2a3a;
-            color: #ccc;
-        }
-        [data-bs-theme="dark"] .pre-code {
-            color: #bbb;
-        }
-        [data-bs-theme="dark"] .table-hover tbody tr:hover {
-            --bs-table-bg: #2a3550 !important;
-        }
-        [data-bs-theme="dark"] .table tbody tr.selected {
-            --bs-table-bg: #1e3a5f !important;
-        }
-        [data-bs-theme="dark"] .table tbody a {
-            color: #90cdf4;
-        }
-        [data-bs-theme="dark"] .table tbody a:hover {
-            background-color: rgba(102, 126, 234, 0.25);
-            color: #bee3f8;
-        }
-        [data-bs-theme="dark"] .table tbody tr.selected a {
-            color: #fff !important;
-        }
-        [data-bs-theme="dark"] #dataTable thead th {
-            background-color: #212529;
-            box-shadow: 0 1px 0 #444;
-        }
-        [data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
-            --bs-table-bg: rgba(255, 255, 255, 0.03);
-        }
-        [data-bs-theme="dark"] .accordion-button:not(.collapsed) {
-            background-color: #2a2a3a;
-            color: #ccc;
-        }
-        [data-bs-theme="dark"] .custom-select-dropdown {
-            background: #2a2a3a;
-            border-color: #444;
-        }
-        [data-bs-theme="dark"] .custom-select-search {
-            background: #2a2a3a;
-            color: #e2e8f0;
-            border-bottom-color: #444;
-        }
-        [data-bs-theme="dark"] .custom-select-option:hover {
-            background-color: #333355;
-        }
-        [data-bs-theme="dark"] .btn-secondary {
-            --bs-btn-color: #ccc;
-            --bs-btn-bg: #2a2a3a;
-            --bs-btn-border-color: #444;
-        }
-
-        /* Active search filter indicator — cross-theme accent colours */
-        .dt-search input.search-active {
-            outline: 2px solid #d4622a;
-            box-shadow: 0 0 7px rgba(212, 98, 42, 0.35);
-            transition: outline 0.15s ease, box-shadow 0.15s ease;
-        }
-        [data-bs-theme="dark"] .dt-search input.search-active {
-            outline: 2px solid #179f9b;
-            box-shadow: 0 0 7px rgba(23, 159, 155, 0.35);
-        }
-
-    </style>
+    <!-- App chrome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
+
+    <!-- App nav -->
+    <nav class="app-nav" id="appNav">
+
+        <!-- Client switcher -->
+        <div class="app-client">
             {% if all_clients | length > 1 %}
-            <div class="nav-item dropdown navbar-brand p-0">
-                <a class="navbar-brand dropdown-toggle mb-0" href="#" data-bs-toggle="dropdown" data-bs-placement="bottom" title="{{ suite_name }} ({{ rsid }})" style="text-transform: capitalize;">{{ client_slug }}</a>
-                <ul class="dropdown-menu">
-                    {% for slug in all_clients %}
-                    <li><a class="dropdown-item {% if slug == client_slug %}active{% endif %}" href="/{{ slug }}/" style="text-transform: capitalize;">{{ slug }}</a></li>
-                    {% endfor %}
-                </ul>
+            <button class="app-client-btn" data-drop="clientMenu" aria-haspopup="true" title="{{ suite_name }} ({{ rsid }})">
+                {{ client_slug }} <span aria-hidden="true">&#9662;</span>
+            </button>
+            <div class="app-client-menu" id="clientMenu">
+                {% for slug in all_clients %}
+                <a href="/{{ slug }}/" class="{% if slug == client_slug %}active{% endif %}">{{ slug }}</a>
+                {% endfor %}
             </div>
             {% else %}
-            <a class="navbar-brand" href="/{{ client_slug }}/" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ suite_name }} ({{ rsid }})" style="text-transform: capitalize;">{{ client_slug }}</a>
+            <a class="app-client-btn" href="/{{ client_slug }}/" title="{{ suite_name }} ({{ rsid }})">{{ client_slug }}</a>
             {% endif %}
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'core' %}active{% endif %}" href="/{{ client_slug }}/core" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Out of the box dimensions">Core</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'props' %}active{% endif %}" href="/{{ client_slug }}/props" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Traffic Variables">Props</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'evars' %}active{% endif %}" href="/{{ client_slug }}/evars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Conversion Variables">eVars</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'events' %}active{% endif %}" href="/{{ client_slug }}/events" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Success Events">Events</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'listvars' %}active{% endif %}" href="/{{ client_slug }}/listvars" data-bs-toggle="tooltip" data-bs-placement="bottom" title="List Variables">ListVars</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'segments' %}active{% endif %}" href="/{{ client_slug }}/segments">Segments</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'calculated-metrics' %}active{% endif %}" href="/{{ client_slug }}/calculated-metrics" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Calculated Metrics">Metrics</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_tab == 'processing-rules' %}active{% endif %}" href="/{{ client_slug }}/processing-rules">Proc Rules</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-bs-toggle="dropdown">Channels</a>
-                        <ul class="dropdown-menu">
-                            <li><h6 class="dropdown-header">Marketing Channels</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'marketing-channels' %}active{% endif %}" href="/{{ client_slug }}/marketing-channels">Channel Setup</a></li>
-                            <li><a class="dropdown-item {% if active_tab == 'channel-rules' %}active{% endif %}" href="/{{ client_slug }}/channel-rules">Channel Rules</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active_tab in ['settings', 'report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-bs-toggle="dropdown" aria-label="More options">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: -0.15em;" aria-hidden="true">
-                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.474l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
-                            </svg>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item {% if active_tab == 'settings' %}active{% endif %}" href="/{{ client_slug }}/settings">Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/{{ client_slug }}/report-suites">Report Suites</a></li>
-                            <li><a class="dropdown-item" href="/{{ client_slug }}/cache">Cache</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Adobe Analytics</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'debug' %}active{% endif %}" href="/{{ client_slug }}/debug">API Debug</a></li>
-                            {% if config.LAUNCH_ENABLED %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Adobe Launch</h6></li>
-                            <li><a class="dropdown-item {% if active_tab == 'reactor-debug' %}active{% endif %}" href="/{{ client_slug }}/debug/reactor">Reactor Debug</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                </ul>
-
-                <ul class="navbar-nav ms-auto">
-                    {# User menu — only rendered when AUTH_MODE is 'user' (v2-004) #}
-                    {% if config.AUTH_MODE == 'user' %}
-                    {% if session.get('user_email') %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            {{ session.get('user_email') }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login with Adobe</a>
-                    </li>
-                    {% endif %}
-                    {% endif %}
-                </ul>
-            </div>
         </div>
+
+        <!-- Tab strip -->
+        <ul class="app-tabs">
+            <li><a class="app-tab {% if active_tab == 'core' %}active{% endif %}" href="/{{ client_slug }}/core">Core</a></li>
+            <li><a class="app-tab {% if active_tab == 'props' %}active{% endif %}" href="/{{ client_slug }}/props">Props</a></li>
+            <li><a class="app-tab {% if active_tab == 'evars' %}active{% endif %}" href="/{{ client_slug }}/evars">eVars</a></li>
+            <li><a class="app-tab {% if active_tab == 'events' %}active{% endif %}" href="/{{ client_slug }}/events">Events</a></li>
+            <li><a class="app-tab {% if active_tab == 'listvars' %}active{% endif %}" href="/{{ client_slug }}/listvars">ListVars</a></li>
+            <li><a class="app-tab {% if active_tab == 'segments' %}active{% endif %}" href="/{{ client_slug }}/segments">Segments</a></li>
+            <li><a class="app-tab {% if active_tab == 'calculated-metrics' %}active{% endif %}" href="/{{ client_slug }}/calculated-metrics">Metrics</a></li>
+            <li><a class="app-tab {% if active_tab == 'processing-rules' %}active{% endif %}" href="/{{ client_slug }}/processing-rules">Proc Rules</a></li>
+            <li class="app-tab-wrap">
+                <a class="app-tab {% if active_tab in ['marketing-channels', 'channel-rules'] %}active{% endif %}" href="#" data-drop="channelMenu" aria-haspopup="true">Channels &#9662;</a>
+                <div class="app-drop-menu" id="channelMenu">
+                    <div class="drop-menu-hd">Marketing Channels</div>
+                    <a class="{% if active_tab == 'marketing-channels' %}active{% endif %}" href="/{{ client_slug }}/marketing-channels">Channel Setup</a>
+                    <a class="{% if active_tab == 'channel-rules' %}active{% endif %}" href="/{{ client_slug }}/channel-rules">Channel Rules</a>
+                </div>
+            </li>
+            <li class="app-tab-wrap">
+                <a class="app-tab {% if active_tab in ['settings', 'report-suites', 'cache', 'debug', 'reactor-debug'] %}active{% endif %}" href="#" data-drop="gearMenu" aria-label="More options" aria-haspopup="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" style="vertical-align:-0.1em;">
+                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.892 3.433-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.892-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.474l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                    </svg>
+                </a>
+                <div class="app-drop-menu app-drop-menu-right" id="gearMenu">
+                    <a class="{% if active_tab == 'settings' %}active{% endif %}" href="/{{ client_slug }}/settings">Settings</a>
+                    <hr>
+                    <a href="/{{ client_slug }}/report-suites">Report Suites</a>
+                    <a href="/{{ client_slug }}/cache">Cache</a>
+                    <hr>
+                    <div class="drop-menu-hd">Adobe Analytics</div>
+                    <a class="{% if active_tab == 'debug' %}active{% endif %}" href="/{{ client_slug }}/debug">API Debug</a>
+                    {% if config.LAUNCH_ENABLED %}
+                    <hr>
+                    <div class="drop-menu-hd">Adobe Launch</div>
+                    <a class="{% if active_tab == 'reactor-debug' %}active{% endif %}" href="/{{ client_slug }}/debug/reactor">Reactor Debug</a>
+                    {% endif %}
+                </div>
+            </li>
+        </ul>
+
+        <!-- Right: user account -->
+        <div class="app-nav-right">
+            {% if config.AUTH_MODE == 'user' %}
+            {% if session.get('user_email') %}
+            <div class="app-tab-wrap">
+                <a class="app-nav-icon" href="#" data-drop="userMenu" aria-haspopup="true">{{ session.get('user_email') }} &#9662;</a>
+                <div class="app-drop-menu app-drop-menu-right" id="userMenu">
+                    <a href="{{ url_for('auth.logout') }}">Logout</a>
+                </div>
+            </div>
+            {% else %}
+            <a class="app-nav-icon" href="{{ url_for('auth.login') }}">Login with Adobe</a>
+            {% endif %}
+            {% endif %}
+        </div>
+
     </nav>
 
-    <!-- Main Content -->
-    <div class="container-fluid table-container">
+    <!-- Main content -->
+    <div class="app-content">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer -->
-    <footer>
+    <!-- Status bar -->
+    <div class="app-sb">
         Report Suite: <code>{{ rsid }}</code>
         {% if cache_info %}
-            Cached: <code>{{ cache_info.created or 'N/A' }}</code>
-            Age: <code>{{ cache_info.age_mins or 0 }} minutes</code>
+        <span class="sb-sep">·</span>
+        Cached: <code>{{ cache_info.created or 'N/A' }}</code>
+        <span class="sb-sep">·</span>
+        Age: <code>{{ cache_info.age_mins or 0 }} min</code>
         {% endif %}
         {% if git_branch or git_commit %}
-            Build: <code>{{ git_branch or 'unknown' }}{% if git_commit %}@{{ git_commit }}{% endif %}</code>
+        <span class="sb-sep">·</span>
+        Build: <code>{{ git_branch or 'unknown' }}{% if git_commit %}@{{ git_commit }}{% endif %}</code>
         {% endif %}
-    </footer>
+    </div>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -447,73 +144,62 @@
     <script src="https://cdn.datatables.net/plug-ins/2.2.1/features/searchHighlight/dataTables.searchHighlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-highlight@3.5.0/jquery.highlight.min.js"></script>
 
-    <!-- Development environment detection -->
+    <!-- Nav dropdowns -->
     <script>
-        // Check if page is accessed from localhost (various forms)
-        const hostname = window.location.hostname;
-        const isLocalhost = hostname === '127.0.0.1' || 
-                           hostname === 'localhost' || 
-                           hostname === '::1' ||
-                           hostname.endsWith('.local');
-        
-        if (isLocalhost) {
-            // Replace the last suffix after the final dash in document.title
-            // If no dash exists, append the Dev suffix
-            if (document.title.includes(' - ')) {
-                document.title = document.title.replace(/- [^-]+$/, '- Dev');
-            } else {
-                document.title = document.title + ' - Dev';
+        (function () {
+            function closeAll() {
+                document.querySelectorAll('.app-drop-menu.open, .app-client-menu.open').forEach(function (m) {
+                    m.classList.remove('open');
+                });
             }
-        }
+
+            document.querySelectorAll('[data-drop]').forEach(function (trigger) {
+                trigger.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var menuId = trigger.getAttribute('data-drop');
+                    var menu = document.getElementById(menuId);
+                    if (!menu) return;
+                    var isOpen = menu.classList.contains('open');
+                    closeAll();
+                    if (!isOpen) menu.classList.add('open');
+                });
+            });
+
+            document.addEventListener('click', closeAll);
+        })();
+    </script>
+
+    <!-- Dev title suffix -->
+    <script>
+        (function () {
+            var h = window.location.hostname;
+            if (h === '127.0.0.1' || h === 'localhost' || h === '::1' || h.endsWith('.local')) {
+                document.title = document.title.includes(' - ')
+                    ? document.title.replace(/- [^-]+$/, '- Dev')
+                    : document.title + ' - Dev';
+            }
+        })();
     </script>
 
     <!-- Row click-to-highlight -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const table = document.getElementById('dataTable');
+        document.addEventListener('DOMContentLoaded', function () {
+            var table = document.getElementById('dataTable');
             if (!table) return;
-
-            table.addEventListener('click', function(e) {
-                const row = e.target.closest('tbody tr');
-                if (!row) return;
-
-                // If clicking a link, don't toggle selection
-                if (e.target.tagName === 'A') return;
-
-                // Toggle: if already selected, deselect; otherwise select this row only
+            table.addEventListener('click', function (e) {
+                var row = e.target.closest('tbody tr');
+                if (!row || e.target.tagName === 'A') return;
                 if (row.classList.contains('selected')) {
                     row.classList.remove('selected');
                 } else {
-                    // Remove selection from any other row
-                    table.querySelectorAll('tbody tr.selected').forEach(r => r.classList.remove('selected'));
+                    table.querySelectorAll('tbody tr.selected').forEach(function (r) { r.classList.remove('selected'); });
                     row.classList.add('selected');
                 }
             });
         });
     </script>
 
-    <!-- Bootstrap tooltip init -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-                new bootstrap.Tooltip(el);
-            });
-        });
-    </script>
-
-    <!-- Theme: keep auto mode in sync if OS preference changes at runtime -->
-    <script>
-        (function() {
-            var mq = window.matchMedia('(prefers-color-scheme: dark)');
-            mq.addEventListener('change', function(e) {
-                if ((localStorage.getItem('codex-theme') || 'auto') === 'auto') {
-                    document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
-                }
-            });
-        })();
-    </script>
-
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
