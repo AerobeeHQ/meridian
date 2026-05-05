@@ -1,38 +1,96 @@
 /* ─── Codex Application Chrome ───────────────────────────────────────────── */
-/* Product register — Themeroller / jQuery UI era, web-era blue palette       */
+/*                                                                            */
+/* Three-layer architecture:                                                  */
+/*   1. Token layer — :root with Classic defaults; themes override below.    */
+/*   2. Always-on — structural layout and nav chrome using those tokens.     */
+/*      Hardcoded surface colors use Bootstrap vars (--bs-body-bg etc.)      */
+/*      so they adapt to Bootstrap's own light/dark mode switching.          */
+/*   3. Classic overrides — compact typography, warm-gray body, jQuery UI    */
+/*      gradient buttons, flat badges, table and accordion reskins.          */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* TOKEN LAYER                                                                 */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --nav-h:      36px;
-  --sb-h:       24px;
+  /* Structural dimensions */
+  --nav-h: 36px;
+  --sb-h:  24px;
 
-  /* Nav strip */
+  /* Typography (Classic values; Light/Dark inherit Bootstrap's system stack) */
+  --font: Verdana, Arial, Helvetica, sans-serif;
+  --mono: Consolas, 'Lucida Console', 'Courier New', monospace;
+
+  /* Classic nav — compact navy blue */
   --nav-bg:     oklch(32%  0.07   255);
   --nav-hover:  oklch(28%  0.065  255);
   --nav-border: oklch(26%  0.060  255);
   --nav-text:   oklch(95%  0.003  220);
 
-  /* App chrome — warm gray */
-  --chrome:     oklch(94%  0.008   55);
-  --sb-bg:      oklch(88%  0.010   55);
-  --border:     oklch(75%  0.018  225);
-
-  /* Accent — web-era blue */
-  --primary:    oklch(42%  0.145  264);
-
-  /* Typography */
-  --font: Verdana, Arial, Helvetica, sans-serif;
-  --mono: Consolas, 'Lucida Console', 'Courier New', monospace;
+  /* Classic chrome — warm gray */
+  --chrome:  oklch(94%  0.008   55);
+  --sb-bg:   oklch(88%  0.010   55);
+  --border:  oklch(75%  0.018  225);
+  --primary: oklch(42%  0.145  264);
 }
+
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+html[data-codex-theme="light"] {
+  --nav-h:      44px;
+  --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
+  --nav-hover:  oklch(38% 0.14 218 / 0.40);
+  --nav-border: oklch(37% 0.14 228);
+  --nav-text:   oklch(99% 0.003 200);
+  --sb-bg:      oklch(94% 0.004 215);
+  --border:     oklch(81% 0.011 215);
+  --primary:    oklch(44% 0.17 265);
+}
+
+/* ── Dark theme ──────────────────────────────────────────────────────────── */
+html[data-codex-theme="dark"] {
+  --nav-h:      44px;
+  --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
+  --nav-hover:  oklch(50% 0.15 28 / 0.40);
+  --nav-border: oklch(41% 0.16 25);
+  --nav-text:   oklch(98% 0.008 46);
+  --sb-bg:      oklch(21% 0.010 255);
+  --border:     oklch(35% 0.012 255);
+  --primary:    oklch(64% 0.14 265);
+}
+
+/* ── Auto — mirrors OS preference ───────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  html[data-codex-theme="auto"] {
+    --nav-h:      44px;
+    --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
+    --nav-hover:  oklch(38% 0.14 218 / 0.40);
+    --nav-border: oklch(37% 0.14 228);
+    --nav-text:   oklch(99% 0.003 200);
+    --sb-bg:      oklch(94% 0.004 215);
+    --border:     oklch(81% 0.011 215);
+    --primary:    oklch(44% 0.17 265);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  html[data-codex-theme="auto"] {
+    --nav-h:      44px;
+    --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
+    --nav-hover:  oklch(50% 0.15 28 / 0.40);
+    --nav-border: oklch(41% 0.16 25);
+    --nav-text:   oklch(98% 0.008 46);
+    --sb-bg:      oklch(21% 0.010 255);
+    --border:     oklch(35% 0.012 255);
+    --primary:    oklch(64% 0.14 265);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* 1. ALWAYS-ON — structural layout, app chrome                               */
+/* ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Base ───────────────────────────────────────────────────────────────── */
-html, body {
-  font-family: var(--font) !important;
-  font-size:   13px !important;
-  line-height: 1.45;
-  background:  var(--chrome) !important;
-  color:       #333 !important;
-}
-
 body {
   padding-top:    var(--nav-h) !important;
   padding-bottom: var(--sb-h) !important;
@@ -40,66 +98,55 @@ body {
 
 /* ─── App Nav ────────────────────────────────────────────────────────────── */
 .app-nav {
-  position:    fixed;
+  position:      fixed;
   top: 0; left: 0; right: 0;
-  z-index:     1030;
-  height:      var(--nav-h);
-  background:  var(--nav-bg);
+  z-index:       1030;
+  height:        var(--nav-h);
+  background:    var(--nav-bg);
   border-bottom: 2px solid var(--nav-border);
-  display:     flex;
-  align-items: stretch;
-  overflow:    hidden;
-  white-space: nowrap;
+  display:       flex;
+  align-items:   stretch;
+  overflow:      hidden;
+  white-space:   nowrap;
 }
 
 /* Client switcher */
 .app-client {
-  position:      relative;
-  display:       flex;
-  align-items:   stretch;
-  border-right:  1px solid var(--nav-border);
-  flex-shrink:   0;
+  position:     relative;
+  display:      flex;
+  align-items:  stretch;
+  border-right: 1px solid var(--nav-border);
+  flex-shrink:  0;
 }
 
 .app-client-btn {
-  display:       flex;
-  align-items:   center;
-  padding:       3px 10px 0 12px;
-  font-family:   var(--font);
-  font-size:     12px;
-  font-weight:   bold;
-  color:         var(--nav-text);
-  background:    none;
-  border:        none;
-  cursor:        pointer;
-  gap:           5px;
-  text-transform: capitalize;
+  display:         flex;
+  align-items:     center;
+  padding:         3px 10px 0 12px;
+  font-size:       12px;
+  font-weight:     bold;
+  color:           var(--nav-text);
+  background:      none;
+  border:          none;
+  cursor:          pointer;
+  gap:             5px;
+  text-transform:  capitalize;
   text-decoration: none;
-  white-space:   nowrap;
+  white-space:     nowrap;
 }
 
-.app-client-btn:hover, .app-client-btn:focus {
-  background: var(--nav-hover);
-  color: var(--nav-text);
-  text-decoration: none;
-}
-
-.app-client-btn:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-}
-
-.app-client-btn:focus:not(:focus-visible) {
-  outline: none;
-}
+.app-client-btn:hover,
+.app-client-btn:focus         { background: var(--nav-hover); color: var(--nav-text); text-decoration: none; }
+.app-client-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.app-client-btn:focus:not(:focus-visible) { outline: none; }
 
 .app-client-menu {
   display:    none;
   position:   fixed;
   top:        var(--nav-h);
   left:       0;
-  background: #fff;
-  border:     1px solid var(--border);
+  background: var(--bs-body-bg, #fff);
+  border:     1px solid var(--bs-border-color, var(--border));
   box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
   min-width:  130px;
   z-index:    200;
@@ -110,9 +157,8 @@ body {
 .app-client-menu a {
   display:         block;
   padding:         4px 10px;
-  font-family:     var(--font);
   font-size:       12px;
-  color:           #333;
+  color:           var(--bs-body-color, #333);
   text-decoration: none;
   text-transform:  capitalize;
 }
@@ -122,41 +168,39 @@ body {
 
 /* Tab strip */
 .app-tabs {
-  list-style: none;
-  margin:     0;
-  padding:    0;
-  display:    flex;
-  align-items: stretch;
-  flex:       1;
-  min-width:  0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  list-style:      none;
+  margin:          0;
+  padding:         0;
+  display:         flex;
+  align-items:     stretch;
+  flex:            1;
+  min-width:       0;
+  overflow-x:      auto;
+  overflow-y:      hidden;
   scrollbar-width: none;
 }
 
 .app-tabs::-webkit-scrollbar { display: none; }
 
-/* Make each <li> a flex container so the <a.app-tab> stretches to full nav height */
 .app-tabs > li {
   display:     flex;
   align-items: stretch;
-  margin-top: -2px;
+  margin-top:  -2px;
 }
 
 .app-tab {
-  display:     flex;
-  align-items: center;
-  padding:     5px 12px 0;
-  font-family: var(--font);
-  font-size:   12px;
-  font-weight: bold;
-  color:       var(--nav-text);
+  display:         flex;
+  align-items:     center;
+  padding:         5px 12px 0;
+  font-size:       12px;
+  font-weight:     bold;
+  color:           var(--nav-text);
   text-decoration: none;
-  opacity:     0.82;
-  border-right: 1px solid var(--nav-border);
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition:  background 0.1s;
+  opacity:         0.82;
+  border-right:    1px solid var(--nav-border);
+  white-space:     nowrap;
+  flex-shrink:     0;
+  transition:      background 0.1s;
 }
 
 .app-tab:hover {
@@ -167,11 +211,11 @@ body {
 }
 
 .app-tab.active {
-  background:    #fff;
-  color:         #333;
+  background:    var(--bs-body-bg, #fff);
+  color:         var(--bs-body-color, #333);
   opacity:       1;
-  border-bottom: 2px solid #fff;
-  margin-bottom: -2px; /* cancels the nav's 2px bottom border */
+  border-bottom: 2px solid var(--bs-body-bg, #fff);
+  margin-bottom: -2px;
 }
 
 /* Dropdown tab wrapper */
@@ -186,38 +230,36 @@ body {
   position:   fixed;
   top:        var(--nav-h);
   left:       0;
-  background: #fff;
-  border:     1px solid var(--border);
+  background: var(--bs-body-bg, #fff);
+  border:     1px solid var(--bs-border-color, var(--border));
   box-shadow: 2px 3px 6px rgba(0,0,0,0.28);
   min-width:  155px;
   z-index:    200;
 }
 
-.app-drop-menu.open    { display: block; }
-.app-drop-menu-right   { left: auto; right: 0; }
+.app-drop-menu.open  { display: block; }
+.app-drop-menu-right { left: auto; right: 0; }
 
 .app-drop-menu a {
   display:         block;
   padding:         4px 10px;
-  font-family:     var(--font);
   font-size:       12px;
-  color:           #333;
+  color:           var(--bs-body-color, #333);
   text-decoration: none;
   white-space:     nowrap;
 }
 
-.app-drop-menu a:hover  { background: oklch(93% 0.015 264); }
+.app-drop-menu a:hover  { background: var(--bs-tertiary-bg, oklch(93% 0.015 264)); }
 .app-drop-menu a.active { font-weight: bold; color: var(--primary); }
-.app-drop-menu hr       { margin: 3px 0; border-color: #ddd; }
+.app-drop-menu hr       { margin: 3px 0; border-color: var(--bs-border-color, #ddd); }
 
 .drop-menu-hd {
   padding:        4px 10px 2px;
-  font-family:    var(--font);
   font-size:      10px;
   font-weight:    bold;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color:          #999;
+  color:          var(--bs-secondary-color, #999);
 }
 
 /* Right-side nav icons */
@@ -229,18 +271,17 @@ body {
 }
 
 .app-nav-icon {
-  display:     flex;
-  align-items: center;
-  padding:     0 10px;
-  font-family: var(--font);
-  font-size:   12px;
-  color:       var(--nav-text);
-  opacity:     0.75;
+  display:         flex;
+  align-items:     center;
+  padding:         0 10px;
+  font-size:       12px;
+  color:           var(--nav-text);
+  opacity:         0.75;
   text-decoration: none;
-  border-left: 1px solid var(--nav-border);
-  gap:         5px;
-  white-space: nowrap;
-  transition:  background 0.1s, opacity 0.1s;
+  border-left:     1px solid var(--nav-border);
+  gap:             5px;
+  white-space:     nowrap;
+  transition:      background 0.1s, opacity 0.1s;
 }
 
 .app-nav-icon:hover {
@@ -252,19 +293,18 @@ body {
 
 /* ─── Status Bar ─────────────────────────────────────────────────────────── */
 .app-sb {
-  position:   fixed;
+  position:    fixed;
   bottom: 0; left: 0; right: 0;
-  z-index:    1030;
-  height:     var(--sb-h);
-  background: var(--sb-bg);
-  border-top: 1px solid var(--border);
-  display:    flex;
+  z-index:     1030;
+  height:      var(--sb-h);
+  background:  var(--sb-bg);
+  border-top:  1px solid var(--border);
+  display:     flex;
   align-items: center;
-  padding:    0 10px;
-  font-family: var(--font);
-  font-size:  11px;
-  color:      #555;
-  overflow:   hidden;
+  padding:     0 10px;
+  font-size:   11px;
+  color:       var(--bs-secondary-color, #555);
+  overflow:    hidden;
   white-space: nowrap;
 }
 
@@ -272,7 +312,7 @@ body {
   font-family: var(--mono);
   font-size:   11px;
   background:  none;
-  color:       #333;
+  color:       var(--bs-body-color, #333);
   padding:     0;
   border:      none;
 }
@@ -281,26 +321,91 @@ body {
 
 /* ─── Content area ───────────────────────────────────────────────────────── */
 .app-content {
-  background:  #fff;
-  border-top:  1px solid var(--border);
-  min-height:  calc(100vh - var(--nav-h) - var(--sb-h));
-  padding:     12px 16px;
+  border-top: 1px solid var(--border);
+  min-height: calc(100vh - var(--nav-h) - var(--sb-h));
+  padding:    12px 16px;
 }
 
-/* ─── Typography overrides ───────────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6    { font-family: var(--font) !important; }
-.form-control, .form-select { font-family: var(--font) !important; font-size: 12px !important; }
-.btn                        { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
-.monospace, .pre-code       { font-family: var(--mono) !important; font-size: 11px !important; }
-code                        { font-family: var(--mono) !important; font-size: 11px !important; }
+/* ─── Table ──────────────────────────────────────────────────────────────── */
+#dataTable thead th {
+  position:   sticky !important;
+  top:        var(--nav-h) !important;
+  z-index:    2;
+  background: var(--bs-body-bg);
+  box-shadow: 0 1px 0 var(--bs-border-color);
+}
+
+/* ─── DataTables controls ────────────────────────────────────────────────── */
+.dataTables_filter label { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 0; }
+.dataTables_filter input { flex: 1; min-width: 120px; }
+.dataTables_wrapper .dt-buttons .btn { margin-right: 4px; }
+.dt-buttons { margin-bottom: 0; }
+
+/* ─── Custom searchable select ───────────────────────────────────────────── */
+.searchable-select-wrapper { position: relative; }
+.custom-searchable-select  { position: relative; width: 100%; }
+.custom-select-display     { width: 100%; text-align: left; cursor: pointer; }
+
+.custom-select-dropdown {
+  position:      absolute;
+  top:           100%;
+  left: 0; right: 0;
+  z-index:       1050;
+  background:    var(--bs-body-bg, #fff);
+  border:        1px solid var(--bs-border-color, #ced4da);
+  border-radius: 2px;
+  margin-top:    2px;
+  box-shadow:    2px 3px 6px rgba(0,0,0,0.18);
+  font-size:     12px;
+}
+
+.custom-select-search       { border: none; border-bottom: 1px solid var(--bs-border-color, #dee2e6); border-radius: 0; margin: 0; }
+.custom-select-search:focus { box-shadow: none; border-bottom-color: var(--primary); }
+
+.custom-select-options               { max-height: 240px; overflow-y: auto; }
+.custom-select-option                { padding: 4px 10px; cursor: pointer; transition: background 0.1s; }
+.custom-select-option:hover          { background: var(--bs-tertiary-bg, oklch(93% 0.015 264)); }
+.custom-select-option.selected       { background: var(--primary); color: #fff; }
+.custom-select-option.selected:hover { background: oklch(36% 0.12 264); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* 2. CLASSIC THEME — compact typography + Bootstrap component overrides      */
+/*    Activated by: data-codex-theme="classic" on <html>                      */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Base and typography ────────────────────────────────────────────────── */
+html[data-codex-theme="classic"],
+html[data-codex-theme="classic"] body {
+  font-family: var(--font) !important;
+  font-size:   13px !important;
+  line-height: 1.45;
+  background:  var(--chrome) !important;
+  color:       #333 !important;
+}
+
+html[data-codex-theme="classic"] .app-content { background: #fff; }
+
+html[data-codex-theme="classic"] h1,
+html[data-codex-theme="classic"] h2,
+html[data-codex-theme="classic"] h3,
+html[data-codex-theme="classic"] h4,
+html[data-codex-theme="classic"] h5,
+html[data-codex-theme="classic"] h6 { font-family: var(--font) !important; }
+
+html[data-codex-theme="classic"] .form-control,
+html[data-codex-theme="classic"] .form-select { font-family: var(--font) !important; font-size: 12px !important; }
+
+html[data-codex-theme="classic"] .btn { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
+
+html[data-codex-theme="classic"] .monospace,
+html[data-codex-theme="classic"] .pre-code,
+html[data-codex-theme="classic"] code { font-family: var(--mono) !important; font-size: 11px !important; }
+
+html[data-codex-theme="classic"] .table { font-family: var(--font) !important; font-size: 12px !important; }
 
 /* ─── Table ──────────────────────────────────────────────────────────────── */
-.table { font-family: var(--font) !important; font-size: 12px !important; }
-
-#dataTable thead th {
-  position:         sticky !important;
-  top:              var(--nav-h) !important;
-  z-index:          2;
+html[data-codex-theme="classic"] #dataTable thead th {
   background-color: oklch(95% 0.006 55) !important;
   font-family:      var(--font) !important;
   font-size:        12px !important;
@@ -309,104 +414,69 @@ code                        { font-family: var(--mono) !important; font-size: 11
   box-shadow:       0 1px 0 var(--border) !important;
 }
 
-.table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg: rgba(0,0,0,0.02); }
-.table-hover tbody tr:hover                 { --bs-table-bg: oklch(94% 0.015 220) !important; }
-.table tbody tr.selected                    { --bs-table-bg: oklch(88% 0.030 264) !important; }
-.table tbody a                              { color: var(--primary); font-weight: bold; text-decoration: none; }
-.table tbody a:hover                        { text-decoration: underline; }
-.table tbody tr.selected a                  { color: #fff !important; }
+html[data-codex-theme="classic"] .table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg: rgba(0,0,0,0.02); }
+html[data-codex-theme="classic"] .table-hover tbody tr:hover                 { --bs-table-bg: oklch(94% 0.015 220) !important; }
+html[data-codex-theme="classic"] .table tbody tr.selected                    { --bs-table-bg: oklch(88% 0.030 264) !important; }
+html[data-codex-theme="classic"] .table tbody a                              { color: var(--primary); font-weight: bold; text-decoration: none; }
+html[data-codex-theme="classic"] .table tbody a:hover                        { text-decoration: underline; }
+html[data-codex-theme="classic"] .table tbody tr.selected a                  { color: #fff !important; }
 
 /* ─── DataTables controls ────────────────────────────────────────────────── */
-.dataTables_filter label { display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 0; }
-.dataTables_filter input { flex: 1; min-width: 120px; }
-.dataTables_wrapper .dt-buttons .btn { margin-right: 4px; }
-.dt-buttons { margin-bottom: 0; }
-
-.btn-secondary {
+html[data-codex-theme="classic"] .btn-secondary {
   --bs-btn-color:        #444;
   --bs-btn-bg:           #ececec;
   --bs-btn-border-color: #cacaca;
 }
 
-.dt-search input.search-active {
+html[data-codex-theme="classic"] .dt-search input.search-active {
   outline:    2px solid var(--primary);
   box-shadow: 0 0 6px rgba(42, 95, 143, 0.28);
 }
 
 /* ─── Accordion ──────────────────────────────────────────────────────────── */
-.accordion-button:not(.collapsed) { background-color: oklch(95% 0.006 55); color: #444; }
+html[data-codex-theme="classic"] .accordion-button:not(.collapsed) { background-color: oklch(95% 0.006 55); color: #444; }
 
-/* ─── Custom searchable select ───────────────────────────────────────────── */
-.searchable-select-wrapper { position: relative; }
-.custom-searchable-select  { position: relative; width: 100%; }
-.custom-select-display     { width: 100%; text-align: left; cursor: pointer; }
-
-.custom-select-dropdown {
-  position:   absolute;
-  top:        100%;
-  left: 0; right: 0;
-  z-index:    1050;
-  background: #fff;
-  border:     1px solid #ced4da;
-  border-radius: 2px;
-  margin-top: 2px;
-  box-shadow: 2px 3px 6px rgba(0,0,0,0.18);
-  font-family: var(--font);
-  font-size:  12px;
+/* ─── Buttons — jQuery UI-era gradient style ─────────────────────────────── */
+html[data-codex-theme="classic"] .btn-outline-primary,
+html[data-codex-theme="classic"] .btn-outline-secondary {
+  background:  linear-gradient(to bottom, #f5f5f5 0%, #e2e2e2 100%) !important;
+  border:      1px solid #a8a8a8 !important;
+  color:       #333 !important;
+  box-shadow:  none !important;
+  text-shadow: none !important;
 }
 
-.custom-select-search { border: none; border-bottom: 1px solid #dee2e6; border-radius: 0; margin: 0; }
-.custom-select-search:focus { box-shadow: none; border-bottom-color: var(--primary); }
-
-.custom-select-options     { max-height: 240px; overflow-y: auto; }
-.custom-select-option      { padding: 4px 10px; cursor: pointer; transition: background 0.1s; }
-.custom-select-option:hover   { background: oklch(93% 0.015 264); }
-.custom-select-option.selected { background: var(--primary); color: #fff; }
-.custom-select-option.selected:hover { background: oklch(36% 0.12 264); }
-
-/* ─── jQuery UI-era button overrides ────────────────────────────────────────── */
-/* Target outline buttons used in detail views — keeps DataTables buttons intact */
-.btn-outline-primary,
-.btn-outline-secondary {
-  background:    linear-gradient(to bottom, #f5f5f5 0%, #e2e2e2 100%) !important;
-  border:        1px solid #a8a8a8 !important;
-  color:         #333 !important;
-  box-shadow:    none !important;
-  text-shadow:   none !important;
+html[data-codex-theme="classic"] .btn-outline-primary:hover,
+html[data-codex-theme="classic"] .btn-outline-secondary:hover {
+  background:   linear-gradient(to bottom, #ebebeb 0%, #d4d4d4 100%) !important;
+  border-color: #888 !important;
+  color:        #222 !important;
+  box-shadow:   none !important;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-secondary:hover {
-  background:    linear-gradient(to bottom, #ebebeb 0%, #d4d4d4 100%) !important;
-  border-color:  #888 !important;
-  color:         #222 !important;
-  box-shadow:    none !important;
+html[data-codex-theme="classic"] .btn-outline-primary:active,
+html[data-codex-theme="classic"] .btn-outline-secondary:active {
+  background: linear-gradient(to bottom, #d4d4d4 0%, #ebebeb 100%) !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important;
 }
 
-.btn-outline-primary:active,
-.btn-outline-secondary:active {
-  background:    linear-gradient(to bottom, #d4d4d4 0%, #ebebeb 100%) !important;
-  box-shadow:    inset 0 1px 3px rgba(0,0,0,0.2) !important;
-}
-
-.btn-outline-primary:focus-visible,
-.btn-outline-secondary:focus-visible {
-  outline: 2px solid var(--primary) !important;
+html[data-codex-theme="classic"] .btn-outline-primary:focus-visible,
+html[data-codex-theme="classic"] .btn-outline-secondary:focus-visible {
+  outline:        2px solid var(--primary) !important;
   outline-offset: 1px !important;
-  box-shadow: none !important;
+  box-shadow:     none !important;
 }
 
-.btn-outline-primary:disabled,
-.btn-outline-secondary:disabled {
+html[data-codex-theme="classic"] .btn-outline-primary:disabled,
+html[data-codex-theme="classic"] .btn-outline-secondary:disabled {
   background:   linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%) !important;
   border-color: #c8c8c8 !important;
   color:        #999 !important;
   opacity:      1 !important;
 }
 
-/* ─── jQuery UI-era badge overrides ─────────────────────────────────────────── */
-/* Replaces Bootstrap's pill badges with flat, bordered period-appropriate labels */
-.badge {
+/* ─── Badges — flat bordered labels, jQuery UI era ──────────────────────── */
+html[data-codex-theme="classic"] .badge {
   font-family:    var(--font) !important;
   font-size:      10px !important;
   font-weight:    normal !important;
@@ -416,49 +486,13 @@ code                        { font-family: var(--mono) !important; font-size: 11
   line-height:    1.4 !important;
 }
 
-.badge.bg-primary {
-  background-color: #d4e5f5 !important;
-  color:            #1a4f7a !important;
-  border:           1px solid #a8c8e8 !important;
-}
-
-.badge.bg-secondary {
-  background-color: #e8e8e8 !important;
-  color:            #555 !important;
-  border:           1px solid #c8c8c8 !important;
-}
-
-.badge.bg-success {
-  background-color: #dff0d8 !important;
-  color:            #3a6b3a !important;
-  border:           1px solid #c3e6cb !important;
-}
-
-.badge.bg-info {
-  background-color: #d4edf7 !important;
-  color:            #2a6e8a !important;
-  border:           1px solid #b0d8eb !important;
-}
-
-.badge.bg-warning {
-  background-color: #fdf5d8 !important;
-  color:            #7a5c1a !important;
-  border:           1px solid #f0d98a !important;
-}
-
-.badge.bg-danger,
-.badge.bg-danger-subtle {
-  background-color: #f5dede !important;
-  color:            #8a3030 !important;
-  border:           1px solid #e8c4c4 !important;
-}
-
-.badge.bg-light,
-.badge.text-dark.bg-light {
-  background-color: #f5f5f5 !important;
-  color:            #555 !important;
-  border:           1px solid #c8c8c8 !important;
-}
-
-/* Undo Bootstrap's text-danger-emphasis override on danger-subtle badges */
-.badge.text-danger-emphasis { color: #8a3030 !important; }
+html[data-codex-theme="classic"] .badge.bg-primary     { background-color: #d4e5f5 !important; color: #1a4f7a !important; border: 1px solid #a8c8e8 !important; }
+html[data-codex-theme="classic"] .badge.bg-secondary   { background-color: #e8e8e8 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
+html[data-codex-theme="classic"] .badge.bg-success     { background-color: #dff0d8 !important; color: #3a6b3a !important; border: 1px solid #c3e6cb !important; }
+html[data-codex-theme="classic"] .badge.bg-info        { background-color: #d4edf7 !important; color: #2a6e8a !important; border: 1px solid #b0d8eb !important; }
+html[data-codex-theme="classic"] .badge.bg-warning     { background-color: #fdf5d8 !important; color: #7a5c1a !important; border: 1px solid #f0d98a !important; }
+html[data-codex-theme="classic"] .badge.bg-danger,
+html[data-codex-theme="classic"] .badge.bg-danger-subtle { background-color: #f5dede !important; color: #8a3030 !important; border: 1px solid #e8c4c4 !important; }
+html[data-codex-theme="classic"] .badge.bg-light,
+html[data-codex-theme="classic"] .badge.text-dark.bg-light { background-color: #f5f5f5 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
+html[data-codex-theme="classic"] .badge.text-danger-emphasis { color: #8a3030 !important; }
