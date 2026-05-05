@@ -83,7 +83,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/{{ client_slug }}/cache/refresh/{{ key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh this key">&#x21ba;</a>
+                        <form method="POST" action="/{{ client_slug }}/cache/refresh/{{ key }}" style="display:inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Force refresh this key">&#x21ba;</button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

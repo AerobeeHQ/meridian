@@ -1898,9 +1898,18 @@ def cache_clear():
     )
 
 
-@main_bp.route('/<client>/cache/refresh/<cache_key>')
+@main_bp.route('/<client>/cache/refresh/<cache_key>', methods=['POST'])
 def cache_refresh(cache_key):
-    """Clear a specific cache key and re-warm it."""
+    """Clear a specific cache key and conditionally re-warm it.
+
+    This endpoint is POST-only to prevent CSRF attacks and unintended cache
+    eviction by web crawlers or prefetch requests that follow GET links.
+
+    The key is always evicted from the cache.  Re-warming is only performed
+    when the key is a known configuration key (i.e. it appears in
+    CONFIG_CACHE_KEYS); ad-hoc keys (e.g. cm_detail_*, top-values) are simply
+    cleared so they will be fetched fresh on the next page load.
+    """
     from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
 
     rsid = get_rsid()
