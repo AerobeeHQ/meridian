@@ -1873,7 +1873,7 @@ def cache_view():
         }
 
     return render_template(
-        'g.cache.html',
+        'cache.html',
         title='Cache',
         cache_info=cache_info,
         rsid=rsid,
@@ -1889,7 +1889,7 @@ def cache_clear():
     g.cache.clear(rsid)
 
     return render_template(
-        'g.cache.html',
+        'cache.html',
         title='Cache',
         cache_info=get_cache_info(),
         rsid=rsid,
@@ -1903,14 +1903,15 @@ def cache_refresh(cache_key):
     """Clear a specific cache key and re-warm it."""
     from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
 
-    if cache_key not in CONFIG_CACHE_KEYS:
-        abort(400)
-
     rsid = get_rsid()
     g.cache.clear_key(rsid, cache_key)
-    warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
-    return redirect(request.referrer or url_for('main.overview'))
+    if cache_key in CONFIG_CACHE_KEYS:
+        app = current_app._get_current_object()
+        ctx = app.codex_clients.get(g.client_slug)
+        warm_cache_key(g.client_slug, rsid, ctx['cache'], ctx['api_v2'], ctx['api_v14'], cache_key)
+
+    return redirect(request.referrer or url_for('main.cache_view', client=g.client_slug))
 
 
 # =============================================================================
