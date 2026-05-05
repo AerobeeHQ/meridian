@@ -6,7 +6,9 @@
         <a href="{{ back_url }}" class="text-muted text-decoration-none" style="font-size: 13px;">&#8592; {{ back_label }}</a>
         <h4 class="mb-0 mt-1">{{ segment.name or segment_id }}</h4>
     </div>
-    <a href="/{{ client_slug }}/cache/refresh/segments" class="btn btn-sm btn-outline-secondary" title="Force refresh segments from API">&#x21ba; Refresh</a>
+    <form method="POST" action="/{{ client_slug }}/cache/refresh/segments" style="display:inline">
+        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Force refresh segments from API">&#x21ba; Refresh</button>
+    </form>
 </div>
 
 <div class="row">

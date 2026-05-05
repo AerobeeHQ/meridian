@@ -6,7 +6,9 @@
         <a href="{{ back_url }}" class="text-muted text-decoration-none" style="font-size: 13px;">&#8592; {{ back_label }}</a>
         <h4 class="mb-0 mt-1">{{ cm.name or cm_id }}</h4>
     </div>
-    <a href="/{{ client_slug }}/cache/refresh/calculated_metrics" class="btn btn-sm btn-outline-secondary" title="Force refresh calculated metrics from API">&#x21ba; Refresh</a>
+    <form method="POST" action="/{{ client_slug }}/cache/refresh/calculated_metrics" style="display:inline">
+        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Force refresh calculated metrics from API">&#x21ba; Refresh</button>
+    </form>
 </div>
 
 <div class="row">

@@ -1873,7 +1873,7 @@ def cache_view():
         }
 
     return render_template(
-        'g.cache.html',
+        'cache.html',
         title='Cache',
         cache_info=cache_info,
         rsid=rsid,
@@ -1889,7 +1889,7 @@ def cache_clear():
     g.cache.clear(rsid)
 
     return render_template(
-        'g.cache.html',
+        'cache.html',
         title='Cache',
         cache_info=get_cache_info(),
         rsid=rsid,
@@ -1898,19 +1898,29 @@ def cache_clear():
     )
 
 
-@main_bp.route('/<client>/cache/refresh/<cache_key>')
+@main_bp.route('/<client>/cache/refresh/<cache_key>', methods=['POST'])
 def cache_refresh(cache_key):
-    """Clear a specific cache key and re-warm it."""
-    from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
+    """Clear a specific cache key and conditionally re-warm it.
 
-    if cache_key not in CONFIG_CACHE_KEYS:
-        abort(400)
+    This endpoint is POST-only to prevent CSRF attacks and unintended cache
+    eviction by web crawlers or prefetch requests that follow GET links.
+
+    The key is always evicted from the cache.  Re-warming is only performed
+    when the key is a known configuration key (i.e. it appears in
+    CONFIG_CACHE_KEYS); ad-hoc keys (e.g. cm_detail_*, top-values) are simply
+    cleared so they will be fetched fresh on the next page load.
+    """
+    from app.services.cache_warmer import CONFIG_CACHE_KEYS, warm_cache_key
 
     rsid = get_rsid()
     g.cache.clear_key(rsid, cache_key)
-    warm_cache_key(current_app._get_current_object(), rsid, cache_key)
 
-    return redirect(request.referrer or url_for('main.overview'))
+    if cache_key in CONFIG_CACHE_KEYS:
+        app = current_app._get_current_object()
+        ctx = app.codex_clients.get(g.client_slug)
+        warm_cache_key(g.client_slug, rsid, ctx['cache'], ctx['api_v2'], ctx['api_v14'], cache_key)
+
+    return redirect(request.referrer or url_for('main.cache_view', client=g.client_slug))
 
 
 # =============================================================================

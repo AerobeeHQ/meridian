@@ -347,7 +347,7 @@ async function sendRequest() {
 
     const tStart = Date.now();
     try {
-        const res = await fetch('/debug/call', {
+        const res = await fetch('/{{ g.client_slug }}/debug/call', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload),

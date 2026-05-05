@@ -127,7 +127,7 @@ $(document).ready(function() {
 
     {% if cache_key %}
     document.querySelector('.dt-refresh-slot').innerHTML =
-        '<a href="/{{ client_slug }}/cache/refresh/{{ cache_key }}" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</a>';
+        '<form method="POST" action="/{{ client_slug }}/cache/refresh/{{ cache_key }}" style="display:inline"><button type="submit" class="btn btn-sm btn-outline-secondary" title="Force refresh data from API">&#x21ba; Refresh</button></form>';
     {% endif %}
 });
 </script>

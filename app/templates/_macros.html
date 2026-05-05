@@ -288,14 +288,14 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
     }
 
     function loadTags() {
-        return fetch('/{{ client_slug }}/api/tags')
+        return fetch('/{{ g.client_slug }}/api/tags')
             .then(function(r) { return r.json(); })
             .then(function(tags) { availableTags = tags; })
             .catch(function(e) { console.error('Failed to load tags:', e); availableTags = []; });
     }
 
     function deleteTagFromLibrary(tagName) {
-        fetch('/{{ client_slug }}/api/tags/' + encodeURIComponent(tagName), { method: 'DELETE' })
+        fetch('/{{ g.client_slug }}/api/tags/' + encodeURIComponent(tagName), { method: 'DELETE' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 availableTags = data.tags;
@@ -324,7 +324,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         function doAddTag() {
             var name = newTagInput.value.trim();
             if (!name) return;
-            fetch('/{{ client_slug }}/api/tags', {
+            fetch('/{{ g.client_slug }}/api/tags', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name })
@@ -349,7 +349,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Load dimension options for Equivalent Dimension dropdown
     function loadDimensionOptions() {
-        return fetch(`/{{ client_slug }}/api/notes/options/${dimensionType}`)
+        return fetch(`/{{ g.client_slug }}/api/notes/options/${dimensionType}`)
             .then(response => response.json())
             .then(options => {
                 const equivalentSelect = form.querySelector('[name="equivalent_dimension"]');
@@ -624,7 +624,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
         if (statusEl) statusEl.textContent = 'Saving...';
         if (saveBtn) saveBtn.disabled = true;
 
-        fetch(`/{{ client_slug }}/api/notes/${dimensionType}/${dimensionId}`, {
+        fetch(`/{{ g.client_slug }}/api/notes/${dimensionType}/${dimensionId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -649,7 +649,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
 
     // Load existing notes
     function loadNotes() {
-        fetch(`/{{ client_slug }}/api/notes/${dimensionType}/${dimensionId}`)
+        fetch(`/{{ g.client_slug }}/api/notes/${dimensionType}/${dimensionId}`)
             .then(response => response.json())
             .then(data => {
                 lastSavedData = data;
@@ -707,7 +707,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <span style="font-size:1.1rem;">&#9888;</span>
             <div>
                 <strong>Segments and Calculated Metrics data is not available.</strong>
-                <p class="mb-1 mt-1 small">Visit the <a href="/{{ client_slug }}/segments">Segments</a> or <a href="/{{ client_slug }}/calculated-metrics">Metrics</a> pages to warm the cache.</p>
+                <p class="mb-1 mt-1 small">Visit the <a href="/{{ g.client_slug }}/segments">Segments</a> or <a href="/{{ g.client_slug }}/calculated-metrics">Metrics</a> pages to warm the cache.</p>
             </div>
         </div>
         {% else %}
@@ -735,7 +735,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     <div id="componentsSegments" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
                             {% for seg in components.segments %}
-                            <a href="/{{ client_slug }}/segments/{{ seg.id }}"
+                            <a href="/{{ g.client_slug }}/segments/{{ seg.id }}"
                                class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ seg.name }}</a>
                             {% endfor %}
                         </div>
@@ -755,7 +755,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
                     <div id="componentsMetrics" class="accordion-collapse collapse">
                         <div class="accordion-body pt-2 pb-3">
                             {% for cm in components.calc_metrics %}
-                            <a href="/{{ client_slug }}/calculated-metrics/{{ cm.id }}"
+                            <a href="/{{ g.client_slug }}/calculated-metrics/{{ cm.id }}"
                                class="badge bg-light text-dark border me-1 mb-1 text-decoration-none">{{ cm.name }}</a>
                             {% endfor %}
                         </div>
@@ -784,7 +784,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <div>
                 <strong>Processing rules data is not available.</strong>
                 <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
-                <a href="/{{ client_slug }}/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
+                <a href="/{{ g.client_slug }}/processing-rules" class="btn btn-sm btn-outline-warning mt-1">Load Processing Rules</a>
             </div>
         </div>
         {% elif related_rules %}
@@ -1007,7 +1007,7 @@ document.querySelectorAll('[contenteditable][data-placeholder]').forEach(el => {
             <div>
                 <strong>Channel rules data is not available.</strong>
                 <p class="mb-1 mt-1 small">This can happen when the Adobe API 1.4 service is temporarily unreachable, or when the cache has not been populated yet.</p>
-                <a href="/{{ client_slug }}/channel-rules" class="btn btn-sm btn-outline-warning mt-1">Load Channel Rules</a>
+                <a href="/{{ g.client_slug }}/channel-rules" class="btn btn-sm btn-outline-warning mt-1">Load Channel Rules</a>
             </div>
         </div>
         {% elif related_rules %}
