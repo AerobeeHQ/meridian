@@ -9,7 +9,9 @@
     <!-- Pre-paint theme init — must run before CSS to avoid FOUC -->
     <script>
         (function () {
-            var stored = localStorage.getItem('codex-theme') || 'classic';
+            var VALID_THEMES = ['classic', 'auto', 'light', 'dark'];
+            var stored = localStorage.getItem('codex-theme');
+            if (!stored || VALID_THEMES.indexOf(stored) === -1) stored = 'classic';
             var bsTheme;
             if (stored === 'classic') {
                 bsTheme = 'light';      // Bootstrap base under Classic; Classic CSS handles visuals
@@ -22,7 +24,9 @@
             document.documentElement.setAttribute('data-codex-theme', stored);
             // Media query listener — only relevant when 'auto' is active
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-                if ((localStorage.getItem('codex-theme') || 'classic') === 'auto') {
+                var current = localStorage.getItem('codex-theme');
+                if (VALID_THEMES.indexOf(current) === -1) current = 'classic';
+                if (current === 'auto') {
                     document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
                 }
             });

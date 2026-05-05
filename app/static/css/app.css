@@ -249,7 +249,7 @@ body {
   white-space:     nowrap;
 }
 
-.app-drop-menu a:hover  { background: oklch(93% 0.015 264); }
+.app-drop-menu a:hover  { background: var(--bs-tertiary-bg, oklch(93% 0.015 264)); }
 .app-drop-menu a.active { font-weight: bold; color: var(--primary); }
 .app-drop-menu hr       { margin: 3px 0; border-color: var(--bs-border-color, #ddd); }
 
@@ -328,9 +328,11 @@ body {
 
 /* ─── Table ──────────────────────────────────────────────────────────────── */
 #dataTable thead th {
-  position: sticky !important;
-  top:      var(--nav-h) !important;
-  z-index:  2;
+  position:   sticky !important;
+  top:        var(--nav-h) !important;
+  z-index:    2;
+  background: var(--bs-body-bg);
+  box-shadow: 0 1px 0 var(--bs-border-color);
 }
 
 /* ─── DataTables controls ────────────────────────────────────────────────── */
@@ -362,7 +364,7 @@ body {
 
 .custom-select-options               { max-height: 240px; overflow-y: auto; }
 .custom-select-option                { padding: 4px 10px; cursor: pointer; transition: background 0.1s; }
-.custom-select-option:hover          { background: oklch(93% 0.015 264); }
+.custom-select-option:hover          { background: var(--bs-tertiary-bg, oklch(93% 0.015 264)); }
 .custom-select-option.selected       { background: var(--primary); color: #fff; }
 .custom-select-option.selected:hover { background: oklch(36% 0.12 264); }
 
