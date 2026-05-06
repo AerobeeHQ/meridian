@@ -899,6 +899,14 @@ def overview():
     return response
 
 
+def _core_sort_key(item):
+    """Sort key for core-dimension rows: preserves the CORE_DIMENSION_IDS order."""
+    try:
+        return CORE_DIMENSION_IDS.index(f"variables/{item['id']}")
+    except ValueError:
+        return 999
+
+
 def _get_core_data(api, rsid: str) -> list[dict]:
     """Return transformed core-dimension rows, sorted by CORE_DIMENSION_IDS order.
 
@@ -918,13 +926,6 @@ def _get_core_data(api, rsid: str) -> list[dict]:
         for dim in raw_dimensions
         if dim.get("id", "") in CORE_DIMENSION_IDS
     ]
-
-    def _core_sort_key(item):
-        try:
-            return CORE_DIMENSION_IDS.index(f"variables/{item['id']}")
-        except ValueError:
-            return 999
-
     raw_core.sort(key=_core_sort_key)
     return transform_data(raw_core, CORE_COLUMNS)
 

@@ -15,7 +15,7 @@ the code harder to maintain:
 
 `get_event_trend()` and `get_metric_trend()` were functionally identical.
 Both built the same `reports` POST body, parsed the same row structure,
-coerced string values to floats, and computed the same statistics dict.
+treated non-numeric API values (e.g. `"N/A"`) as 0, and computed the same statistics dict.
 The only difference was that `get_event_trend` added a `"metrics/"` prefix
 to the event ID before making the call.
 
@@ -95,8 +95,8 @@ def props_export():
 ```
 
 The nested `sort_key` function duplicated between `core()` and `core_export()`
-was also removed and replaced with a single module-scoped `_core_sort_key`
-inside `_get_core_data()`.
+was also removed and replaced with a module-scoped `_core_sort_key` defined
+just above `_get_core_data()`.
 
 ---
 
