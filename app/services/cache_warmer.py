@@ -16,7 +16,11 @@ from app.services.cache import CacheService, CONFIG_TTL_HOURS
 
 logger = logging.getLogger(__name__)
 
-# Cache keys that hold slow-changing configuration data (24h TTL)
+# Cache keys that hold slow-changing configuration data (24h TTL).
+# These are the keys pre-warmed at startup and refreshed every 24 hours so
+# users never wait for a cold-cache API call when navigating listing pages.
+# Keys not listed here (e.g. detail pages and trend charts) are populated
+# lazily on first visit and expire after the default 1-hour TTL.
 CONFIG_CACHE_KEYS = {
     'dimensions',
     'events',
@@ -30,7 +34,29 @@ CONFIG_CACHE_KEYS = {
 
 
 def warm_cache_key(client_slug: str, rsid: str, cache: CacheService, api_v2, api_v14, cache_key: str):
-    """Fetch and cache a single configuration key for one client."""
+    """Fetch and cache a single configuration key for one client.
+
+    The fetch logic is split across two API versions:
+
+    - **API 1.4** (always available): processing rules, marketing channel rules
+      and channels, and list variables.  These endpoints are not yet exposed
+      in API 2.0.
+    - **API 2.0** (when ``api_v2`` is not None): dimensions, events, segments,
+      and calculated metrics.  These are skipped for clients configured for
+      API 1.4 only, since the service object will be ``None``.
+
+    If the key is already fresh in cache, ``get_or_set`` returns the cached
+    value immediately without making an API call.
+
+    Args:
+        client_slug: Client identifier used only for log messages.
+        rsid:        Report suite ID used as the cache namespace.
+        cache:       The client's ``CacheService`` instance.
+        api_v2:      ``AdobeAnalyticsV2Service`` instance, or ``None``.
+        api_v14:     ``AdobeAnalyticsService`` (API 1.4) instance.
+        cache_key:   One of the keys listed in ``CONFIG_CACHE_KEYS``.
+    """
+    # Keys that rely on API 1.4 — always populated regardless of API version.
     fetch_map = {
         'processing_rules':    lambda: api_v14.get_processing_rules(rsid),
         'channel_rules':       lambda: api_v14.get_marketing_channel_rules(rsid),
@@ -38,6 +64,7 @@ def warm_cache_key(client_slug: str, rsid: str, cache: CacheService, api_v2, api
         'listvars':            lambda: api_v14.get_list_variables(rsid),
     }
     if api_v2 is not None:
+        # Keys that rely on API 2.0 — only added when the client uses OAuth2.
         fetch_map.update({
             'dimensions':         lambda: api_v2.get_dimensions(rsid),
             'events':             lambda: api_v2.get_success_events(rsid),

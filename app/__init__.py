@@ -10,7 +10,33 @@ from app.services.config_loader import load_clients
 
 
 def _build_client_services(client_slug: str, config: dict) -> dict:
-    """Instantiate API services for one client config and return them in a dict."""
+    """Instantiate API services for one client config and return them in a dict.
+
+    Creates the following services based on the client's ``API_VERSION`` setting:
+
+    - ``api_v2``:  ``AdobeAnalyticsV2Service`` (OAuth2, API 2.0) — only when
+                   ``API_VERSION == '2.0'``.  Requires ``CLIENT_ID``,
+                   ``CLIENT_SECRET``, and ``ORGANIZATION_ID`` in the config.
+    - ``api_v14``: ``AdobeAnalyticsService`` (WSSE, API 1.4) — always created
+                   because API 1.4 is still needed for processing rules, marketing
+                   channels, and other endpoints not yet available in 2.0.
+    - ``launch``:  ``AdobeLaunchService`` (Reactor API) — only when
+                   ``LAUNCH_ENABLED`` is truthy and ``LAUNCH_PROPERTY_ID`` is
+                   provided.  Uses a separate ``OAuth2Auth`` instance with the
+                   broader Reactor scopes.
+    - ``cache``:   ``CacheService`` pointing to a per-client subdirectory so
+                   different clients never share cached data.
+
+    Args:
+        client_slug: The client identifier (JSON filename stem, e.g. ``'maxis'``).
+        config:      Client config dict loaded from the JSON secrets file.
+
+    Returns:
+        Dict with keys ``config``, ``api_v2``, ``api_v14``, ``launch``, ``cache``.
+
+    Raises:
+        RuntimeError: If ``API_VERSION == '2.0'`` but required OAuth keys are missing.
+    """
     from app.services.adobe_auth import OAuth2Auth
     from app.services.adobe_analytics_v2 import AdobeAnalyticsV2Service
     from app.services.adobe_analytics import AdobeAnalyticsService
@@ -47,6 +73,8 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
     launch = None
     if config.get('LAUNCH_ENABLED') and config.get('LAUNCH_PROPERTY_ID') and api_version == '2.0':
         from app.services.adobe_launch import AdobeLaunchService
+        # The Reactor API requires broader scopes than the Analytics API, so
+        # Launch gets its own OAuth2Auth instance with the full set of roles.
         _launch_scopes = config.get('LAUNCH_SCOPES') or (
             'AdobeID, openid, read_organizations, '
             'additional_info.job_function, '
@@ -65,6 +93,7 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
     # Per-client cache directory.
     # Prefer $CODEX_CACHE_DIR/<slug> (explicit writable cache mount in Docker).
     # Fall back to {project_root}/cache/<slug> for local development.
+    # Each client gets its own subdirectory so their caches never overlap.
     _cache_root = os.environ.get('CODEX_CACHE_DIR') or os.path.join(
         os.path.dirname(os.path.dirname(__file__)), 'cache'
     )
@@ -82,7 +111,23 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
 
 
 def create_app():
-    """Create and configure the Flask application."""
+    """Create and configure the Flask application.
+
+    This is the Flask application factory.  It is called once at startup
+    (by ``run.py`` or ``gunicorn``) and returns a fully configured ``Flask``
+    instance.
+
+    Multi-client architecture
+    -------------------------
+    Codex supports multiple Adobe Analytics clients from a single running
+    instance.  Each client maps to one JSON file in ``CODEX_SECRETS_DIR``.
+    At startup, every client gets its own bundle of services (API clients,
+    cache) stored on ``app.codex_clients[slug]``.  Routes access the correct
+    bundle via ``g`` (populated per-request by ``_load_client_context``).
+
+    Returns:
+        Configured ``Flask`` application instance.
+    """
     app = Flask(__name__)
 
     # ── Load all client configurations ────────────────────────────────────────
