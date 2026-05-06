@@ -113,15 +113,8 @@ class CacheService:
         key_meta = metadata.get('keys', {}).get(key)
 
         if not key_meta:
-            # Legacy metadata format — fall back to global 'created' with 1h TTL
-            created_str = metadata.get('created')
-            if not created_str:
-                return True
-            try:
-                created = datetime.fromisoformat(created_str)
-                return (datetime.now() - created).total_seconds() > 3600
-            except (ValueError, TypeError):
-                return True
+            # Legacy metadata format — fall back to the global timestamp check.
+            return self._is_expired(cache_name)
 
         try:
             created = datetime.fromisoformat(key_meta['created'])
