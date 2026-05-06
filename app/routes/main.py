@@ -899,77 +899,49 @@ def overview():
     return response
 
 
+def _core_sort_key(item):
+    """Sort key for core-dimension rows: preserves the CORE_DIMENSION_IDS order."""
+    try:
+        return CORE_DIMENSION_IDS.index(f"variables/{item['id']}")
+    except ValueError:
+        return 999
+
+
+def _get_core_data(api, rsid: str) -> list[dict]:
+    """Return transformed core-dimension rows, sorted by CORE_DIMENSION_IDS order.
+
+    Shared by the ``core`` listing route and the ``core_export`` CSV route so
+    the filtering, transformation, and sort logic only lives in one place.
+    """
+    raw_dimensions = get_cached_data(
+        'dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS
+    )
+    raw_core = [
+        {
+            'id': dim.get("id", "").replace("variables/", ""),
+            'name': dim.get("name") or dim.get("title", ""),
+            'type': dim.get("type", ""),
+            'description': dim.get("description", ""),
+        }
+        for dim in raw_dimensions
+        if dim.get("id", "") in CORE_DIMENSION_IDS
+    ]
+    raw_core.sort(key=_core_sort_key)
+    return transform_data(raw_core, CORE_COLUMNS)
+
+
 @main_bp.route('/<client>/core')
 def core():
     """Display core/out-of-the-box dimensions"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Cache raw dimensions for reuse
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-
-    # Filter core dimensions
-    raw_core = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id in CORE_DIMENSION_IDS:
-            # Transform to simpler format
-            core_item = {
-                'id': dim_id.replace("variables/", ""),
-                'name': dim.get("name") or dim.get("title", ""),
-                'type': dim.get("type", ""),
-                'description': dim.get("description", "")
-            }
-            raw_core.append(core_item)
-
-    # Sort by the order defined in CORE_DIMENSION_IDS
-    def sort_key(item):
-        full_id = f"variables/{item['id']}"
-        try:
-            return CORE_DIMENSION_IDS.index(full_id)
-        except ValueError:
-            return 999
-
-    raw_core.sort(key=sort_key)
-
-    data = transform_data(raw_core, CORE_COLUMNS)
-
+    data = _get_core_data(get_api_service(), get_rsid())
     return render_listing('Core', data, list(CORE_COLUMNS.values()), 'core', cache_key='dimensions')
 
 
 @main_bp.route('/<client>/core/export')
 def core_export():
     """Export core dimensions as CSV"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-    raw_core = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id in CORE_DIMENSION_IDS:
-            core_item = {
-                'id': dim_id.replace("variables/", ""),
-                'name': dim.get("name") or dim.get("title", ""),
-                'type': dim.get("type", ""),
-                'description': dim.get("description", "")
-            }
-            raw_core.append(core_item)
-
-    # Sort by the order defined in CORE_DIMENSION_IDS
-    def sort_key(item):
-        full_id = f"variables/{item['id']}"
-        try:
-            return CORE_DIMENSION_IDS.index(full_id)
-        except ValueError:
-            return 999
-
-    raw_core.sort(key=sort_key)
-
-    data = transform_data(raw_core, CORE_COLUMNS)
-
-    return generate_csv(data, f'{rsid}_core.csv')
+    data = _get_core_data(get_api_service(), get_rsid())
+    return generate_csv(data, f'{get_rsid()}_core.csv')
 
 
 @main_bp.route('/<client>/core/<dimension_id>')
@@ -1060,55 +1032,38 @@ def core_detail(dimension_id: str):
     )
 
 
+def _get_props_data(api, rsid: str) -> list[dict]:
+    """Return transformed prop rows, sorted numerically.
+
+    Shared by the ``props`` listing route and the ``props_export`` CSV route.
+    Classifications (dimension IDs containing a dot, e.g. ``prop12.screen-height``)
+    are excluded because they are child dimensions, not base props.
+    """
+    raw_dimensions = get_cached_data(
+        'dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS
+    )
+    raw_props = [
+        api._transform_dimension_to_prop(dim)
+        for dim in raw_dimensions
+        if dim.get("id", "").startswith("variables/prop")
+        and "." not in dim.get("id", "").replace("variables/", "")
+    ]
+    raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    return transform_data(raw_props, PROPS_COLUMNS)
+
+
 @main_bp.route('/<client>/props')
 def props():
     """Display traffic variables (props)"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Cache raw dimensions for reuse by detail pages (Quick Win #1)
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-    
-    # Filter props from dimensions and transform
-    # Exclude classifications (IDs containing a dot after the prop number, e.g., prop12.screen-height)
-    raw_props = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id.startswith("variables/prop"):
-            # Check if this is a classification (has a dot after prop number)
-            prop_part = dim_id.replace("variables/", "")
-            if "." not in prop_part:
-                raw_props.append(api._transform_dimension_to_prop(dim))
-    
-    # Sort by prop number
-    raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
-    data = transform_data(raw_props, PROPS_COLUMNS)
-
+    data = _get_props_data(get_api_service(), get_rsid())
     return render_listing('Props', data, list(PROPS_COLUMNS.values()), 'props', cache_key='dimensions')
 
 
 @main_bp.route('/<client>/props/export')
 def props_export():
     """Export props as CSV"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-    raw_props = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id.startswith("variables/prop"):
-            # Exclude classifications (IDs containing a dot after prop number)
-            prop_part = dim_id.replace("variables/", "")
-            if "." not in prop_part:
-                raw_props.append(api._transform_dimension_to_prop(dim))
-    raw_props.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
-    data = transform_data(raw_props, PROPS_COLUMNS)
-
-    return generate_csv(data, f'{rsid}_props.csv')
+    data = _get_props_data(get_api_service(), get_rsid())
+    return generate_csv(data, f'{get_rsid()}_props.csv')
 
 
 @main_bp.route('/<client>/props/<prop_id>')
@@ -1199,58 +1154,39 @@ def prop_detail(prop_id: str):
     )
 
 
+def _get_evars_data(api, rsid: str) -> list[dict]:
+    """Return transformed eVar rows, sorted numerically.
+
+    Shared by the ``evars`` listing route and the ``evars_export`` CSV route.
+    Classifications (dimension IDs containing a dot, e.g. ``evar101.catalogue-name``)
+    are excluded. Note: allocation/expiration fields are empty in the listing
+    because API 2.0 dimensions omit them — full config is available on detail pages.
+    """
+    raw_dimensions = get_cached_data(
+        'dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS
+    )
+    raw_evars = [
+        api._transform_dimension_to_evar(dim)
+        for dim in raw_dimensions
+        if dim.get("id", "").startswith("variables/evar")
+        and "." not in dim.get("id", "").replace("variables/", "")
+    ]
+    raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
+    return transform_data(raw_evars, EVARS_COLUMNS)
+
+
 @main_bp.route('/<client>/evars')
 def evars():
     """Display conversion variables (eVars)"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Cache raw dimensions for reuse by detail pages (Quick Win #1)
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-    
-    # Filter eVars from dimensions and transform
-    # Exclude classifications (IDs containing a dot after the evar number, e.g., evar101.catalogue-name)
-    # NOTE: API 2.0 dimensions don't include allocation/expiration fields, so these columns
-    # will be empty in the table view. Full configuration (including allocation, expiration,
-    # and merchandising) is available on the eVar detail pages via API 1.4.
-    raw_evars = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id.startswith("variables/evar"):
-            # Check if this is a classification (has a dot after evar number)
-            evar_part = dim_id.replace("variables/", "")
-            if "." not in evar_part:
-                raw_evars.append(api._transform_dimension_to_evar(dim))
-    
-    # Sort by evar number
-    raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
-    data = transform_data(raw_evars, EVARS_COLUMNS)
-
+    data = _get_evars_data(get_api_service(), get_rsid())
     return render_listing('eVars', data, list(EVARS_COLUMNS.values()), 'evars', cache_key='dimensions')
 
 
 @main_bp.route('/<client>/evars/export')
 def evars_export():
     """Export eVars as CSV"""
-    api = get_api_service()
-    rsid = get_rsid()
-
-    # Use cached dimensions
-    raw_dimensions = get_cached_data('dimensions', lambda: api.get_dimensions(rsid), ttl_hours=CONFIG_TTL_HOURS)
-    raw_evars = []
-    for dim in raw_dimensions:
-        dim_id = dim.get("id", "")
-        if dim_id.startswith("variables/evar"):
-            # Exclude classifications (IDs containing a dot after evar number)
-            evar_part = dim_id.replace("variables/", "")
-            if "." not in evar_part:
-                raw_evars.append(api._transform_dimension_to_evar(dim))
-    raw_evars.sort(key=lambda x: api._extract_number(x.get("id", "")))
-    
-    data = transform_data(raw_evars, EVARS_COLUMNS)
-
-    return generate_csv(data, f'{rsid}_evars.csv')
+    data = _get_evars_data(get_api_service(), get_rsid())
+    return generate_csv(data, f'{get_rsid()}_evars.csv')
 
 
 @main_bp.route('/<client>/evars/<evar_id>')

@@ -113,15 +113,9 @@ class CacheService:
         key_meta = metadata.get('keys', {}).get(key)
 
         if not key_meta:
-            # Legacy metadata format — fall back to global 'created' with 1h TTL
-            created_str = metadata.get('created')
-            if not created_str:
-                return True
-            try:
-                created = datetime.fromisoformat(created_str)
-                return (datetime.now() - created).total_seconds() > 3600
-            except (ValueError, TypeError):
-                return True
+            # Legacy metadata format — fall back to the global timestamp check,
+            # reusing the already-loaded metadata to avoid a second file read.
+            return self._is_expired(cache_name, metadata=metadata)
 
         try:
             created = datetime.fromisoformat(key_meta['created'])
@@ -130,9 +124,14 @@ class CacheService:
         except (ValueError, TypeError, KeyError):
             return True
 
-    def _is_expired(self, cache_name: str) -> bool:
-        """Check if the whole cache is expired (legacy compat — checks global timestamp)"""
-        metadata = self._load_metadata(cache_name)
+    def _is_expired(self, cache_name: str, metadata: dict | None = None) -> bool:
+        """Check if the whole cache is expired (legacy compat — checks global timestamp).
+
+        Pass an already-loaded ``metadata`` dict to avoid a second filesystem read
+        when called from ``_is_key_expired``.
+        """
+        if metadata is None:
+            metadata = self._load_metadata(cache_name)
         created_str = metadata.get('created')
         if not created_str:
             return True

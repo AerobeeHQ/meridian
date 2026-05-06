@@ -575,142 +575,98 @@ class AdobeAnalyticsV2Service:
         # Not found
         return {}
 
-    def get_event_trend(
-        self,
-        rsid: str,
-        event_id: str,
-        days: int = 30
-    ) -> dict:
-        """
-        Get daily trend data for an event (total occurrences per day)
+    def _fetch_trend_data(self, rsid: str, metric_id: str, days: int) -> dict:
+        """Fetch daily trend data for a single metric ID.
+
+        Shared implementation used by ``get_event_trend`` and
+        ``get_metric_trend``.  The caller is responsible for normalising
+        ``metric_id`` to the correct format before calling this method.
 
         Args:
-            rsid: Report suite ID
-            event_id: Event ID (e.g., 'metrics/event1' or 'event1')
-            days: Number of days to look back
+            rsid:      Report suite ID.
+            metric_id: Fully-qualified metric ID as it should appear in the
+                       request body (e.g. ``'metrics/event1'`` or
+                       ``'cm200000529_abc'``).
+            days:      Number of days to look back from today.
 
         Returns:
-            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+            Dict with ``'dates'``, ``'values'``, and ``'stats'``
+            (avg, median, max, min).
         """
-        # Ensure event_id has 'metrics/' prefix
-        if not event_id.startswith("metrics/"):
-            event_id = f"metrics/{event_id}"
-
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-        # Build report request for time-series data using the event as the metric
         request_body = {
             "rsid": rsid,
             "globalFilters": [
                 {
                     "type": "dateRange",
-                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                    "dateRange": (
+                        f"{start_date.strftime('%Y-%m-%dT00:00:00')}/"
+                        f"{end_date.strftime('%Y-%m-%dT23:59:59')}"
+                    ),
                 }
             ],
-            "metricContainer": {
-                "metrics": [{"id": event_id}]
-            },
+            "metricContainer": {"metrics": [{"id": metric_id}]},
             "dimension": "variables/daterangeday",
-            "settings": {
-                "dimensionSort": "asc",
-                "limit": days + 1
-            }
+            "settings": {"dimensionSort": "asc", "limit": days + 1},
         }
 
         result = self._make_request("reports", method="POST", json_data=request_body)
 
-        # Extract dates and values from response
         dates = []
         values = []
-
         for row in result.get("rows", []):
             # daterangeday returns dates like "Jan 1, 2024"
-            date_str = row.get("value", "")
-            dates.append(date_str)
-
-            # Get the metric value (first metric in our request)
+            dates.append(row.get("value", ""))
             row_data = row.get("data", [0])
             raw = row_data[0] if row_data else 0
             # The API can return strings ("N/A") for some metrics; coerce to float.
-            value = raw if isinstance(raw, (int, float)) else 0
-            values.append(value)
+            values.append(raw if isinstance(raw, (int, float)) else 0)
 
-        # Calculate statistics
         stats = {}
         if values:
             stats = {
                 "avg": round(sum(values) / len(values), 1),
                 "median": round(statistics.median(values), 1),
                 "max": max(values),
-                "min": min(values)
+                "min": min(values),
             }
 
         return {"dates": dates, "values": values, "stats": stats}
 
-    def get_metric_trend(
-        self,
-        rsid: str,
-        metric_id: str,
-        days: int = 30
-    ) -> dict:
+    def get_event_trend(self, rsid: str, event_id: str, days: int = 30) -> dict:
+        """
+        Get daily trend data for an event (total occurrences per day).
+
+        Args:
+            rsid:     Report suite ID
+            event_id: Event ID (e.g., ``'metrics/event1'`` or ``'event1'``)
+            days:     Number of days to look back
+
+        Returns:
+            Dict with ``'dates'``, ``'values'``, and ``'stats'``
+            (avg, median, max, min)
+        """
+        if not event_id.startswith("metrics/"):
+            event_id = f"metrics/{event_id}"
+        return self._fetch_trend_data(rsid, event_id, days)
+
+    def get_metric_trend(self, rsid: str, metric_id: str, days: int = 30) -> dict:
         """
         Get daily trend data for a calculated metric.
 
         Args:
-            rsid: Report suite ID
-            metric_id: Calculated metric ID (e.g., 'cm200000529_abc') — used as-is,
-                       no 'metrics/' prefix added
-            days: Number of days to look back
+            rsid:      Report suite ID
+            metric_id: Calculated metric ID (e.g., ``'cm200000529_abc'``) —
+                       used as-is, no ``'metrics/'`` prefix added
+            days:      Number of days to look back
 
         Returns:
-            Dict with 'dates', 'values', and 'stats' (avg, median, max, min)
+            Dict with ``'dates'``, ``'values'``, and ``'stats'``
+            (avg, median, max, min)
         """
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-
-        request_body = {
-            "rsid": rsid,
-            "globalFilters": [
-                {
-                    "type": "dateRange",
-                    "dateRange": f"{start_date.strftime('%Y-%m-%dT00:00:00')}/{end_date.strftime('%Y-%m-%dT23:59:59')}"
-                }
-            ],
-            "metricContainer": {
-                "metrics": [{"id": metric_id}]
-            },
-            "dimension": "variables/daterangeday",
-            "settings": {
-                "dimensionSort": "asc",
-                "limit": days + 1
-            }
-        }
-
-        result = self._make_request("reports", method="POST", json_data=request_body)
-
-        dates = []
-        values = []
-
-        for row in result.get("rows", []):
-            date_str = row.get("value", "")
-            dates.append(date_str)
-            row_data = row.get("data", [0])
-            raw = row_data[0] if row_data else 0
-            # The API can return strings ("N/A") for some metrics; coerce to float.
-            value = raw if isinstance(raw, (int, float)) else 0
-            values.append(value)
-
-        stats = {}
-        if values:
-            stats = {
-                "avg": round(sum(values) / len(values), 1),
-                "median": round(statistics.median(values), 1),
-                "max": max(values),
-                "min": min(values)
-            }
-
-        return {"dates": dates, "values": values, "stats": stats}
+        return self._fetch_trend_data(rsid, metric_id, days)
 
     def get_top_items(
         self,
