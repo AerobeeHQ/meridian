@@ -63,17 +63,12 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
         )
 
     # Per-client cache directory.
-    # Prefer $CODEX_SECRETS_DIR/cache/<slug> so cached data persists on the
-    # mounted secrets volume in Docker.  Fall back to {project_root}/cache/<slug>
-    # for local development where the env var may not be set.
-    _secrets_dir = os.environ.get('CODEX_SECRETS_DIR')
-    if _secrets_dir:
-        cache_dir = os.path.join(_secrets_dir, 'cache', client_slug)
-    else:
-        cache_dir = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            'cache', client_slug,
-        )
+    # Prefer $CODEX_CACHE_DIR/<slug> (explicit writable cache mount in Docker).
+    # Fall back to {project_root}/cache/<slug> for local development.
+    _cache_root = os.environ.get('CODEX_CACHE_DIR') or os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 'cache'
+    )
+    cache_dir = os.path.join(_cache_root, client_slug)
     os.makedirs(cache_dir, exist_ok=True)
     cache = CacheService(cache_dir=cache_dir)
 

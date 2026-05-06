@@ -15,5 +15,6 @@ services:
     environment:
       - FLASK_DEBUG=false
       - CODEX_SECRETS_DIR=/app/secrets
+      - CODEX_CACHE_DIR=/app/cache
     restart: unless-stopped
 
