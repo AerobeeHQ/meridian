@@ -21,9 +21,9 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
                    because API 1.4 is still needed for processing rules, marketing
                    channels, and other endpoints not yet available in 2.0.
     - ``launch``:  ``AdobeLaunchService`` (Reactor API) — only when
-                   ``LAUNCH_ENABLED`` is truthy and ``LAUNCH_PROPERTY_ID`` is
-                   provided.  Uses a separate ``OAuth2Auth`` instance with the
-                   broader Reactor scopes.
+                   ``API_VERSION == '2.0'``, ``LAUNCH_ENABLED`` is truthy,
+                   and ``LAUNCH_PROPERTY_ID`` is provided.  Uses a separate
+                   ``OAuth2Auth`` instance with the broader Reactor scopes.
     - ``cache``:   ``CacheService`` pointing to a per-client subdirectory so
                    different clients never share cached data.
 

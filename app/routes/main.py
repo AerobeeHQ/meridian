@@ -21,9 +21,10 @@ need to reference the client slug directly — they always read from ``g``.
 
 Error handling
 --------------
-Unhandled ``requests`` exceptions (e.g. timeouts from API 1.4 calls) are
-caught by ``handle_api14_error`` and rendered as a friendly error page.
-Debug mode includes a full Python traceback; production omits it.
+Unhandled ``requests`` exceptions (e.g. timeouts or connection errors from
+any outbound HTTP call — API 2.0, API 1.4, or Reactor/Launch) are caught by
+``handle_api14_error`` and rendered as a friendly error page.  Debug mode
+includes a full Python traceback; production omits it.
 """
 import csv
 import io
