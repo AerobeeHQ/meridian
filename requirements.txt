@@ -1,6 +1,6 @@
 # Flask application
 Flask>=2.0.0
-Werkzeug>=3.0.0
+Werkzeug>=3.1.6
 
 # HTTP requests for Adobe Analytics API
 requests>=2.28.0
