@@ -36,6 +36,12 @@ class AdobeLaunchService:
         self._reactor_company_id: str | None = None
 
     def _headers(self) -> dict:
+        """Build the required HTTP headers for every Reactor API request.
+
+        The Reactor API uses the JSON:API media type, which requires the
+        ``application/vnd.api+json;revision=1`` Accept header.  Omitting the
+        revision causes the API to return a 406 Not Acceptable response.
+        """
         return {
             "Authorization": f"Bearer {self.auth.get_access_token()}",
             "X-Api-Key": self.auth.client_id,
@@ -302,11 +308,22 @@ class AdobeLaunchService:
         """
         raw_results = self.search_dimension(dimension_value, property_id)
 
-        # Categorise rule_component items by resolution strategy.
-        # strategy_a: rule_id  -> [component_item, ...]  (fetch rule via GET /rules/{id})
-        # strategy_b: comp_id  -> url                    (fetch rule via GET {links.rules})
-        # component_by_rule groups all component items per rule_id so we can
-        # later aggregate variable_assignments across multiple setVariables actions.
+        # ── Step 1: Categorise rule_component items by resolution strategy ──────
+        #
+        # The Reactor /search API does not always populate the parent rule's ID in
+        # the ``relationships.rule.data.id`` field of rule_component results.
+        # When it is missing, we fall back to following the ``links.rules`` URL
+        # on the component to discover its parent rule(s).
+        #
+        # strategy_a: rule_id -> [component_item, ...]
+        #   Rule ID was present in the search result — fetch via GET /rules/{id}.
+        # strategy_b: comp_id -> links.rules URL
+        #   Rule ID was absent — fetch via GET {links.rules} on the component.
+        # component_by_rule: rule_id -> [comp_item, ...]
+        #   Groups all components belonging to a given rule so we can aggregate
+        #   variable assignments from multiple setVariables actions in one rule.
+        # component_by_comp: comp_id -> [comp_item]
+        #   Same grouping but keyed by component ID for strategy B lookups.
         strategy_a: dict[str, list] = {}
         strategy_b: dict[str, str] = {}
         component_by_rule: dict[str, list] = {}   # rule_id -> [comp_item, ...]
@@ -326,7 +343,10 @@ class AdobeLaunchService:
                     strategy_b[item["id"]] = rules_url
                     component_by_comp.setdefault(item["id"], []).append(item)
 
-        # Single executor pass for both strategies.
+        # ── Step 2: Resolve rule names in parallel ────────────────────────────────
+        # Both strategies are submitted to the same thread pool so the HTTP calls
+        # run concurrently.  Results land in two separate maps keyed by the ID
+        # type used to look them up later.
         # rule_map:  rule_id  -> rule data object  (strategy A results)
         # comp_map:  comp_id  -> rule data object  (strategy B results)
         rule_map: dict = {}
@@ -358,6 +378,16 @@ class AdobeLaunchService:
                     else:
                         comp_map[id_] = {}
 
+        # ── Step 3: Build the deduplicated results list ───────────────────────────
+        # We process items in a specific order so that richer matches take
+        # precedence when the same rule appears multiple times in the raw results:
+        #
+        #   1. rule_components first — carry a delegate_descriptor_id and variable
+        #      assignments, so they are the most informative match for a rule.
+        #   2. extensions, data_elements, and rules — added only if not already seen.
+        #
+        # The ``seen`` set tracks (type, id) tuples so each rule/element appears
+        # at most once in the final output.
         entries = []
         seen: set = set()
 

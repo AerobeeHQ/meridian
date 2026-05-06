@@ -1,5 +1,30 @@
 """
-Main routes for the Codex application
+Main routes for the Codex application.
+
+This module defines every URL route served under the /<client>/ prefix.
+Each route follows the same pattern:
+
+    1. Read the report suite ID and API service from Flask's request-scoped
+       ``g`` object (populated by ``_load_client_context``).
+    2. Fetch data via ``get_cached_data()``, which wraps the cache service
+       and only calls the Adobe API on a cache miss.
+    3. Pass the data to a Jinja2 template via ``render_template`` or the
+       ``render_listing`` helper.
+
+Multi-client routing
+--------------------
+Every route URL starts with ``/<client>/``.  The ``_extract_client``
+preprocessor strips this segment into ``g.client_slug``, and
+``_load_client_context`` validates it and loads the matching service bundle
+(API clients, cache, config) onto ``g``.  This means route functions never
+need to reference the client slug directly — they always read from ``g``.
+
+Error handling
+--------------
+Unhandled ``requests`` exceptions (e.g. timeouts or connection errors from
+any outbound HTTP call — API 2.0, API 1.4, or Reactor/Launch) are caught by
+``handle_api14_error`` and rendered as a friendly error page.  Debug mode
+includes a full Python traceback; production omits it.
 """
 import csv
 import io
@@ -179,14 +204,33 @@ def get_cache_info() -> dict:
 def render_listing(title, data, columns, active_tab, monospace_columns=None, column_styles=None, dt_order=None, column_badges=None, preformatted_columns=None, dt_column_widths=None, **kwargs):
     """Render listing.html with common context variables injected automatically.
 
+    This helper centralises the boilerplate of passing ``rsid``, ``cache_info``,
+    and ``active_tab`` to every listing page so route functions stay concise.
+
     Args:
-        title: Page title shown in the browser tab and heading.
-        data: List of row dicts to display in the table.
-        columns: Ordered list of column header strings.
-        active_tab: Nav-tab identifier used to highlight the current section.
-        monospace_columns: Column names whose cells should be styled monospace.
-        column_styles: Dict mapping column names to inline CSS style strings.
-        **kwargs: Extra variables forwarded to the template (e.g. cache_key).
+        title:               Page title shown in the browser tab and heading.
+        data:                List of row dicts to display in the DataTable.
+        columns:             Ordered list of column header strings matching keys
+                             in each row dict.
+        active_tab:          Nav-tab identifier used to highlight the current
+                             section in the sidebar (e.g. ``'props'``).
+        monospace_columns:   Column names whose cells should be rendered in a
+                             monospace font (useful for IDs and code values).
+        column_styles:       Dict mapping column names to inline CSS style strings
+                             applied to that column's ``<td>`` elements.
+        dt_order:            DataTables ``order`` config — list of ``[colIndex, dir]``
+                             pairs that set the default sort order.
+        column_badges:       Dict mapping column names to badge configs used by
+                             the listing template to render coloured label chips.
+        preformatted_columns: Column names whose content should be wrapped in
+                             ``<pre>`` tags to preserve whitespace and newlines
+                             (used for processing rule actions/conditions).
+        dt_column_widths:    List of CSS width strings (one per column, or ``None``
+                             to skip a column).  Passed to DataTables as
+                             ``columnDefs`` width entries so columns don't reflow
+                             on sort.
+        **kwargs:            Extra variables forwarded directly to the template
+                             (e.g. ``cache_key``, ``export_url``).
     """
     return render_template(
         'listing.html',
@@ -243,6 +287,8 @@ def format_conditions(text: str) -> str:
     return text.replace(' AND ', '\nAND ')
 
 
+# Matches Adobe Analytics variable names so they can be bolded in rendered rule text.
+# The word-boundary anchors (\b) prevent partial matches like "evar1" inside "evar10".
 _VAR_RE = re.compile(r'\b(evar\d+|prop\d+|event\d+|listvar\d+|list\d+)\b', re.IGNORECASE)
 
 
@@ -380,8 +426,14 @@ def _parse_segment_schema(schema: list[str]) -> dict:
 
 
 # -- Segment definition → human-readable breakdown ---------------------------
+#
+# The Adobe Analytics API 2.0 returns segment definitions as nested JSON trees
+# using internal ``func`` keys (e.g. ``"streq"``, ``"container"``, ``"and"``).
+# The three lookup tables below map those internal keys to plain-English labels
+# for display in the segment detail page.
 
-# Mapping of API func names to user-facing operator labels.
+# Maps predicate function names (comparison operators) to readable labels.
+# Keys come from the ``pred.func`` field of a segment definition node.
 _PRED_LABELS: dict[str, str] = {
     'streq': 'equals', 'not-streq': 'does not equal',
     'contains': 'contains', 'not-contains': 'does not contain',
@@ -398,10 +450,13 @@ _PRED_LABELS: dict[str, str] = {
     'eq-any-of': 'equals any of', 'not-eq-any-of': 'does not equal any of',
 }
 
+# Maps container context values to readable scope labels (hit / visit / visitor).
 _CONTEXT_LABELS: dict[str, str] = {
     'hits': 'Hit', 'visits': 'Visit', 'visitors': 'Visitor',
 }
 
+# Maps boolean/sequence function names to the connector word shown between
+# sibling conditions (AND, OR, NOT, THEN, etc.).
 _LOGIC_LABELS: dict[str, str] = {
     'and': 'AND', 'or': 'OR', 'without': 'NOT',
     'sequence': 'THEN', 'sequence-prefix': 'THEN (prefix)',

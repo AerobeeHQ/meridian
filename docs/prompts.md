@@ -76,3 +76,14 @@ Please ensure that the site is visually appealing. All content should be on a si
 
 Please create a new branch for the site and submit a pull request. Please include a screenshot of the site in the pull request. Please generate an autopsy document in the docs/autopsies folder summarising your approach and any challenges you faced during the development of the site. (See other md files for example styles)
 
+## Project Code Simplification
+
+Please review the codebase and identify any areas where the code can be simplified or refactored to improve readability and maintainability. This could include removing redundant code, simplifying complex logic, or improving variable and function naming conventions.
+
+When you find an area for improvement, please create a new branch with the prefix `refactor/` and make the necessary changes. Be sure to test your changes thoroughly to ensure that they do not introduce any new bugs or issues.
+
+## Code Documentation
+
+Please ensure that all code is properly documented with clear and concise comments. This will make it easier for others to understand and maintain the codebase. When writing comments, please use proper grammar and sentence structure, and avoid using overly technical jargon.
+
+Please create a new branch with the prefix `docs/` and add comments to any code that you feel could benefit from additional documentation. Be sure to explain the purpose of the code, how it works, and any important details that others should be aware of when working with it.
