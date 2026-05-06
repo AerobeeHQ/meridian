@@ -645,6 +645,7 @@ PROPS_COLUMNS = {
     'pathing_enabled': 'Pathing',
     'list_enabled': 'List Support',
     'list_delimiter': 'Delimiter',
+    'tags': 'Tags',
     'description': 'Description'
 }
 
@@ -654,6 +655,7 @@ EVARS_COLUMNS = {
     'type': 'Type',
     'expiration_type': 'Expiration',
     'allocation_type': 'Allocation',
+    'tags': 'Tags',
     'description': 'Description'
 }
 
@@ -662,6 +664,7 @@ EVENTS_COLUMNS = {
     'name': 'Label',
     'type': 'Type',
     'serialization': 'Serialisation',
+    'tags': 'Tags',
     'description': 'Description'
 }
 
