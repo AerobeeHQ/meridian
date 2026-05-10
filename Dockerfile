@@ -36,4 +36,9 @@ EXPOSE 5010
 
 ENV HOST=0.0.0.0
 
+# Health check: hit /health every 30 s; allow 10 s for first startup.
+# curl exits non-zero on HTTP 4xx/5xx, which marks the container unhealthy.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl --fail http://localhost:5010/health || exit 1
+
 CMD ["uv", "run", "run.py"]
