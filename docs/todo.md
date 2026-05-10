@@ -26,7 +26,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] **No custom 404/500 error pages:** Only `_api_error.html` (for Adobe API errors) exists. Flask's default HTML error pages are returned for missing routes and unhandled server errors — these leak the Flask version and look broken.
 - [ ] **CSRF exposure on write routes:** `POST /api/notes`, `DELETE /api/notes`, `POST /api/tags`, and `DELETE /api/tags` have no CSRF token validation. Requests can be forged from any origin that can reach the server (see v3-012).
 - [ ] If there is a problem with the Adobe API2 credentials then the props/eVars/events/listVars listing pages will fail to load and show an error message about Adobe Analytics API 1.4 Unavailable, which is misleading. The app should detect which API is having issues and show a more accurate error message (see autopsy 046 for API debug page improvements, which would also help surface these issues).
-- [ ] Tags on Prop/eVar/Event pages appear to be broken. It displays a message: "Failed to save", and trying to add a new one doesn't work, and doesn't show an error. (It doesn't need error handling, it just needs to work)
+- [x] Tags on Prop/eVar/Event pages appear to be broken. It displays a message: "Failed to save", and trying to add a new one doesn't work, and doesn't show an error. **[autopsy 060](autopsies/060-notes-tags-broken-in-docker.md)**
 
 ---
 
