@@ -192,21 +192,26 @@ def create_app():
             # Use the dimensions cache key as a proxy for overall cache health.
             # This is a cheap file-stat operation — no outbound API calls.
             dim_key = {}
+            cache_error = None
             if rsid:
                 try:
                     cache_info = cache.get_info(rsid)
                     dim_key = cache_info.get('cache_keys', {}).get('dimensions', {})
-                except Exception:
-                    pass
+                except Exception as exc:
+                    cache_error = str(exc)
+
+            cache_block = {
+                'dimensions_fresh': None if cache_error else not dim_key.get('expired', True),
+                'dimensions_age_mins': None if cache_error else dim_key.get('age_mins'),
+            }
+            if cache_error:
+                cache_block['cache_info_error'] = cache_error
 
             clients_info.append({
                 'slug': slug,
                 'api_version': config.get('API_VERSION', '2.0'),
                 'rsid': rsid,
-                'cache': {
-                    'dimensions_fresh': not dim_key.get('expired', True),
-                    'dimensions_age_mins': dim_key.get('age_mins'),
-                },
+                'cache': cache_block,
             })
 
         return jsonify({

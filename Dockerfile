@@ -37,8 +37,9 @@ EXPOSE 5010
 ENV HOST=0.0.0.0
 
 # Health check: hit /health every 30 s; allow 10 s for first startup.
-# curl exits non-zero on HTTP 4xx/5xx, which marks the container unhealthy.
+# Uses Python's urllib so no extra packages are needed in the slim image.
+# ${PORT:-5010} matches the default used by run.py and can be overridden.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl --fail http://localhost:5010/health || exit 1
+    CMD python -c "import urllib.request, sys; urllib.request.urlopen('http://localhost:${PORT:-5010}/health')" || exit 1
 
 CMD ["uv", "run", "run.py"]
