@@ -12,11 +12,16 @@ from datetime import datetime, timezone
 def _resolve_notes_dir() -> str:
     """Resolve the notes storage directory.
 
-    Prefers ``$CODEX_SECRETS_DIR/notes`` so that notes survive container
-    redeploys (the secrets volume is mounted outside the image).  Falls back
-    to ``{project_root}/notes`` for local development where the env var is
-    not set.
+    Resolution order:
+    1. ``$CODEX_NOTES_DIR`` — explicit writable notes directory (recommended
+       for Docker where the secrets volume is mounted read-only).
+    2. ``$CODEX_SECRETS_DIR/notes`` — legacy fallback for deployments that
+       pre-date the dedicated notes volume.
+    3. ``{project_root}/notes`` — local development default.
     """
+    notes_dir = os.environ.get('CODEX_NOTES_DIR')
+    if notes_dir:
+        return notes_dir
     secrets_dir = os.environ.get('CODEX_SECRETS_DIR')
     if secrets_dir:
         return os.path.join(secrets_dir, 'notes')
@@ -62,8 +67,7 @@ def get_empty_note():
 
 def _ensure_notes_dir():
     """Create notes directory if it doesn't exist."""
-    if not os.path.exists(NOTES_DIR):
-        os.makedirs(NOTES_DIR)
+    os.makedirs(NOTES_DIR, exist_ok=True)
 
 
 def _get_note_path(rsid, dimension_type, dimension_id):
