@@ -293,11 +293,12 @@ class AdobeAnalyticsV2Service:
             rsid: Report suite ID
 
         Returns:
-            List of dimension objects
+            List of dimension objects, each with a ``tags`` array when the API
+            returns tag data (requires the ``expansion=tags`` request parameter).
         """
         result = self._make_request(
             "dimensions",
-            params={"rsid": rsid}
+            params={"rsid": rsid, "expansion": "tags"}
         )
 
         # API returns array directly
@@ -365,11 +366,12 @@ class AdobeAnalyticsV2Service:
             rsid: Report suite ID
 
         Returns:
-            List of metric objects
+            List of metric objects, each with a ``tags`` array when the API
+            returns tag data (requires the ``expansion=tags`` request parameter).
         """
         result = self._make_request(
             "metrics",
-            params={"rsid": rsid}
+            params={"rsid": rsid, "expansion": "tags"}
         )
 
         if isinstance(result, list):
@@ -406,12 +408,31 @@ class AdobeAnalyticsV2Service:
     # Transform methods to convert 2.0 API responses to 1.4 format
     # -------------------------------------------------------------------------
 
+    @staticmethod
+    def _extract_tag_names(obj: dict) -> str:
+        """Return a comma-separated string of tag names from an API object.
+
+        The Analytics API 2.0 ``expansion=tags`` parameter adds a ``tags``
+        array to dimension and metric objects.  Each element is a dict with at
+        least a ``name`` key.  If the field is absent (e.g. old cached data
+        that predates the expansion parameter) an empty string is returned.
+
+        Args:
+            obj: A raw dimension or metric dict from the API.
+
+        Returns:
+            Tag names joined with ``", "``, or ``""`` when there are none.
+        """
+        tags = obj.get("tags") or []
+        names = [t["name"] for t in tags if t.get("name")]
+        return ", ".join(names)
+
     def _transform_dimension_to_prop(self, dim: dict) -> dict:
         """Transform a 2.0 dimension to 1.4 prop format"""
         dim_id = dim.get("id", "")
         # Extract prop number from "variables/prop1" -> "prop1"
         prop_id = dim_id.replace("variables/", "")
-        
+
         # Extract status from reportable list (e.g., ['oberon'] -> 'oberon')
         reportable = dim.get("reportable", [])
         status = ", ".join(reportable) if reportable else ""
@@ -423,6 +444,7 @@ class AdobeAnalyticsV2Service:
             "pathing_enabled": dim.get("pathingEnabled", False),
             "list_enabled": dim.get("listEnabled", False),
             "list_delimiter": dim.get("listDelimiter", ""),
+            "tags": self._extract_tag_names(dim),
             "description": dim.get("description", "")
         }
 
@@ -503,6 +525,7 @@ class AdobeAnalyticsV2Service:
             "expiration_type": parsed['expiration_type'],
             "expiration_custom_days": parsed['expiration_custom_days'],
             "allocation_type": parsed['allocation_type'],
+            "tags": self._extract_tag_names(dim),
             "description": description
         }
 
@@ -517,6 +540,7 @@ class AdobeAnalyticsV2Service:
             "name": metric.get("name", ""),
             "type": metric.get("type", ""),
             "serialization": metric.get("serialization", ""),
+            "tags": self._extract_tag_names(metric),
             "description": metric.get("description", "")
         }
 
