@@ -3,6 +3,7 @@ Codex - Adobe Analytics Configuration Viewer
 Flask application factory
 """
 import os
+import time
 from flask import Flask
 
 from app.services.git_info import get_git_info
@@ -129,6 +130,7 @@ def create_app():
         Configured ``Flask`` application instance.
     """
     app = Flask(__name__)
+    app._start_time = time.monotonic()
 
     # ── Load all client configurations ────────────────────────────────────────
     clients_config = load_clients()
@@ -169,6 +171,58 @@ def create_app():
     def root():
         from flask import render_template
         return render_template('brochure.html')
+
+    # ── Health check endpoint ─────────────────────────────────────────────────
+    # Intentionally has no /<client>/ prefix so Docker / load balancers can hit
+    # it without knowing a client slug.  Always returns HTTP 200 as long as the
+    # process is alive and handling requests; callers should restart only on
+    # network-level failure (connection refused / timeout), not on stale cache.
+    @app.route('/health')
+    def health():
+        from flask import jsonify, current_app
+
+        uptime_seconds = round(time.monotonic() - app._start_time)
+
+        clients_info = []
+        for slug, ctx in current_app.codex_clients.items():
+            config = ctx['config']
+            cache = ctx['cache']
+            rsid = config.get('AW_REPORTSUITE_ID', '')
+
+            # Use the dimensions cache key as a proxy for overall cache health.
+            # This is a cheap file-stat operation — no outbound API calls.
+            dim_key = {}
+            cache_error = None
+            if rsid:
+                try:
+                    cache_info = cache.get_info(rsid)
+                    dim_key = cache_info.get('cache_keys', {}).get('dimensions', {})
+                except Exception as exc:
+                    cache_error = str(exc)
+
+            cache_block = {
+                'dimensions_fresh': None if cache_error else not dim_key.get('expired', True),
+                'dimensions_age_mins': None if cache_error else dim_key.get('age_mins'),
+            }
+            if cache_error:
+                cache_block['cache_info_error'] = cache_error
+
+            clients_info.append({
+                'slug': slug,
+                'api_version': config.get('API_VERSION', '2.0'),
+                'rsid': rsid,
+                'cache': cache_block,
+            })
+
+        return jsonify({
+            'status': 'ok',
+            'uptime_seconds': uptime_seconds,
+            'version': {
+                'branch': current_app.config.get('GIT_BRANCH'),
+                'commit': current_app.config.get('GIT_COMMIT'),
+            },
+            'clients': clients_info,
+        })
 
     # ── Background cache warmer ───────────────────────────────────────────────
     from app.services.cache_warmer import start_scheduler

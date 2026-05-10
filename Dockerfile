@@ -36,4 +36,10 @@ EXPOSE 5010
 
 ENV HOST=0.0.0.0
 
+# Health check: hit /health every 30 s; allow 10 s for first startup.
+# Uses Python's urllib so no extra packages are needed in the slim image.
+# os.getenv('PORT', '5010') mirrors the default used by run.py.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.getenv('PORT', '5010') + '/health')"
+
 CMD ["uv", "run", "run.py"]
