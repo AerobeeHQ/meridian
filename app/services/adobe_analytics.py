@@ -29,6 +29,14 @@ class AdobeAnalyticsService:
         "https://api4.omniture.com/admin/1.4/rest/",
     ]
 
+    # Minimum read timeout for authenticated API requests.
+    # Adobe's API can take several seconds to respond even after the TCP
+    # connection is established. The configured request_timeout is used as the
+    # *connect* timeout (for fast failover during endpoint rotation); the read
+    # timeout is always at least this value so slow-but-reachable endpoints
+    # are not rejected prematurely.
+    _MIN_READ_TIMEOUT = 30.0
+
     def __init__(self, username: str, secret: str, request_timeout: float | tuple[float, float] = 10.0):
         """
         Initialize the Adobe Analytics service
@@ -36,16 +44,17 @@ class AdobeAnalyticsService:
         Args:
             username: WSSE username (format: username:company)
             secret: WSSE shared secret
-            request_timeout: Timeout in seconds for API 1.4 HTTP requests.
-                             A (connect, read) tuple is also accepted.
-                             Defaults to 5 seconds — fast enough to fail
-                             quickly when the endpoint is unreachable, while
-                             still allowing normal cross-Pacific responses through.
+            request_timeout: Connect timeout in seconds for API 1.4 HTTP requests.
+                             Used for connection attempts only; the read timeout is
+                             always at least _MIN_READ_TIMEOUT seconds so slow
+                             responses are not rejected prematurely.
+                             A (connect, read) tuple is also accepted to override both.
         """
         self.username = username
         self.secret = secret
         self.request_timeout = request_timeout
         self._active_endpoint_index = 0  # index into API_ENDPOINTS; advances on timeout
+        self._discovered_endpoint: str | None = None  # set by discover_endpoint()
 
     def _generate_wsse_header(self) -> str:
         """
@@ -78,10 +87,67 @@ class AdobeAnalyticsService:
 
         return wsse_header
 
+    def discover_endpoint(self) -> None:
+        """Discover and cache the correct API endpoint for this service's company.
+
+        Calls ``Company.GetEndpoint`` without authentication — this is a public
+        lookup that returns the company-specific API host (e.g.
+        ``https://api3.omniture.com/admin/1.4/rest/``).  This mirrors the
+        behaviour of the RSiteCatalyst R library, which always resolves the
+        endpoint before making authenticated calls.
+
+        The discovered endpoint is stored in ``self._discovered_endpoint`` and
+        used by ``_make_request`` as the first endpoint to try, bypassing the
+        round-robin rotation for the common case where the correct host is known.
+
+        Failures are logged and silently ignored — the service falls back to the
+        default endpoint rotation if discovery does not succeed.
+        """
+        if not self.username or ':' not in self.username:
+            return
+        company = self.username.split(':', 1)[1]
+        try:
+            url = f"{self.API_ENDPOINTS[0]}?method=Company.GetEndpoint"
+            response = requests.post(url, json={"company": company}, timeout=10.0)
+            response.raise_for_status()
+            # Response is a JSON-encoded string: "\"https://api3.omniture.com/...\""
+            try:
+                endpoint = response.json()
+            except Exception:
+                endpoint = response.text.strip().strip('"').replace('\\', '')
+            if isinstance(endpoint, str) and endpoint.startswith('http'):
+                if not endpoint.endswith('/'):
+                    endpoint += '/'
+                logger.info("Discovered API 1.4 endpoint for company '%s': %s", company, endpoint)
+                self._discovered_endpoint = endpoint
+            else:
+                logger.warning("Unexpected Company.GetEndpoint response for '%s': %r", company, endpoint)
+        except Exception as exc:
+            logger.warning(
+                "Company.GetEndpoint discovery failed for '%s' (%s); will use default endpoint rotation",
+                company, exc,
+            )
+
+    def _compute_timeout(self) -> tuple[float, float] | float:
+        """Return the (connect_timeout, read_timeout) pair for API requests.
+
+        If ``request_timeout`` is already a tuple it is returned unchanged.
+        Otherwise the configured value is used as the *connect* timeout and the
+        read timeout is set to ``max(request_timeout, _MIN_READ_TIMEOUT)`` so
+        that slow-but-reachable endpoints are not rejected prematurely.
+        """
+        if isinstance(self.request_timeout, tuple):
+            return self.request_timeout
+        read = max(self.request_timeout, self._MIN_READ_TIMEOUT)
+        return (self.request_timeout, read)
+
     def _make_request(self, method: str, params: dict = None) -> Any:
         """
         Make a request to the Adobe Analytics API, rotating through fallback
         endpoints when the primary host is unresponsive.
+
+        If ``discover_endpoint()`` has been called and succeeded, the discovered
+        endpoint is tried first before falling back to the default rotation.
 
         Args:
             method: API method name (e.g., "Company.GetReportSuites")
@@ -91,12 +157,23 @@ class AdobeAnalyticsService:
             JSON response from the API
         """
         payload = params or {}
-        n = len(self.API_ENDPOINTS)
+        timeout = self._compute_timeout()
+
+        # Build the ordered list of endpoints to try.
+        # Discovered endpoint (if any) goes first; the rest follow in rotation order.
+        if self._discovered_endpoint:
+            others = [e for e in self.API_ENDPOINTS if e != self._discovered_endpoint]
+            endpoints_to_try = [self._discovered_endpoint] + others
+        else:
+            n = len(self.API_ENDPOINTS)
+            endpoints_to_try = [
+                self.API_ENDPOINTS[(self._active_endpoint_index + i) % n]
+                for i in range(n)
+            ]
+
         last_exc: Exception = None
 
-        for attempt in range(n):
-            idx = (self._active_endpoint_index + attempt) % n
-            endpoint = self.API_ENDPOINTS[idx]
+        for attempt, endpoint in enumerate(endpoints_to_try):
             url = f"{endpoint}?method={method}"
             # Fresh WSSE header per attempt — the token is time-stamped
             headers = {
@@ -110,7 +187,7 @@ class AdobeAnalyticsService:
                     url,
                     headers=headers,
                     json=payload,
-                    timeout=self.request_timeout,
+                    timeout=timeout,
                 )
                 response.raise_for_status()
                 logger.debug(
@@ -120,14 +197,16 @@ class AdobeAnalyticsService:
                     response.headers.get('Content-Encoding', 'unknown'),
                 )
                 data = response.json()
-                # Remember the working endpoint for subsequent calls
-                if idx != self._active_endpoint_index:
-                    logger.info("API 1.4 endpoint rotated to %s after %d attempt(s)", endpoint, attempt + 1)
-                    self._active_endpoint_index = idx
+                # Update the active rotation index when a non-discovered endpoint succeeds
+                if not self._discovered_endpoint and endpoint in self.API_ENDPOINTS:
+                    idx = self.API_ENDPOINTS.index(endpoint)
+                    if idx != self._active_endpoint_index:
+                        logger.info("API 1.4 endpoint rotated to %s after %d attempt(s)", endpoint, attempt + 1)
+                        self._active_endpoint_index = idx
                 return data
             except requests.exceptions.ContentDecodingError:
                 logger.warning("Adobe API response %s had broken compression; retrying with manual decoding", method)
-                return self._fetch_with_manual_decoding(url, payload, headers)
+                return self._fetch_with_manual_decoding(url, payload, headers, timeout)
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
                 logger.warning("API 1.4 endpoint %s unavailable (%s); trying next", endpoint, exc)
                 last_exc = exc
@@ -136,7 +215,7 @@ class AdobeAnalyticsService:
             raise last_exc
         raise RuntimeError("All Adobe Analytics API 1.4 endpoints failed without a captured exception.")
 
-    def _fetch_with_manual_decoding(self, url: str, params: dict, headers: dict) -> Any:
+    def _fetch_with_manual_decoding(self, url: str, params: dict, headers: dict, timeout=None) -> Any:
         """Retry the request while handling compression manually"""
         retry_headers = dict(headers)
         retry_headers['Accept-Encoding'] = 'identity'
@@ -147,7 +226,7 @@ class AdobeAnalyticsService:
             headers=retry_headers,
             json=params,
             stream=True,
-            timeout=self.request_timeout,
+            timeout=timeout if timeout is not None else self._compute_timeout(),
         )
         response.raise_for_status()
 
