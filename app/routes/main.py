@@ -35,7 +35,7 @@ import re
 import traceback as _traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, current_app, Response, request, jsonify, redirect, abort, make_response, g, url_for
 
 import requests
@@ -156,9 +156,10 @@ def inject_globals():
         'git_commit':  current_app.config.get('GIT_COMMIT'),
         'suite_name':  suite_name,
         'app_title':   app_title,
-        'client_slug': client_slug,
-        'all_clients': list(current_app.codex_clients.keys()),
-        'config':      client_config,
+        'client_slug':          client_slug,
+        'all_clients':          list(current_app.codex_clients.keys()),
+        'config':               client_config,
+        'stale_cache_notices':  getattr(g, 'stale_cache_notices', []),
     }
 
 
@@ -182,18 +183,61 @@ def get_rsid() -> str:
     return g.client_config['AW_REPORTSUITE_ID']
 
 
-def get_cached_data(key: str, fetch_func, ttl_hours: float = None):
+def format_stale_age(age: timedelta) -> str:
+    """Return a human-readable description of how old stale cache data is."""
+    total_seconds = int(age.total_seconds())
+    minutes = total_seconds // 60
+    hours = minutes // 60
+    days = hours // 24
+
+    if minutes < 1:
+        return "Data is less than a minute old"
+    if hours < 1:
+        return f"Data is {minutes} minute{'s' if minutes != 1 else ''} old"
+    if days < 1:
+        return f"Data is {hours} hour{'s' if hours != 1 else ''} old"
+    if days < 7:
+        return f"Data was last retrieved {days} day{'s' if days != 1 else ''} ago"
+    weeks, rem_days = divmod(days, 7)
+    if days < 30:
+        if rem_days:
+            return f"Data is {weeks} week{'s' if weeks != 1 else ''} and {rem_days} day{'s' if rem_days != 1 else ''} old"
+        return f"Data is {weeks} week{'s' if weeks != 1 else ''} old"
+    months, rem_days = divmod(days, 30)
+    if rem_days:
+        return f"Data is {months} month{'s' if months != 1 else ''} and {rem_days} day{'s' if rem_days != 1 else ''} old"
+    return f"Data is {months} month{'s' if months != 1 else ''} old"
+
+
+def get_cached_data(key: str, fetch_func, ttl_hours: float = None, fallback_stale: bool = False):
     """Get data from cache or fetch from API.
 
     Args:
         key: Cache key name
         fetch_func: Callable that fetches fresh data on cache miss
         ttl_hours: Optional TTL override (default uses CacheService default)
+        fallback_stale: If True, serve expired cached data when the API call
+                        fails, and record a stale notice on g.stale_cache_notices.
     """
     kwargs = {}
     if ttl_hours is not None:
         kwargs['ttl_hours'] = ttl_hours
-    return g.cache.get_or_set(get_rsid(), key, fetch_func, **kwargs)
+
+    if not fallback_stale:
+        return g.cache.get_or_set(get_rsid(), key, fetch_func, **kwargs)
+
+    try:
+        return g.cache.get_or_set(get_rsid(), key, fetch_func, **kwargs)
+    except Exception as exc:
+        logger.warning("API call for cache key '%s' failed (%s); attempting stale fallback", key, exc)
+        stale_value, age = g.cache.get_stale(get_rsid(), key)
+        if stale_value is not None:
+            notice = format_stale_age(age) if age is not None else "Data may be out of date"
+            if not hasattr(g, 'stale_cache_notices'):
+                g.stale_cache_notices = []
+            g.stale_cache_notices.append(notice)
+            return stale_value
+        raise
 
 
 def get_cache_info() -> dict:
@@ -1269,6 +1313,17 @@ def evar_detail(evar_id: str):
                     g.cache.set(rsid, f'evar_trend_{display_id}', value)
                     trend_data = value
 
+    # Stale fallback for evar_config: if the API 1.4 call failed during this
+    # request, serve whatever is in cache (even if expired) and note it.
+    if evar_config is None:
+        stale_config, stale_age = g.cache.get_stale(rsid, f'evar_config_{display_id}')
+        if stale_config is not None:
+            evar_config = stale_config
+            notice = format_stale_age(stale_age) if stale_age is not None else "eVar config data may be out of date"
+            if not hasattr(g, 'stale_cache_notices'):
+                g.stale_cache_notices = []
+            g.stale_cache_notices.append(notice)
+
     # Parse expiration & allocation from the API 2.0 description field.
     # This avoids dependence on API 1.4 (deprecated August 2026).
     dimension = dimension.copy() if dimension else {}
@@ -1419,7 +1474,7 @@ def listvars():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
     return render_listing('ListVars', data, list(LISTVARS_COLUMNS.values()), 'listvars', cache_key='listvars')
@@ -1431,7 +1486,7 @@ def listvars_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('listvars', lambda: api.get_list_variables(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, LISTVARS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_listvars.csv')
@@ -1529,7 +1584,7 @@ def processing_rules():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
     for row in data:
         row['Conditions'] = format_rule_html(row.get('Conditions', ''))
@@ -1551,7 +1606,7 @@ def processing_rules_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('processing_rules', lambda: api.get_processing_rules(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, PROCRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_processing_rules.csv')
@@ -1564,7 +1619,7 @@ def marketing_channels():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
     return render_listing('Marketing Channels', data, list(MKTCHANNELS_COLUMNS.values()), 'marketing-channels', cache_key='marketing_channels')
@@ -1576,7 +1631,7 @@ def marketing_channels_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('marketing_channels', lambda: api.get_marketing_channels(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, MKTCHANNELS_COLUMNS)
 
     return generate_csv(data, f'{rsid}_marketing_channels.csv')
@@ -1589,7 +1644,7 @@ def channel_rules():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return render_listing(
@@ -1606,7 +1661,7 @@ def channel_rules_export():
     api = get_api_service_v14()
     rsid = get_rsid()
 
-    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS)
+    raw_data = get_cached_data('channel_rules', lambda: api.get_marketing_channel_rules(rsid), ttl_hours=CONFIG_TTL_HOURS, fallback_stale=True)
     data = transform_data(raw_data, MKTRULES_COLUMNS)
 
     return generate_csv(data, f'{rsid}_channel_rules.csv')

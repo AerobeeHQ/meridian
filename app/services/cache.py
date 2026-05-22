@@ -5,7 +5,7 @@ Implements file-based caching using JSON files with per-key TTL support
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
@@ -195,6 +195,40 @@ class CacheService:
                 pass
 
         return info
+
+    def get_stale(self, cache_name: str, key: str) -> tuple[Any, timedelta | None]:
+        """Return (value, age) for a cache key, ignoring TTL expiry.
+
+        Used as a fallback when the API is unavailable — serves previously
+        cached data rather than an error page, even if the TTL has passed.
+
+        Returns:
+            (value, age) if the key exists in the cache file, (None, None) otherwise.
+        """
+        cache_path = self._get_cache_path(cache_name)
+        if not cache_path.exists():
+            return None, None
+
+        try:
+            with open(cache_path, 'r') as f:
+                cache_data = json.load(f)
+            value = cache_data.get(key)
+            if value is None:
+                return None, None
+
+            metadata = self._load_metadata(cache_name)
+            key_meta = metadata.get('keys', {}).get(key)
+            age = None
+            if key_meta:
+                try:
+                    created = datetime.fromisoformat(key_meta['created'])
+                    age = datetime.now() - created
+                except (ValueError, TypeError):
+                    pass
+
+            return value, age
+        except (json.JSONDecodeError, IOError):
+            return None, None
 
     def clear(self, cache_name: str) -> None:
         """Clear a specific cache"""
