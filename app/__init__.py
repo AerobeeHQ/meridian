@@ -70,6 +70,7 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
         secret=config.get('AW_SECRET'),
         request_timeout=config.get('API_V14_TIMEOUT', 5.0),
     )
+    api_v14.discover_endpoint()
 
     launch = None
     if config.get('LAUNCH_ENABLED') and config.get('LAUNCH_PROPERTY_ID') and api_version == '2.0':
