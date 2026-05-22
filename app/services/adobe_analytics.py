@@ -11,6 +11,7 @@ import secrets
 import zlib
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 from flask import current_app
@@ -118,8 +119,21 @@ class AdobeAnalyticsService:
             if isinstance(endpoint, str) and endpoint.startswith('http'):
                 if not endpoint.endswith('/'):
                     endpoint += '/'
-                logger.info("Discovered API 1.4 endpoint for company '%s': %s", company, endpoint)
-                self._discovered_endpoint = endpoint
+                parsed = urlparse(endpoint)
+                valid = (
+                    parsed.scheme == 'https'
+                    and isinstance(parsed.hostname, str)
+                    and (parsed.hostname == 'omniture.com' or parsed.hostname.endswith('.omniture.com'))
+                    and parsed.path.startswith('/admin/1.4/rest/')
+                )
+                if valid:
+                    logger.info("Discovered API 1.4 endpoint for company '%s': %s", company, endpoint)
+                    self._discovered_endpoint = endpoint
+                else:
+                    logger.warning(
+                        "Company.GetEndpoint returned an unexpected URL for '%s': %r; ignoring",
+                        company, endpoint,
+                    )
             else:
                 logger.warning("Unexpected Company.GetEndpoint response for '%s': %r", company, endpoint)
         except Exception as exc:
@@ -128,7 +142,7 @@ class AdobeAnalyticsService:
                 company, exc,
             )
 
-    def _compute_timeout(self) -> tuple[float, float] | float:
+    def _compute_timeout(self) -> tuple[float, float]:
         """Return the (connect_timeout, read_timeout) pair for API requests.
 
         If ``request_timeout`` is already a tuple it is returned unchanged.
@@ -209,6 +223,12 @@ class AdobeAnalyticsService:
                 return self._fetch_with_manual_decoding(url, payload, headers, timeout)
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
                 logger.warning("API 1.4 endpoint %s unavailable (%s); trying next", endpoint, exc)
+                if endpoint == self._discovered_endpoint:
+                    logger.info(
+                        "Discovered endpoint %s failed; clearing so subsequent requests use default rotation",
+                        endpoint,
+                    )
+                    self._discovered_endpoint = None
                 last_exc = exc
 
         if last_exc is not None:

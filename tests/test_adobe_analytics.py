@@ -11,6 +11,7 @@ import base64
 import gzip
 import json
 import zlib
+from urllib.parse import urlparse
 import pytest
 from unittest.mock import MagicMock, patch
 import requests
@@ -254,7 +255,7 @@ class TestEndpointRotation:
 
         def fake_post(url, **kwargs):
             call_count[0] += 1
-            if "api3.omniture.com" in url:
+            if urlparse(url).hostname == "api3.omniture.com":
                 raise requests.exceptions.Timeout("timed out")
             resp = MagicMock()
             resp.raise_for_status = lambda: None
@@ -266,6 +267,23 @@ class TestEndpointRotation:
 
         assert result == [{"rsid": "x"}]
         assert call_count[0] == 2  # api3 failed, one default succeeded
+
+    def test_clears_discovered_endpoint_after_timeout(self, service):
+        """Discovered endpoint is cleared when it times out so future requests use rotation."""
+        service._discovered_endpoint = "https://api3.omniture.com/admin/1.4/rest/"
+
+        def fake_post(url, **kwargs):
+            if urlparse(url).hostname == "api3.omniture.com":
+                raise requests.exceptions.Timeout("timed out")
+            resp = MagicMock()
+            resp.raise_for_status = lambda: None
+            resp.json.return_value = {"report_suites": []}
+            return resp
+
+        with patch("app.services.adobe_analytics.requests.post", side_effect=fake_post):
+            service.get_report_suites()
+
+        assert service._discovered_endpoint is None
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +369,24 @@ class TestDiscoverEndpoint:
         with patch(
             "app.services.adobe_analytics.requests.post",
             return_value=self._ok_response('"not-a-url"'),
+        ):
+            service.discover_endpoint()
+        assert service._discovered_endpoint is None
+
+    def test_rejects_http_scheme(self, service):
+        """Only https URLs should be accepted to prevent credential leakage."""
+        with patch(
+            "app.services.adobe_analytics.requests.post",
+            return_value=self._ok_response('"http://api3.omniture.com/admin/1.4/rest/"'),
+        ):
+            service.discover_endpoint()
+        assert service._discovered_endpoint is None
+
+    def test_rejects_non_omniture_host(self, service):
+        """URLs with non-omniture.com hostnames should be rejected."""
+        with patch(
+            "app.services.adobe_analytics.requests.post",
+            return_value=self._ok_response('"https://evil.com/admin/1.4/rest/"'),
         ):
             service.discover_endpoint()
         assert service._discovered_endpoint is None
