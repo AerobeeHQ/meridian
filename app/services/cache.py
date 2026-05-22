@@ -218,10 +218,15 @@ class CacheService:
 
             metadata = self._load_metadata(cache_name)
             key_meta = metadata.get('keys', {}).get(key)
+            created_str = (
+                key_meta.get('created')
+                if key_meta
+                else metadata.get('created')
+            )
             age = None
-            if key_meta:
+            if created_str:
                 try:
-                    created = datetime.fromisoformat(key_meta['created'])
+                    created = datetime.fromisoformat(created_str)
                     age = datetime.now() - created
                 except (ValueError, TypeError):
                     logger.debug(

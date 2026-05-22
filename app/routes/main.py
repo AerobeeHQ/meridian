@@ -194,7 +194,7 @@ def format_stale_age(age: timedelta) -> str:
         return "Data is less than a minute old"
     if hours < 1:
         return f"Data is {minutes} minute{'s' if minutes != 1 else ''} old"
-    if days < 1:
+    if hours < 48:
         return f"Data is {hours} hour{'s' if hours != 1 else ''} old"
     if days < 7:
         return f"Data was last retrieved {days} day{'s' if days != 1 else ''} ago"
@@ -228,7 +228,7 @@ def get_cached_data(key: str, fetch_func, ttl_hours: float = None, fallback_stal
 
     try:
         return g.cache.get_or_set(get_rsid(), key, fetch_func, **kwargs)
-    except Exception as exc:
+    except requests.exceptions.RequestException as exc:
         logger.warning("API call for cache key '%s' failed (%s); attempting stale fallback", key, exc)
         stale_value, age = g.cache.get_stale(get_rsid(), key)
         if stale_value is not None:
@@ -2760,5 +2760,4 @@ def settings():
         cache_info=get_cache_info(),
         active_tab='settings',
     )
-
 
