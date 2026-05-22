@@ -224,7 +224,12 @@ class CacheService:
                     created = datetime.fromisoformat(key_meta['created'])
                     age = datetime.now() - created
                 except (ValueError, TypeError):
-                    pass
+                    logger.debug(
+                        "Invalid cache metadata timestamp for cache '%s', key '%s'; returning stale value without age",
+                        cache_name,
+                        key,
+                        exc_info=True,
+                    )
 
             return value, age
         except (json.JSONDecodeError, IOError):
