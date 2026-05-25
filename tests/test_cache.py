@@ -259,3 +259,54 @@ class TestResilience:
         (tmp_path / "suite1.json").write_text("{not valid json}")
         cache.set("suite1", "key", "value")
         assert cache.get("suite1", "key") == "value"
+
+
+# ---------------------------------------------------------------------------
+# get_stale
+# ---------------------------------------------------------------------------
+
+class TestGetStale:
+    def test_returns_value_and_age_for_expired_key(self, cache, tmp_path):
+        cache.set("suite1", "key", "value", ttl_hours=1)
+        meta_path = tmp_path / "suite1_meta.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        old_time = (datetime.now() - timedelta(hours=2)).isoformat()
+        meta["keys"]["key"]["created"] = old_time
+        meta["created"] = old_time
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        value, age = cache.get_stale("suite1", "key")
+        assert value == "value"
+        assert age is not None
+        assert age >= timedelta(hours=2)
+
+    def test_returns_value_with_none_age_when_metadata_missing_or_corrupt(self, cache, tmp_path):
+        cache.set("suite1", "key", "value")
+        (tmp_path / "suite1_meta.json").unlink()
+        value, age = cache.get_stale("suite1", "key")
+        assert value == "value"
+        assert age is None
+
+        # Corrupt metadata should also keep stale fallback value and no age.
+        (tmp_path / "suite1_meta.json").write_text("{not valid json}")
+        value, age = cache.get_stale("suite1", "key")
+        assert value == "value"
+        assert age is None
+
+    def test_uses_legacy_top_level_created_when_key_metadata_missing(self, cache, tmp_path):
+        cache.set("suite1", "key", "value")
+        meta_path = tmp_path / "suite1_meta.json"
+        with open(meta_path) as f:
+            meta = json.load(f)
+        old_time = (datetime.now() - timedelta(hours=3)).isoformat()
+        meta["keys"].pop("key", None)
+        meta["created"] = old_time
+        with open(meta_path, "w") as f:
+            json.dump(meta, f)
+
+        value, age = cache.get_stale("suite1", "key")
+        assert value == "value"
+        assert age is not None
+        assert age >= timedelta(hours=3)
