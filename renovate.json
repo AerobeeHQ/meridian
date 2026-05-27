@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovateapp.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Package dependencies — allow all updates",
+      "matchManagers": ["pep621", "pip_requirements", "uv", "npm","swift", "gradle", "gradle-wrapper", "maven", "cocoapods", "github-actions"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "enabled": true
+    },
+    {
+      "description": "Runtime and tooling — patch updates only",
+      "matchDepNames": ["python", "uv", "node", "npm","swift", "gradle", "java", "openjdk", "xcode"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },{
+      "description": "Kotlin compiler and runtime — patch updates only",
+      "matchDepPatterns": ["^org\\.jetbrains\\.kotlin"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    }
+  ]
+}
