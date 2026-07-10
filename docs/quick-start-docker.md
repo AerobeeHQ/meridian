@@ -17,7 +17,7 @@ This guide walks a system administrator through running Codex using Docker Compo
 ## 1. Get the Code
 
 ```bash
-git clone https://github.com/maxisdigital/codex.git
+git clone https://github.com/aerobeehq/codex.git
 cd codex
 ```
 

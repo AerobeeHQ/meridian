@@ -45,7 +45,7 @@ For a detailed step-by-step walkthrough, see [docs/quick-start.md](docs/quick-st
 
 ```bash
 # Clone the repository
-git clone https://github.com/maxisdigital/codex.git
+git clone https://github.com/aerobeehq/codex.git
 cd codex
 
 # Install dependencies

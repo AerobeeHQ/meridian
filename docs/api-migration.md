@@ -1146,7 +1146,7 @@ If migration encounters blocking issues:
 - Current implementation: `/app/services/adobe_analytics.py`
 - API 1.4 Swagger: `/docs/adobe_analytics_api_1.4_swagger.json`
 - API 2.0 Swagger: `/docs/adobe_analytics_api_2.0_swagger.json`
-- GitHub repository: `maxisdigital/codex`
+- GitHub repository: `aerobeehq/codex`
 
 ---
 

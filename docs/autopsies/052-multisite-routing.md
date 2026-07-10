@@ -1,7 +1,7 @@
 # 052 — Multisite Routing with Per-Client URL Prefix and Secrets Directory
 
 **Date:** 2026-04-14
-**PR:** [#67](https://github.com/maxisdigital/codex/pull/67)
+**PR:** [#67](https://github.com/aerobeehq/codex/pull/67)
 **Branch:** `feature/multisite-routing` (merged to `main`)
 **Status:** Complete
 

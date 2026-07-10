@@ -27,7 +27,7 @@ irm https://astral.sh/uv/install.ps1 | iex
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/maxisdigital/codex.git
+git clone https://github.com/aerobeehq/codex.git
 cd codex
 ```
 

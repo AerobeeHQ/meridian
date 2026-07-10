@@ -76,7 +76,7 @@ All v2 features were implemented in this order:
 
 **Complexity: High** — new API integration from scratch; requires a spike notebook to understand data shape; may require additional OAuth2 scopes.
 
-See also this Github repo: https://github.com/maxisdigital/launchpad 
+See also this Github repo: https://github.com/aerobeehq/launchpad 
 
 Let me know if you need access.
 
