@@ -1,7 +1,7 @@
-# AI Agent & Copilot Guide for Codex
+# AI Agent & Copilot Guide for Meridian
 
 ## 1. Project Context
-**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
+**Meridian** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
 
 ## 2. Architecture & Tech Stack
 - **Framework**: Flask (`app/routes/`, `app/templates/`).
@@ -26,10 +26,10 @@
 ## 4. Critical Workflows
 - **Install/Sync**: `uv sync`.
 - **Run Tests**: `uv run pytest` — must pass before any commit or PR.
-- **Startup**: `CODEX_SECRETS_DIR=$(pwd)/secrets uv run run.py` (Default: http://127.0.0.1:5010).
-- **Health Check**: `CODEX_SECRETS_DIR=$(pwd)/secrets uv run verify_setup.py` (checks config, directories, imports).
+- **Startup**: `MERIDIAN_SECRETS_DIR=$(pwd)/secrets uv run run.py` (Default: http://127.0.0.1:5010).
+- **Health Check**: `MERIDIAN_SECRETS_DIR=$(pwd)/secrets uv run verify_setup.py` (checks config, directories, imports).
 - **Docker**: `docker compose up -d --build`.
-- **Config**: Per-client JSON files in `secrets/` (e.g. `secrets/maxis.json`). This directory is git-ignored. Set `CODEX_SECRETS_DIR=$(pwd)/secrets` before running.
+- **Config**: Per-client JSON files in `secrets/` (e.g. `secrets/maxis.json`). This directory is git-ignored. Set `MERIDIAN_SECRETS_DIR=$(pwd)/secrets` before running.
   - Always required: `APP_TITLE`, `AW_REPORTSUITE_ID`.
   - API 2.0 required: `API_VERSION=2.0`, `CLIENT_ID`, `CLIENT_SECRET`, `ORGANIZATION_ID` (and optional `SCOPES`).
   - API 1.4 required: `AW_USERNAME`, `AW_SECRET`.
@@ -75,7 +75,7 @@ After completing a feature implementation, or whenever the user needs to review 
    ```
 2. **If not running**, start it bound to all interfaces so it's reachable over Tailscale:
    ```bash
-   CODEX_SECRETS_DIR=$(pwd)/secrets HOST=0.0.0.0 uv run run.py > /tmp/codex.log 2>&1 &
+   MERIDIAN_SECRETS_DIR=$(pwd)/secrets HOST=0.0.0.0 uv run run.py > /tmp/meridian.log 2>&1 &
    sleep 3 && curl -s http://127.0.0.1:5010 > /dev/null && echo "UP"
    ```
 3. **If the hostname of the computer is M4, then Always present the review link** as a clickable markdown hyperlink:

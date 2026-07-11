@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Verify Codex setup
-Checks: CODEX_SECRETS_DIR, imports, app factory, directory structure
+Verify Meridian setup
+Checks: MERIDIAN_SECRETS_DIR, imports, app factory, directory structure
 """
 import sys
 import os
@@ -18,16 +18,16 @@ def check_python_version():
 
 
 def check_config():
-    """Check CODEX_SECRETS_DIR is set and contains at least one valid client config."""
+    """Check MERIDIAN_SECRETS_DIR is set and contains at least one valid client config."""
     import json
     from pathlib import Path
 
-    print("Checking CODEX_SECRETS_DIR...", end=" ")
+    print("Checking MERIDIAN_SECRETS_DIR...", end=" ")
 
-    secrets_dir_raw = os.environ.get('CODEX_SECRETS_DIR')
+    secrets_dir_raw = os.environ.get('MERIDIAN_SECRETS_DIR')
     if not secrets_dir_raw:
-        print("FAIL - CODEX_SECRETS_DIR is not set")
-        print("  export CODEX_SECRETS_DIR=/path/to/secrets/codex")
+        print("FAIL - MERIDIAN_SECRETS_DIR is not set")
+        print("  export MERIDIAN_SECRETS_DIR=/path/to/secrets/meridian")
         print("  Then place one JSON config per client: maxis.json, coles.json, etc.")
         return False
 
@@ -137,7 +137,7 @@ def check_directories():
 def main():
     """Run all checks"""
     print("=" * 50)
-    print("Codex Setup Verification")
+    print("Meridian Setup Verification")
     print("=" * 50)
     print()
 

@@ -1,4 +1,4 @@
-# Codex Makefile
+# Meridian Makefile
 #
 # Usage:
 #   make up                              # Build and start (current branch)

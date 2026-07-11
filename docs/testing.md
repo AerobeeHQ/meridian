@@ -1,12 +1,12 @@
 # Testing Guide
 
-This document describes the Codex test suite, what each test module covers, and how to run the tests.
+This document describes the Meridian test suite, what each test module covers, and how to run the tests.
 
 ---
 
 ## Overview
 
-Codex uses **pytest** for automated testing. The suite focuses on the service layer — pure logic and file-I/O code that can be tested without real Adobe API credentials or a running Flask app. All tests are fast (< 1 second total), isolated, and deterministic.
+Meridian uses **pytest** for automated testing. The suite focuses on the service layer — pure logic and file-I/O code that can be tested without real Adobe API credentials or a running Flask app. All tests are fast (< 1 second total), isolated, and deterministic.
 
 | Metric | Value |
 |--------|-------|
@@ -116,7 +116,7 @@ Tests for `app/services/config_loader.py`.
 
 | Group | What is tested |
 |-------|----------------|
-| `TestGetSecretsDir` | Raises `RuntimeError` when `CODEX_SECRETS_DIR` is unset; raises when the directory does not exist; returns a `Path` when valid |
+| `TestGetSecretsDir` | Raises `RuntimeError` when `MERIDIAN_SECRETS_DIR` is unset; raises when the directory does not exist; returns a `Path` when valid |
 | `TestLoadClients` | Loads a single valid config; loads multiple configs; result is sorted alphabetically; skips `_`-prefixed reserved files; skips configs missing required keys; skips corrupt JSON files; raises when no valid configs are found; raises when the directory is empty; preserves extra config keys |
 
 ---

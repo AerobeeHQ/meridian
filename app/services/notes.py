@@ -13,16 +13,16 @@ def _resolve_notes_dir() -> str:
     """Resolve the notes storage directory.
 
     Resolution order:
-    1. ``$CODEX_NOTES_DIR`` — explicit writable notes directory (recommended
+    1. ``$MERIDIAN_NOTES_DIR`` — explicit writable notes directory (recommended
        for Docker where the secrets volume is mounted read-only).
-    2. ``$CODEX_SECRETS_DIR/notes`` — legacy fallback for deployments that
+    2. ``$MERIDIAN_SECRETS_DIR/notes`` — legacy fallback for deployments that
        pre-date the dedicated notes volume.
     3. ``{project_root}/notes`` — local development default.
     """
-    notes_dir = os.environ.get('CODEX_NOTES_DIR')
+    notes_dir = os.environ.get('MERIDIAN_NOTES_DIR')
     if notes_dir:
         return notes_dir
-    secrets_dir = os.environ.get('CODEX_SECRETS_DIR')
+    secrets_dir = os.environ.get('MERIDIAN_SECRETS_DIR')
     if secrets_dir:
         return os.path.join(secrets_dir, 'notes')
     return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'notes')

@@ -1,5 +1,5 @@
 """
-Auth routes for Codex — Roadmap v2-004 (User OAuth Login)
+Auth routes for Meridian — Roadmap v2-004 (User OAuth Login)
 
 This blueprint is a stub that establishes the routing structure for per-user
 Adobe IMS OAuth login.  All routes currently return placeholder responses;

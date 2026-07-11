@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive plan for implementing dimension detail pages in the Codex application. Detail pages allow administrators to click on a data dimension (prop, eVar) from the listing and view its configuration, top recorded values, and usage trends over the last 30 days.
+This document provides a comprehensive plan for implementing dimension detail pages in the Meridian application. Detail pages allow administrators to click on a data dimension (prop, eVar) from the listing and view its configuration, top recorded values, and usage trends over the last 30 days.
 
 **Goal:**
 Enable administrators to verify that data dimensions are collecting data correctly by providing:
@@ -59,7 +59,7 @@ Fixed 30-day lookback period for both top values and trend data.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Codex  Props  eVars  Events  ListVars  Proc Rules  Marketing Channels  ...  │
+│ Meridian  Props  eVars  Events  ListVars  Proc Rules  Marketing Channels  ...  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Company > rsid > prop1                              [← Back to Props Listing]│
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -132,7 +132,7 @@ Fixed 30-day lookback period for both top values and trend data.
 - Uses existing Bootstrap 5 card components
 - Chart.js for line chart visualization
 - Responsive two-column layout (stacks on mobile)
-- Consistent with existing Codex design language
+- Consistent with existing Meridian design language
 
 ---
 

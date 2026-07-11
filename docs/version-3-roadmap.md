@@ -1,6 +1,6 @@
 # Version 3 Roadmap
 
-This document summarises the planned features for Codex v3. Each item will have a detailed implementation plan in `docs/plans/` once scoped.
+This document summarises the planned features for Meridian v3. Each item will have a detailed implementation plan in `docs/plans/` once scoped.
 
 ---
 
@@ -78,7 +78,7 @@ Start with architectural improvements before user-facing features:
 These endpoints have no API 2.0 equivalents. Without a mitigation strategy, these features will stop working.
 
 **Options to explore:**
-1. **Manual data upload** — Users export configuration from Adobe Analytics UI and upload to Codex. Note, that the UI doesn't offer any direct export functionality, so it might require users to copy-paste from the UI or take screenshots. YUCK!
+1. **Manual data upload** — Users export configuration from Adobe Analytics UI and upload to Meridian. Note, that the UI doesn't offer any direct export functionality, so it might require users to copy-paste from the UI or take screenshots. YUCK!
 2. **AI agent extraction** — An AI agent (or Playwright script) logs into Adobe Analytics on the user's behalf and extracts configuration data from the UI.
 3. **Adobe Admin Console API** — Some configuration may be accessible via Adobe Admin APIs (needs investigation).
 4. **Feature deprecation** — Accept that some features will no longer be available post-August 2026.
@@ -107,7 +107,7 @@ These endpoints have no API 2.0 equivalents. Without a mitigation strategy, thes
 
 **Goal:** In Settings, allow users to map a specific Launch property to the selected report suite.
 
-**Why:** Launch properties and Analytics report suites don't have a 1:1 relationship. Users may want to view different Launch properties for different report suites within the same Codex client.
+**Why:** Launch properties and Analytics report suites don't have a 1:1 relationship. Users may want to view different Launch properties for different report suites within the same Meridian client.
 
 **How:** Add a Launch property dropdown to Settings (fetches properties from Reactor API). Store mapping in localStorage or session. Use mapped property when rendering Launch rules on detail pages.
 
@@ -121,7 +121,7 @@ These endpoints have no API 2.0 equivalents. Without a mitigation strategy, thes
 
 **Goal:** Offer Adobe Spectrum as a theme option in the Settings page.
 
-**Why:** Adobe Spectrum is Adobe's design system. Offering it as a theme option would align Codex's look and feel with Adobe's own tools, which may be preferred by users already familiar with Adobe products.
+**Why:** Adobe Spectrum is Adobe's design system. Offering it as a theme option would align Meridian's look and feel with Adobe's own tools, which may be preferred by users already familiar with Adobe products.
 
 **How:** Integrate `@adobe/spectrum-web-components` library. Map Spectrum design tokens to Bootstrap CSS custom properties. Add a fourth theme option ("Spectrum") to the Settings page theme selector.
 
@@ -185,7 +185,7 @@ These endpoints have no API 2.0 equivalents. Without a mitigation strategy, thes
 
 **Goal:** Detect and surface changes to Adobe Analytics configuration between cache refreshes — for example, when an eVar's name, allocation, or expiration changes, or when a new event is enabled.
 
-**Why:** Adobe Analytics configurations are modified in the Admin Console and changes are not versioned or audited natively. Analysts often discover unexpected changes only when reports break. Codex already fetches configuration data on a 24-hour schedule; comparing consecutive snapshots is a natural extension.
+**Why:** Adobe Analytics configurations are modified in the Admin Console and changes are not versioned or audited natively. Analysts often discover unexpected changes only when reports break. Meridian already fetches configuration data on a 24-hour schedule; comparing consecutive snapshots is a natural extension.
 
 **How:**
 1. When the cache warmer writes a new snapshot, compare it against the previous snapshot for key fields (name, type, allocation, expiration, enabled state).

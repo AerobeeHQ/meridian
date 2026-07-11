@@ -86,7 +86,7 @@ def warm_cache_key(client_slug: str, rsid: str, cache: CacheService, api_v2, api
 def warm_client(app, client_slug: str):
     """Warm all slow-changing cache keys for a single client."""
     with app.app_context():
-        ctx = app.codex_clients.get(client_slug)
+        ctx = app.meridian_clients.get(client_slug)
         if ctx is None:
             logger.warning("warm_client called for unknown client '%s'", client_slug)
             return
@@ -104,7 +104,7 @@ def warm_client(app, client_slug: str):
 
 def warm_all_clients(app):
     """Warm caches for all configured clients."""
-    for client_slug in app.codex_clients:
+    for client_slug in app.meridian_clients:
         warm_client(app, client_slug)
 
 
@@ -131,5 +131,5 @@ def start_scheduler(app):
     # Warm immediately in the background so the app is available right away.
     threading.Thread(target=warm_all_clients, args=(app,), daemon=True).start()
 
-    logger.info("Cache warmer scheduler started (24h interval, %d client(s))", len(app.codex_clients))
+    logger.info("Cache warmer scheduler started (24h interval, %d client(s))", len(app.meridian_clients))
     return scheduler

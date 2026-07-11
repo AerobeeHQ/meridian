@@ -1,4 +1,4 @@
-/* ─── Codex Application Chrome ───────────────────────────────────────────── */
+/* ─── Meridian Application Chrome ───────────────────────────────────────────── */
 /*                                                                            */
 /* Three-layer architecture:                                                  */
 /*   1. Token layer — :root with Classic defaults; themes override below.    */
@@ -36,7 +36,7 @@
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-html[data-codex-theme="light"] {
+html[data-meridian-theme="light"] {
   --nav-h:      44px;
   --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
   --nav-hover:  oklch(38% 0.14 218 / 0.40);
@@ -48,7 +48,7 @@ html[data-codex-theme="light"] {
 }
 
 /* ── Dark theme ──────────────────────────────────────────────────────────── */
-html[data-codex-theme="dark"] {
+html[data-meridian-theme="dark"] {
   --nav-h:      44px;
   --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
   --nav-hover:  oklch(50% 0.15 28 / 0.40);
@@ -61,7 +61,7 @@ html[data-codex-theme="dark"] {
 
 /* ── Auto — mirrors OS preference ───────────────────────────────────────── */
 @media (prefers-color-scheme: light) {
-  html[data-codex-theme="auto"] {
+  html[data-meridian-theme="auto"] {
     --nav-h:      44px;
     --nav-bg:     linear-gradient(to right, oklch(44% 0.16 248), oklch(53% 0.13 188));
     --nav-hover:  oklch(38% 0.14 218 / 0.40);
@@ -73,7 +73,7 @@ html[data-codex-theme="dark"] {
   }
 }
 @media (prefers-color-scheme: dark) {
-  html[data-codex-theme="auto"] {
+  html[data-meridian-theme="auto"] {
     --nav-h:      44px;
     --nav-bg:     linear-gradient(to right, oklch(57% 0.18 36), oklch(44% 0.17 21));
     --nav-hover:  oklch(50% 0.15 28 / 0.40);
@@ -371,12 +371,12 @@ body {
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* 2. CLASSIC THEME — compact typography + Bootstrap component overrides      */
-/*    Activated by: data-codex-theme="classic" on <html>                      */
+/*    Activated by: data-meridian-theme="classic" on <html>                      */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Base and typography ────────────────────────────────────────────────── */
-html[data-codex-theme="classic"],
-html[data-codex-theme="classic"] body {
+html[data-meridian-theme="classic"],
+html[data-meridian-theme="classic"] body {
   font-family: var(--font) !important;
   font-size:   13px !important;
   line-height: 1.45;
@@ -384,28 +384,28 @@ html[data-codex-theme="classic"] body {
   color:       #333 !important;
 }
 
-html[data-codex-theme="classic"] .app-content { background: #fff; }
+html[data-meridian-theme="classic"] .app-content { background: #fff; }
 
-html[data-codex-theme="classic"] h1,
-html[data-codex-theme="classic"] h2,
-html[data-codex-theme="classic"] h3,
-html[data-codex-theme="classic"] h4,
-html[data-codex-theme="classic"] h5,
-html[data-codex-theme="classic"] h6 { font-family: var(--font) !important; }
+html[data-meridian-theme="classic"] h1,
+html[data-meridian-theme="classic"] h2,
+html[data-meridian-theme="classic"] h3,
+html[data-meridian-theme="classic"] h4,
+html[data-meridian-theme="classic"] h5,
+html[data-meridian-theme="classic"] h6 { font-family: var(--font) !important; }
 
-html[data-codex-theme="classic"] .form-control,
-html[data-codex-theme="classic"] .form-select { font-family: var(--font) !important; font-size: 12px !important; }
+html[data-meridian-theme="classic"] .form-control,
+html[data-meridian-theme="classic"] .form-select { font-family: var(--font) !important; font-size: 12px !important; }
 
-html[data-codex-theme="classic"] .btn { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
+html[data-meridian-theme="classic"] .btn { font-family: var(--font) !important; font-size: 12px !important; border-radius: 3px !important; }
 
-html[data-codex-theme="classic"] .monospace,
-html[data-codex-theme="classic"] .pre-code,
-html[data-codex-theme="classic"] code { font-family: var(--mono) !important; font-size: 11px !important; }
+html[data-meridian-theme="classic"] .monospace,
+html[data-meridian-theme="classic"] .pre-code,
+html[data-meridian-theme="classic"] code { font-family: var(--mono) !important; font-size: 11px !important; }
 
-html[data-codex-theme="classic"] .table { font-family: var(--font) !important; font-size: 12px !important; }
+html[data-meridian-theme="classic"] .table { font-family: var(--font) !important; font-size: 12px !important; }
 
 /* ─── Table ──────────────────────────────────────────────────────────────── */
-html[data-codex-theme="classic"] #dataTable thead th {
+html[data-meridian-theme="classic"] #dataTable thead th {
   background-color: oklch(95% 0.006 55) !important;
   font-family:      var(--font) !important;
   font-size:        12px !important;
@@ -414,31 +414,31 @@ html[data-codex-theme="classic"] #dataTable thead th {
   box-shadow:       0 1px 0 var(--border) !important;
 }
 
-html[data-codex-theme="classic"] .table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg: rgba(0,0,0,0.02); }
-html[data-codex-theme="classic"] .table-hover tbody tr:hover                 { --bs-table-bg: oklch(94% 0.015 220) !important; }
-html[data-codex-theme="classic"] .table tbody tr.selected                    { --bs-table-bg: oklch(88% 0.030 264) !important; }
-html[data-codex-theme="classic"] .table tbody a                              { color: var(--primary); font-weight: bold; text-decoration: none; }
-html[data-codex-theme="classic"] .table tbody a:hover                        { text-decoration: underline; }
-html[data-codex-theme="classic"] .table tbody tr.selected a                  { color: #fff !important; }
+html[data-meridian-theme="classic"] .table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg: rgba(0,0,0,0.02); }
+html[data-meridian-theme="classic"] .table-hover tbody tr:hover                 { --bs-table-bg: oklch(94% 0.015 220) !important; }
+html[data-meridian-theme="classic"] .table tbody tr.selected                    { --bs-table-bg: oklch(88% 0.030 264) !important; }
+html[data-meridian-theme="classic"] .table tbody a                              { color: var(--primary); font-weight: bold; text-decoration: none; }
+html[data-meridian-theme="classic"] .table tbody a:hover                        { text-decoration: underline; }
+html[data-meridian-theme="classic"] .table tbody tr.selected a                  { color: #fff !important; }
 
 /* ─── DataTables controls ────────────────────────────────────────────────── */
-html[data-codex-theme="classic"] .btn-secondary {
+html[data-meridian-theme="classic"] .btn-secondary {
   --bs-btn-color:        #444;
   --bs-btn-bg:           #ececec;
   --bs-btn-border-color: #cacaca;
 }
 
-html[data-codex-theme="classic"] .dt-search input.search-active {
+html[data-meridian-theme="classic"] .dt-search input.search-active {
   outline:    2px solid var(--primary);
   box-shadow: 0 0 6px rgba(42, 95, 143, 0.28);
 }
 
 /* ─── Accordion ──────────────────────────────────────────────────────────── */
-html[data-codex-theme="classic"] .accordion-button:not(.collapsed) { background-color: oklch(95% 0.006 55); color: #444; }
+html[data-meridian-theme="classic"] .accordion-button:not(.collapsed) { background-color: oklch(95% 0.006 55); color: #444; }
 
 /* ─── Buttons — jQuery UI-era gradient style ─────────────────────────────── */
-html[data-codex-theme="classic"] .btn-outline-primary,
-html[data-codex-theme="classic"] .btn-outline-secondary {
+html[data-meridian-theme="classic"] .btn-outline-primary,
+html[data-meridian-theme="classic"] .btn-outline-secondary {
   background:  linear-gradient(to bottom, #f5f5f5 0%, #e2e2e2 100%) !important;
   border:      1px solid #a8a8a8 !important;
   color:       #333 !important;
@@ -446,29 +446,29 @@ html[data-codex-theme="classic"] .btn-outline-secondary {
   text-shadow: none !important;
 }
 
-html[data-codex-theme="classic"] .btn-outline-primary:hover,
-html[data-codex-theme="classic"] .btn-outline-secondary:hover {
+html[data-meridian-theme="classic"] .btn-outline-primary:hover,
+html[data-meridian-theme="classic"] .btn-outline-secondary:hover {
   background:   linear-gradient(to bottom, #ebebeb 0%, #d4d4d4 100%) !important;
   border-color: #888 !important;
   color:        #222 !important;
   box-shadow:   none !important;
 }
 
-html[data-codex-theme="classic"] .btn-outline-primary:active,
-html[data-codex-theme="classic"] .btn-outline-secondary:active {
+html[data-meridian-theme="classic"] .btn-outline-primary:active,
+html[data-meridian-theme="classic"] .btn-outline-secondary:active {
   background: linear-gradient(to bottom, #d4d4d4 0%, #ebebeb 100%) !important;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important;
 }
 
-html[data-codex-theme="classic"] .btn-outline-primary:focus-visible,
-html[data-codex-theme="classic"] .btn-outline-secondary:focus-visible {
+html[data-meridian-theme="classic"] .btn-outline-primary:focus-visible,
+html[data-meridian-theme="classic"] .btn-outline-secondary:focus-visible {
   outline:        2px solid var(--primary) !important;
   outline-offset: 1px !important;
   box-shadow:     none !important;
 }
 
-html[data-codex-theme="classic"] .btn-outline-primary:disabled,
-html[data-codex-theme="classic"] .btn-outline-secondary:disabled {
+html[data-meridian-theme="classic"] .btn-outline-primary:disabled,
+html[data-meridian-theme="classic"] .btn-outline-secondary:disabled {
   background:   linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%) !important;
   border-color: #c8c8c8 !important;
   color:        #999 !important;
@@ -476,7 +476,7 @@ html[data-codex-theme="classic"] .btn-outline-secondary:disabled {
 }
 
 /* ─── Badges — flat bordered labels, jQuery UI era ──────────────────────── */
-html[data-codex-theme="classic"] .badge {
+html[data-meridian-theme="classic"] .badge {
   font-family:    var(--font) !important;
   font-size:      10px !important;
   font-weight:    normal !important;
@@ -486,13 +486,13 @@ html[data-codex-theme="classic"] .badge {
   line-height:    1.4 !important;
 }
 
-html[data-codex-theme="classic"] .badge.bg-primary     { background-color: #d4e5f5 !important; color: #1a4f7a !important; border: 1px solid #a8c8e8 !important; }
-html[data-codex-theme="classic"] .badge.bg-secondary   { background-color: #e8e8e8 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
-html[data-codex-theme="classic"] .badge.bg-success     { background-color: #dff0d8 !important; color: #3a6b3a !important; border: 1px solid #c3e6cb !important; }
-html[data-codex-theme="classic"] .badge.bg-info        { background-color: #d4edf7 !important; color: #2a6e8a !important; border: 1px solid #b0d8eb !important; }
-html[data-codex-theme="classic"] .badge.bg-warning     { background-color: #fdf5d8 !important; color: #7a5c1a !important; border: 1px solid #f0d98a !important; }
-html[data-codex-theme="classic"] .badge.bg-danger,
-html[data-codex-theme="classic"] .badge.bg-danger-subtle { background-color: #f5dede !important; color: #8a3030 !important; border: 1px solid #e8c4c4 !important; }
-html[data-codex-theme="classic"] .badge.bg-light,
-html[data-codex-theme="classic"] .badge.text-dark.bg-light { background-color: #f5f5f5 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
-html[data-codex-theme="classic"] .badge.text-danger-emphasis { color: #8a3030 !important; }
+html[data-meridian-theme="classic"] .badge.bg-primary     { background-color: #d4e5f5 !important; color: #1a4f7a !important; border: 1px solid #a8c8e8 !important; }
+html[data-meridian-theme="classic"] .badge.bg-secondary   { background-color: #e8e8e8 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
+html[data-meridian-theme="classic"] .badge.bg-success     { background-color: #dff0d8 !important; color: #3a6b3a !important; border: 1px solid #c3e6cb !important; }
+html[data-meridian-theme="classic"] .badge.bg-info        { background-color: #d4edf7 !important; color: #2a6e8a !important; border: 1px solid #b0d8eb !important; }
+html[data-meridian-theme="classic"] .badge.bg-warning     { background-color: #fdf5d8 !important; color: #7a5c1a !important; border: 1px solid #f0d98a !important; }
+html[data-meridian-theme="classic"] .badge.bg-danger,
+html[data-meridian-theme="classic"] .badge.bg-danger-subtle { background-color: #f5dede !important; color: #8a3030 !important; border: 1px solid #e8c4c4 !important; }
+html[data-meridian-theme="classic"] .badge.bg-light,
+html[data-meridian-theme="classic"] .badge.text-dark.bg-light { background-color: #f5f5f5 !important; color: #555555 !important; border: 1px solid #c8c8c8 !important; }
+html[data-meridian-theme="classic"] .badge.text-danger-emphasis { color: #8a3030 !important; }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-05-01T00:00:00.000Z",
-  "title": "Design System: Codex",
+  "title": "Design System: Meridian",
   "extensions": {
     "colorMeta": {
       "bg":                  { "role": "neutral",   "displayName": "Deep Space",          "canonical": "#0A0C10", "tonalRamp": ["#0A0C10","#111318","#191D27","#21273A","#2A334D","#374260","#4A5878","#6B7A9A"] },
@@ -110,7 +110,7 @@
   ],
   "narrative": {
     "northStar": "The Analyst's Observatory",
-    "overview": "Codex is not a dashboard and it is not a reporting tool. It is an observatory: a precision instrument for practitioners who already know what they are looking for, and want to find it fast. The visual language reflects this. Dark canvas, indigo as the primary signal colour, a full categorical palette for the six variable types (indigo, violet, blue, emerald, amber, rose), Inter for reading and JetBrains Mono for data. The density is intentional; the interface trusts its users to read it.\n\nThe two surfaces, brochure and product app, share one voice. The brochure expresses the Observatory metaphor outward, with a star-field canvas, glowing orbs, and scrolling feature reveals. The product app expresses it inward, as a compressed, reference-weight tool where the data is the entirety of the point. Both dark. Both indigo. Both authoritative. Neither decorative.\n\nThis system explicitly rejects generic SaaS dashboard aesthetics: blue-gradient heroes with metric cards and 'Transform your data' copy. It also rejects consumer-app warmth: rounded bubbles, pastel gradients, and emoji-heavy affordances.",
+    "overview": "Meridian is not a dashboard and it is not a reporting tool. It is an observatory: a precision instrument for practitioners who already know what they are looking for, and want to find it fast. The visual language reflects this. Dark canvas, indigo as the primary signal colour, a full categorical palette for the six variable types (indigo, violet, blue, emerald, amber, rose), Inter for reading and JetBrains Mono for data. The density is intentional; the interface trusts its users to read it.\n\nThe two surfaces, brochure and product app, share one voice. The brochure expresses the Observatory metaphor outward, with a star-field canvas, glowing orbs, and scrolling feature reveals. The product app expresses it inward, as a compressed, reference-weight tool where the data is the entirety of the point. Both dark. Both indigo. Both authoritative. Neither decorative.\n\nThis system explicitly rejects generic SaaS dashboard aesthetics: blue-gradient heroes with metric cards and 'Transform your data' copy. It also rejects consumer-app warmth: rounded bubbles, pastel gradients, and emoji-heavy affordances.",
     "keyCharacteristics": [
       "Dark-first: the base surface is near-black (#0A0C10), not charcoal grey",
       "Full categorical palette: six semantic accent colours, each assigned a variable type",

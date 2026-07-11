@@ -1,11 +1,11 @@
 <!-- SEED — re-run /impeccable document once there's code to capture the actual tokens and components. -->
 
 ---
-name: Codex
+name: Meridian
 description: The living data dictionary for Adobe Analytics — built by a practitioner, for practitioners.
 ---
 
-# Design System: Codex
+# Design System: Meridian
 
 ## 1. Overview
 

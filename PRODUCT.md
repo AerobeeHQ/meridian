@@ -6,20 +6,20 @@ both
 
 ## Surface Personalities
 
-Codex has two distinct surfaces with intentionally different visual identities. They share voice and values but not aesthetics.
+Meridian has two distinct surfaces with intentionally different visual identities. They share voice and values but not aesthetics.
 
 - **Brochure** (`/`): The warm face. Feels like a senior practitioner's personal site circa 2001 — handmade, deliberate, trustworthy. Georgia serif, visible structure, horizontal rules as section dividers, links that look like links. The "Personal Webmaster" register: A List Apart meets a specialist's domain.
 - **Application** (`/<client>/`): The capable hands. Feels like purpose-built desktop software running in a browser. jQuery UI Themeroller era — floating panels with drag chrome, hard drop shadows, tab strips, status bar, dense windowed layout. Visible affordances everywhere.
 
 ## Users
 
-Adobe Analytics practitioners: admins, implementation consultants, and developers who manage report suite configuration day-to-day. Technically fluent, comfortable with API concepts, use Codex as a working reference — not a one-time lookup. They know what eVars and Props are. The tool does not explain them.
+Adobe Analytics practitioners: admins, implementation consultants, and developers who manage report suite configuration day-to-day. Technically fluent, comfortable with API concepts, use Meridian as a working reference — not a one-time lookup. They know what eVars and Props are. The tool does not explain them.
 
 Secondary: analysts who need to understand what a variable means or how a segment is constructed, but who don't manage the implementation.
 
 ## Product Purpose
 
-Codex is a living data dictionary and configuration intelligence tool for Adobe Analytics. It surfaces the complete picture of a report suite — every eVar, Prop, Event, Segment, Calculated Metric, Processing Rule, and Marketing Channel — in a fast, searchable interface with full data lineage tracing across the implementation. Success: a practitioner can answer "where does this variable get its value?" in under 30 seconds without touching the Adobe UI.
+Meridian is a living data dictionary and configuration intelligence tool for Adobe Analytics. It surfaces the complete picture of a report suite — every eVar, Prop, Event, Segment, Calculated Metric, Processing Rule, and Marketing Channel — in a fast, searchable interface with full data lineage tracing across the implementation. Success: a practitioner can answer "where does this variable get its value?" in under 30 seconds without touching the Adobe UI.
 
 ## Brand Personality
 
@@ -30,7 +30,7 @@ The brochure surface reads like a craftsperson's personal domain: handmade choic
 ## Anti-references
 
 - AI-generated design aesthetic: smooth symmetric layouts, indigo/violet gradient palettes, perfectly balanced asymmetric grids, star canvas backgrounds, CSS counter feature rows. If a teenager can clock it in three seconds, it's failed.
-- Generic SaaS landing pages: hero-metric cards, "Transform your data" copy, Vercel/Stripe/Linear visual language. Codex is a practitioner tool built by a practitioner.
+- Generic SaaS landing pages: hero-metric cards, "Transform your data" copy, Vercel/Stripe/Linear visual language. Meridian is a practitioner tool built by a practitioner.
 - Consumer-app playful: pastel gradients, rounded bubbles, emoji-heavy UI, large card grids.
 - Modern flat design in the app: the iOS/Material You aesthetic of borderless, spacious, depth-free layouts. The app needs visible chrome, real borders, and layered depth.
 

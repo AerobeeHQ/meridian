@@ -1,4 +1,4 @@
-/* Codex brochure site — main.js */
+/* Meridian brochure site — main.js */
 
 (function () {
   'use strict';
@@ -207,7 +207,7 @@
     // Hero image — index 0
     const heroImg = document.querySelector('.hero-image');
     if (heroImg) {
-      gallery.push({ src: heroImg.src, alt: heroImg.alt, caption: 'Codex \u2014 Configuration Hub' });
+      gallery.push({ src: heroImg.src, alt: heroImg.alt, caption: 'Meridian \u2014 Configuration Hub' });
       makeActivatable(heroImg, () => openLightbox(0));
     }
 

@@ -1,8 +1,8 @@
-# Codex `v3.0`
+# Meridian `v3.0`
 
 ### A Data Dictionary for your Adobe Analytics Report Suites
 
-Codex provides **configuration intelligence** for Adobe Analytics, serving as a living data dictionary that documents your report suite implementation. It gives analysts, developers, and stakeholders a single source of truth for understanding how your Adobe Analytics data is structured and collected.
+Meridian provides **configuration intelligence** for Adobe Analytics, serving as a living data dictionary that documents your report suite implementation. It gives analysts, developers, and stakeholders a single source of truth for understanding how your Adobe Analytics data is structured and collected.
 
 Converted from [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr) to Python/Flask.
 
@@ -52,12 +52,12 @@ cd codex
 uv sync
 
 # Create a secrets directory and copy the config template
-mkdir -p ~/secrets/codex
-cp config.dist.json ~/secrets/codex/acme.json
-# Edit ~/secrets/codex/acme.json with your credentials
+mkdir -p ~/secrets/meridian
+cp config.dist.json ~/secrets/meridian/acme.json
+# Edit ~/secrets/meridian/acme.json with your credentials
 
-# Point Codex to the secrets directory
-export CODEX_SECRETS_DIR=~/secrets/codex
+# Point Meridian to the secrets directory
+export MERIDIAN_SECRETS_DIR=~/secrets/meridian
 ```
 
 ### Running the Application
@@ -83,14 +83,14 @@ uv run verify_setup.py
 
 ## Configuration
 
-Codex uses a **secrets directory** model: credentials are stored in per-client JSON files rather than a single `config.json`. This allows a single Codex instance to serve multiple clients.
+Meridian uses a **secrets directory** model: credentials are stored in per-client JSON files rather than a single `config.json`. This allows a single Meridian instance to serve multiple clients.
 
 ### Secrets Directory
 
-Set the `CODEX_SECRETS_DIR` environment variable to a directory containing one JSON file per client:
+Set the `MERIDIAN_SECRETS_DIR` environment variable to a directory containing one JSON file per client:
 
 ```
-~/secrets/codex/
+~/secrets/meridian/
 ├── acme.json        → accessible at /acme/
 └── another-co.json  → accessible at /another-co/
 ```
@@ -123,7 +123,7 @@ Use `config.dist.json` as the template for each file. Files starting with `_` ar
 
 > **Note:** Even when using API 2.0, WSSE credentials are still required for certain endpoints not yet migrated to 2.0 (e.g., Processing Rules, Marketing Channels).
 
-### Example Client Config (`~/secrets/codex/acme.json`)
+### Example Client Config (`~/secrets/meridian/acme.json`)
 
 ```json
 {
@@ -149,13 +149,13 @@ Use `config.dist.json` as the template for each file. Files starting with `_` ar
 
 ## Authentication
 
-Codex uses a **hybrid API approach**:
+Meridian uses a **hybrid API approach**:
 
 - **API 2.0 (OAuth2)** — Primary method for most endpoints (eVars, Props, Events, ListVars, Segments, Calculated Metrics). OAuth2 credentials are obtained from the [Adobe I/O Console](https://console.adobe.io/).
 
 - **API 1.4 (WSSE)** — Legacy method required for endpoints not yet available in API 2.0 (Processing Rules, Marketing Channels, Channel Rules). WSSE credentials can be obtained from Admin → User Management → Users in Adobe Analytics.
 
-> **Note:** Adobe has announced the deprecation of API 1.4. Codex automatically retries on alternative API domains (`api2`, `api3`, `api4.omniture.com`) if the primary endpoint is unresponsive.
+> **Note:** Adobe has announced the deprecation of API 1.4. Meridian automatically retries on alternative API domains (`api2`, `api3`, `api4.omniture.com`) if the primary endpoint is unresponsive.
 
 ---
 
@@ -176,7 +176,7 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-The app listens on port `5010`. The `docker-compose.yml` mounts `./secrets` as a read-only volume and sets `CODEX_SECRETS_DIR` automatically.
+The app listens on port `5010`. The `docker-compose.yml` mounts `./secrets` as a read-only volume and sets `MERIDIAN_SECRETS_DIR` automatically.
 
 ---
 
@@ -195,7 +195,7 @@ codex/
 │   │   ├── adobe_launch.py         # Adobe Reactor (Tags) API client
 │   │   ├── cache.py                # JSON file-based caching
 │   │   ├── cache_warmer.py         # Background cache pre-warming (APScheduler)
-│   │   ├── config_loader.py        # Multi-client config loader (CODEX_SECRETS_DIR)
+│   │   ├── config_loader.py        # Multi-client config loader (MERIDIAN_SECRETS_DIR)
 │   │   ├── git_info.py             # Git branch/commit info for footer
 │   │   └── notes.py                # Dimension annotation storage
 │   ├── static/
@@ -207,7 +207,7 @@ codex/
 ├── exports/             # CSV exports directory
 ├── notebooks/           # Jupyter notebooks for API exploration
 ├── docs/                # Documentation and post-mortems
-└── config.dist.json     # Config template (copy to $CODEX_SECRETS_DIR/<client>.json)
+└── config.dist.json     # Config template (copy to $MERIDIAN_SECRETS_DIR/<client>.json)
 ```
 
 ### URL Structure
@@ -221,15 +221,15 @@ All client routes are prefixed with `/<client>/` where `<client>` is the filenam
 | `/<client>/evars` | eVar listing |
 | `/<client>/props` | Prop listing |
 | `/<client>/events` | Event listing |
-| `/<client>/...` | All other Codex routes |
+| `/<client>/...` | All other Meridian routes |
 
 ---
 
 ## Live Demo
 
-[https://codex.maxisdev.com](https://codex.maxisdev.com)
+[https://meridian.aerobee.com.au](https://meridian.aerobee.com.au)
 
-![Homepage screenshot](./assets/screenshots/codex-live-demo.png)
+![Homepage screenshot](./assets/screenshots/meridian-live-demo.png)
 
 ---
 
@@ -299,7 +299,7 @@ Major feature release built on top of the original Flask conversion. All new fea
 | Detail page panel layout | Processing Rules, Channel Rules, and Launch panels moved to right column |
 | Accurate dimension trend charts | Trend charts scoped to dimension-specific hits; eVars use `evar<n>instances`, props use a `metricFilters` segment, events use an `event-exists` segment |
 | Launch match type badges | Action / Condition / Event badges parsed from `delegate_descriptor_id`; "Name match" badge flags rule-name-only matches as potential false positives |
-| Multisite routing | Single deployment serves multiple clients via `/<client>/` URL prefix; per-client credential files in `CODEX_SECRETS_DIR` |
+| Multisite routing | Single deployment serves multiple clients via `/<client>/` URL prefix; per-client credential files in `MERIDIAN_SECRETS_DIR` |
 | Brochure site | Product landing page served at `/`; all client apps continue at `/<client>/` |
 | Themes & Settings | Light / Dark / Auto theme selector with Bootstrap 5.3 dark mode; Settings page with gear icon in navbar |
 | User OAuth login (partial) | Config scaffolding in place; per-user Adobe IMS login planned for a future release |

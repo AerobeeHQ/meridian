@@ -9,7 +9,7 @@ Give users control over the app's appearance via a Settings page. Phase 1 delive
 ## Phase 1 — System / Light / Dark
 
 ### Storage
-- Key: `localStorage.codex-theme`
+- Key: `localStorage.meridian-theme`
 - Values: `"auto"` (default) | `"light"` | `"dark"`
 
 ### Theme application

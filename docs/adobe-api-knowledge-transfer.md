@@ -1,7 +1,7 @@
 # Adobe API Knowledge Transfer
 
 This document captures non-obvious behaviors, patterns, and gotchas discovered during
-Codex development. Copy the relevant sections into a new project's AGENTS.md.
+Meridian development. Copy the relevant sections into a new project's AGENTS.md.
 
 ---
 

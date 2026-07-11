@@ -1,5 +1,5 @@
 """
-Main routes for the Codex application.
+Main routes for the Meridian application.
 
 This module defines every URL route served under the /<client>/ prefix.
 Each route follows the same pattern:
@@ -76,7 +76,7 @@ def _load_client_context():
     slug = g.get('client_slug')
     if not slug:
         abort(404)
-    ctx = current_app.codex_clients.get(slug)
+    ctx = current_app.meridian_clients.get(slug)
     if ctx is None:
         abort(404)
     g.client_config = ctx['config']
@@ -131,10 +131,10 @@ def inject_globals():
     client_slug   = g.get('client_slug', '')
 
     rsid       = client_config.get('AW_REPORTSUITE_ID', '')
-    app_title  = client_config.get('APP_TITLE', 'Codex')
+    app_title  = client_config.get('APP_TITLE', 'Meridian')
 
     # Resolve suite name once per client and cache it on the client bundle.
-    ctx = current_app.codex_clients.get(client_slug, {})
+    ctx = current_app.meridian_clients.get(client_slug, {})
     suite_name = ctx.get('resolved_suite_name')
 
     if suite_name is None:
@@ -157,7 +157,7 @@ def inject_globals():
         'suite_name':  suite_name,
         'app_title':   app_title,
         'client_slug':          client_slug,
-        'all_clients':          list(current_app.codex_clients.keys()),
+        'all_clients':          list(current_app.meridian_clients.keys()),
         'config':               client_config,
         'stale_cache_notices':  getattr(g, 'stale_cache_notices', []),
     }
@@ -1966,7 +1966,7 @@ def cache_refresh(cache_key):
 
     if cache_key in CONFIG_CACHE_KEYS:
         app = current_app._get_current_object()
-        ctx = app.codex_clients.get(g.client_slug)
+        ctx = app.meridian_clients.get(g.client_slug)
         warm_cache_key(g.client_slug, rsid, ctx['cache'], ctx['api_v2'], ctx['api_v14'], cache_key)
 
     return redirect(request.referrer or url_for('main.cache_view', client=g.client_slug))
@@ -2467,7 +2467,7 @@ def api_debug_call():
             result = svc._make_request(payload['method'], payload.get('body') or {})
         else:
             if get_api_version() != '2.0':
-                return jsonify({'success': False, 'error': 'API 2.0 is not configured for this Codex instance'})
+                return jsonify({'success': False, 'error': 'API 2.0 is not configured for this Meridian instance'})
             http_method = payload.get('http_method', 'GET')
             path_template = payload.get('path', '')
             # POST is allowed only for known read-only endpoints.
@@ -2634,7 +2634,7 @@ def reactor_debug_call():
     read-only search operation that requires POST by the Reactor API's design.
     """
     if not g.client_config.get('LAUNCH_ENABLED'):
-        return jsonify({'success': False, 'error': 'Reactor API is not configured for this Codex instance'})
+        return jsonify({'success': False, 'error': 'Reactor API is not configured for this Meridian instance'})
     launch_svc = g.launch
     if not launch_svc:
         return jsonify({'success': False, 'error': 'Reactor API service is not available'})

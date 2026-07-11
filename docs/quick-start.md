@@ -1,6 +1,6 @@
 # Quick Start — Local Development
 
-This guide walks a developer through running Codex on their local machine from scratch.
+This guide walks a developer through running Meridian on their local machine from scratch.
 
 ---
 
@@ -45,12 +45,12 @@ This creates a virtual environment and installs all Python dependencies from `uv
 
 ## 3. Set Up Credentials
 
-Codex uses a **secrets directory** — a folder containing one JSON file per client. This lets a single Codex instance serve multiple Adobe Analytics clients without mixing credentials.
+Meridian uses a **secrets directory** — a folder containing one JSON file per client. This lets a single Meridian instance serve multiple Adobe Analytics clients without mixing credentials.
 
 ### 3a. Create the secrets directory
 
 ```bash
-mkdir -p ~/secrets/codex
+mkdir -p ~/secrets/meridian
 ```
 
 You can use any path. The folder can be anywhere on your machine; it should **not** be inside the `codex/` repository directory (to avoid accidental commits).
@@ -58,14 +58,14 @@ You can use any path. The folder can be anywhere on your machine; it should **no
 ### 3b. Create a client config file
 
 ```bash
-cp config.dist.json ~/secrets/codex/acme.json
+cp config.dist.json ~/secrets/meridian/acme.json
 ```
 
 Name the file after your client or report suite (e.g. `acme.json`, `mycompany.json`). The filename stem becomes the client slug in URLs (`/acme/`, `/mycompany/`).
 
 ### 3c. Fill in your credentials
 
-Open `~/secrets/codex/acme.json` in your editor and fill in the required values:
+Open `~/secrets/meridian/acme.json` in your editor and fill in the required values:
 
 ```json
 {
@@ -90,13 +90,13 @@ See the [Configuration reference in README.md](../README.md#configuration) for a
 ### 3d. Set the environment variable
 
 ```bash
-export CODEX_SECRETS_DIR=~/secrets/codex
+export MERIDIAN_SECRETS_DIR=~/secrets/meridian
 ```
 
 Add this to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.) so it persists across sessions:
 
 ```bash
-echo 'export CODEX_SECRETS_DIR=~/secrets/codex' >> ~/.zshrc
+echo 'export MERIDIAN_SECRETS_DIR=~/secrets/meridian' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -108,7 +108,7 @@ source ~/.zshrc
 uv run verify_setup.py
 ```
 
-This checks that `CODEX_SECRETS_DIR` is set, at least one client config is valid, required directories exist, and all imports succeed. Fix any errors it reports before proceeding.
+This checks that `MERIDIAN_SECRETS_DIR` is set, at least one client config is valid, required directories exist, and all imports succeed. Fix any errors it reports before proceeding.
 
 ---
 
@@ -145,7 +145,7 @@ PORT=5011 uv run run.py
 Drop another JSON file in the same secrets directory:
 
 ```bash
-cp ~/secrets/codex/acme.json ~/secrets/codex/betacorp.json
+cp ~/secrets/meridian/acme.json ~/secrets/meridian/betacorp.json
 # edit betacorp.json with different credentials
 ```
 
@@ -157,10 +157,10 @@ Restart the app. The new client is available at `http://127.0.0.1:5010/betacorp/
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| `RuntimeError: CODEX_SECRETS_DIR is not set` | Env var missing | Run `export CODEX_SECRETS_DIR=<path>` |
+| `RuntimeError: MERIDIAN_SECRETS_DIR is not set` | Env var missing | Run `export MERIDIAN_SECRETS_DIR=<path>` |
 | `No valid client configs found` | Secrets dir is empty or files have invalid JSON | Check file syntax with `python -m json.tool <file>` |
 | `401 Unauthorized` from API | Wrong credentials | Verify `CLIENT_ID`, `CLIENT_SECRET`, and `ORGANIZATION_ID` in your config |
-| API 1.4 pages show an error banner | Adobe 1.4 API unreachable | Adobe's 1.4 infrastructure is being deprecated; Codex retries on `api2`–`api4.omniture.com` automatically |
+| API 1.4 pages show an error banner | Adobe 1.4 API unreachable | Adobe's 1.4 infrastructure is being deprecated; Meridian retries on `api2`–`api4.omniture.com` automatically |
 | Port already in use | Another process on 5010 | Use `PORT=5011 uv run run.py` |
 
 ---

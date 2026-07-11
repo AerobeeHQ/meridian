@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive plan for migrating the Codex application from Adobe Analytics API 1.4 (using WSSE authentication) to Adobe Analytics API 2.0 (using OAuth2/JWT authentication). The migration will enable continued support as Adobe phases out the legacy 1.4 API.
+This document provides a comprehensive plan for migrating the Meridian application from Adobe Analytics API 1.4 (using WSSE authentication) to Adobe Analytics API 2.0 (using OAuth2/JWT authentication). The migration will enable continued support as Adobe phases out the legacy 1.4 API.
 
 **Current State:**
 - Python Flask application using Adobe Analytics API 1.4
@@ -46,7 +46,7 @@ This document provides a comprehensive plan for migrating the Codex application 
 
 **Choose Authentication Type:**
 
-For automated server-to-server applications (recommended for Codex):
+For automated server-to-server applications (recommended for Meridian):
 
 **Option A: OAuth Server-to-Server (Recommended)**
 1. Select "OAuth Server-to-Server" credential type
@@ -268,7 +268,7 @@ class TokenCache:
 **Cons:**
 - Additional dependency to manage
 - Learning curve for library-specific patterns
-- May include features not needed for Codex
+- May include features not needed for Meridian
 
 **Installation:**
 ```bash
@@ -349,7 +349,7 @@ dimensions = api2.getDimensions(rsid="your-rsid")
 **Rationale:**
 
 1. **Consistency with Current Architecture**
-   - Codex already uses direct HTTP requests for 1.4 API
+   - Meridian already uses direct HTTP requests for 1.4 API
    - Team is familiar with this approach
    - Minimal architectural changes required
 

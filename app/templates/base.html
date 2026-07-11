@@ -10,7 +10,7 @@
     <script>
         (function () {
             var VALID_THEMES = ['classic', 'auto', 'light', 'dark'];
-            var stored = localStorage.getItem('codex-theme');
+            var stored = localStorage.getItem('meridian-theme');
             if (!stored || VALID_THEMES.indexOf(stored) === -1) stored = 'classic';
             var bsTheme;
             if (stored === 'classic') {
@@ -21,10 +21,10 @@
                 bsTheme = stored;       // 'light' or 'dark'
             }
             document.documentElement.setAttribute('data-bs-theme', bsTheme);
-            document.documentElement.setAttribute('data-codex-theme', stored);
+            document.documentElement.setAttribute('data-meridian-theme', stored);
             // Media query listener — only relevant when 'auto' is active
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-                var current = localStorage.getItem('codex-theme');
+                var current = localStorage.getItem('meridian-theme');
                 if (VALID_THEMES.indexOf(current) === -1) current = 'classic';
                 if (current === 'auto') {
                     document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');

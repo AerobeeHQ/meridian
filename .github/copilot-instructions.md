@@ -1,8 +1,8 @@
-# GitHub Copilot Instructions for Codex Project
+# GitHub Copilot Instructions for Meridian Project
 
 ## Project Overview
 
-**Codex** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
+**Meridian** is a Python/Flask application that visualizes Adobe Analytics configurations (eVars, Props, Events, processing rules, marketing channel settings). It is a port of [RShiny SDR](https://github.com/Brontojoris/rshiny-sdr).
 
 **Key Objectives:**
 - Display configuration of Conversion Variables (eVars), Traffic Variables (props), Success Events, ListVars

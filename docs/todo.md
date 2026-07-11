@@ -1,6 +1,6 @@
 # TODOs and Bugs
 
-This document is a list of smaller todo items and bugs found while using the Codex app.
+This document is a list of smaller todo items and bugs found while using the Meridian app.
 
 ---
 
@@ -10,7 +10,7 @@ This document is a list of smaller todo items and bugs found while using the Cod
 - [ ] Add unit tests for critical service layer functions (`adobe_analytics_v2.py`, `adobe_auth.py`, `cache.py`).
 - [ ] Consider adding integration tests for key routes with mocked API responses.
 - [x] Add a `GET /health` endpoint for Docker `HEALTHCHECK` and container orchestration readiness probes (see v3-013). **[autopsy 061](autopsies/061-health-check-endpoint.md)**
-- [x] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `CODEX_SECRETS_DIR` or an env-configured path for portability across deployments. Also fixed per-client cache dirs in `app/__init__.py`. **[autopsy 059](autopsies/059-persistent-data-dirs.md)**
+- [x] `notes.py` hard-codes the notes directory path relative to `__file__` — should use `MERIDIAN_SECRETS_DIR` or an env-configured path for portability across deployments. Also fixed per-client cache dirs in `app/__init__.py`. **[autopsy 059](autopsies/059-persistent-data-dirs.md)**
 - [x] Persist the search term between prop,eVar, events, and listVar listing pages. Extended to Segments and Calculated Metrics pages too. Escape key clears the search. **[autopsy 058](autopsies/058-persist-listing-search.md)**
 - [ ] Add Tags as a column to the Props/eVars/Events/ListVars listing pages, so that the user can search for them.
 - [ ] Add a Report Suite selector to the NavBar? Needs research to get the right ux.
@@ -76,7 +76,7 @@ Completed items from Version 2 development. Use git history/blame to track compl
 - [x] Move the processing/channel/launch panels on detail pages from left to right column. **[autopsy 044](autopsies/044-detail-page-panel-layout.md)**
 - [x] Allow users to manage (CRUD) tags. **[autopsy 047](autopsies/047-tags-crud.md)**
 - [x] Improve listing pages (lighter shading, sticky headers, toolbar consolidation). **[autopsy 044](autopsies/044-listing-page-improvements.md)**
-- [x] Create a Codex brochure site. **[autopsy 051](autopsies/051-brochure-site.md)**
+- [x] Create a Meridian brochure site. **[autopsy 051](autopsies/051-brochure-site.md)**
 - [x] Reorganize site structure for multisite routing. **[autopsy 052](autopsies/052-multisite-routing.md)**
 - [x] Add the allocation and expiration data to the data dimensions listing page. **[autopsy 018](autopsies/018-evar-listing-expiration-allocation.md)**
 - [x] Change the data dimensions listing page template name (`table.html` → `listing.html`). **[autopsy 019](autopsies/019-rename-table-template.md)**
