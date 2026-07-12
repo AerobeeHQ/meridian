@@ -45,8 +45,8 @@ For a detailed step-by-step walkthrough, see [docs/quick-start.md](docs/quick-st
 
 ```bash
 # Clone the repository
-git clone https://github.com/aerobeehq/codex.git
-cd codex
+git clone https://github.com/aerobeehq/meridian.git
+cd meridian
 
 # Install dependencies
 uv sync
@@ -183,7 +183,7 @@ The app listens on port `5010`. The `docker-compose.yml` mounts `./secrets` as a
 ## Project Structure
 
 ```
-codex/
+meridian/
 ├── app/
 │   ├── routes/          # Flask route handlers
 │   │   ├── main.py      # All client routes (prefixed /<client>/)
