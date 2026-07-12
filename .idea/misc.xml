@@ -1,6 +1,0 @@
-<project version="4">
-  <component name="Black">
-    <option name="sdkName" value="Python 3.13 (Codex)" />
-  </component>
-  <component name="ProjectRootManager" version="2" default="true" project-jdk-name="uv (Codex)" project-jdk-type="Python SDK" />
-</project>

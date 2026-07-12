@@ -175,3 +175,7 @@ settings.local.json
 reactor-notes.md
 /.playwright-mcp/
 /secrets/
+
+.junie/
+/site/
+run_configurations/
