@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Codex - Adobe Analytics Intelligence</title>
+  <title>Meridian - Adobe Analytics Intelligence</title>
   <meta name="description" content="The complete data dictionary and configuration intelligence tool for Adobe Analytics. Browse eVars, Props, Events, Segments, and trace full data lineage across your implementation." />
-  <meta property="og:title" content="Codex - Adobe Analytics Intelligence" />
+  <meta property="og:title" content="Meridian - Adobe Analytics Intelligence" />
   <meta property="og:description" content="The living data dictionary for Adobe Analytics. Full configuration visibility, data lineage, and cross-referencing, all in the one place." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="{{ url_for('static', filename='brochure/img/screenshots/dashboard-overview.webp', _external=True) }}" />
   <meta property="og:image:width" content="1280" />
   <meta property="og:image:height" content="800" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Codex - Adobe Analytics Intelligence" />
+  <meta name="twitter:title" content="Meridian - Adobe Analytics Intelligence" />
   <meta name="twitter:description" content="The living data dictionary for Adobe Analytics. Full configuration visibility, data lineage, and cross-referencing, all in the one place." />
   <meta name="twitter:image" content="{{ url_for('static', filename='brochure/img/screenshots/dashboard-overview.webp', _external=True) }}" />
   <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png" />
@@ -24,8 +24,8 @@
   <nav class="nav" id="nav">
     <div class="nav-inner">
       <a href="#" class="nav-logo">
-        <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="22" height="22" alt="Codex" aria-hidden="true" />
-        <span>Codex</span>
+        <img src="{{ url_for('static', filename='meridian-logo.svg') }}" width="22" height="22" alt="Meridian" aria-hidden="true" />
+        <span>Meridian</span>
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
         <span></span><span></span><span></span>
@@ -56,7 +56,7 @@
             Your Adobe Analytics<br>implementation, decoded.
           </h1>
           <p class="hero-subtitle">
-            Codex is a living data dictionary for Adobe Analytics, giving your team
+            Meridian is a living data dictionary for Adobe Analytics, giving your team
             complete visibility into every eVar, Prop, Event, Segment, and rule, with
             full data lineage tracing across your implementation.
           </p>
@@ -73,8 +73,8 @@
 
         <div class="hero-visual">
           <img
-            src="{{ url_for('static', filename='brochure/img/codex-hero.png') }}"
-            alt="Codex — living data dictionary interface showing the configuration hub with cross-referenced eVars, Props, Segments, and data lineage connections across an Adobe Analytics implementation"
+            src="{{ url_for('static', filename='brochure/img/meridian-hero.png') }}"
+            alt="Meridian — living data dictionary interface showing the configuration hub with cross-referenced eVars, Props, Segments, and data lineage connections across an Adobe Analytics implementation"
             class="hero-image"
             width="1169"
             height="663"
@@ -110,12 +110,12 @@
         <span class="section-label">See It In Action</span>
         <h2 class="section-title">Every feature, visible at a glance</h2>
         <p class="section-subtitle">
-          A tour of Codex across eVars, Props, Events, Segments, Calculated Metrics,
+          A tour of Meridian across eVars, Props, Events, Segments, Calculated Metrics,
           Processing Rules, and more.
         </p>
       </div>
 
-      <div class="carousel" id="carousel" role="region" aria-label="Codex application screenshots" aria-live="polite">
+      <div class="carousel" id="carousel" role="region" aria-label="Meridian application screenshots" aria-live="polite">
         <div class="carousel-track" id="carouselTrack">
 
           <figure class="carousel-slide" aria-hidden="false">
@@ -327,7 +327,7 @@
         <span class="section-label">Features</span>
         <h2 class="section-title">Everything you need to understand your data</h2>
         <p class="section-subtitle">
-          Codex brings all your Adobe Analytics configuration into one place,
+          Meridian brings all your Adobe Analytics configuration into one place,
           with the context and cross-referencing to actually make sense of it.
         </p>
       </div>
@@ -408,7 +408,7 @@
           <span class="section-label">Data Lineage</span>
           <h2 class="section-title">Trace every variable to its source</h2>
           <p class="section-subtitle">
-            When you need to know where a variable gets its value, Codex gives you
+            When you need to know where a variable gets its value, Meridian gives you
             the full picture: not just what's configured, but how it got there.
           </p>
           <ul class="lineage-list">
@@ -507,7 +507,7 @@
         <span class="section-label">Get Started</span>
         <h2 class="section-title">Up and running in minutes</h2>
         <p class="section-subtitle">
-          Codex runs locally with a simple Python setup. Connect your Adobe Analytics
+          Meridian runs locally with a simple Python setup. Connect your Adobe Analytics
           credentials and you're ready to go.
         </p>
       </div>
@@ -532,7 +532,7 @@
           <div class="step-panel active" data-panel="0">
             <div class="step-desc">
               <h3>Clone the repository and install dependencies</h3>
-              <p>Codex uses <a href="https://docs.astral.sh/uv/">uv</a> for fast, reliable Python dependency management. Install uv first if you haven't already.</p>
+              <p>Meridian uses <a href="https://docs.astral.sh/uv/">uv</a> for fast, reliable Python dependency management. Install uv first if you haven't already.</p>
             </div>
             <div class="terminal">
               <div class="terminal-bar">
@@ -542,7 +542,7 @@
                 <span class="terminal-title">Terminal</span>
               </div>
               <div class="terminal-body">
-                <div class="t-line"><span class="t-prompt">$</span> git clone https://github.com/maxisdigital/codex.git</div>
+                <div class="t-line"><span class="t-prompt">$</span> git clone https://github.com/aerobeehq/codex.git</div>
                 <div class="t-line"><span class="t-prompt">$</span> cd codex</div>
                 <div class="t-line t-gap"><span class="t-prompt">$</span> uv sync</div>
                 <div class="t-comment"># All dependencies installed &mdash; no virtualenv setup needed</div>
@@ -582,8 +582,8 @@
 
           <div class="step-panel" data-panel="2">
             <div class="step-desc">
-              <h3>Start Codex and verify your setup</h3>
-              <p>Run the health check first, then start the Flask server. Codex begins pre-caching your configuration data on startup.</p>
+              <h3>Start Meridian and verify your setup</h3>
+              <p>Run the health check first, then start the Flask server. Meridian begins pre-caching your configuration data on startup.</p>
             </div>
             <div class="terminal">
               <div class="terminal-bar">
@@ -605,7 +605,7 @@
       </div>
 
       <div class="getting-started-cta">
-        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start.md" class="cta-link-secondary">
+        <a href="https://github.com/aerobeehq/codex/blob/main/docs/quick-start.md" class="cta-link-secondary">
           Read the full quick-start guide &rarr;
         </a>
       </div>
@@ -627,7 +627,7 @@
             <div class="t-comment"># Available at http://localhost:5010</div>
           </div>
         </div>
-        <a href="https://github.com/maxisdigital/codex/blob/main/docs/quick-start-docker.md" class="docker-alt-guide">
+        <a href="https://github.com/aerobeehq/codex/blob/main/docs/quick-start-docker.md" class="docker-alt-guide">
           Docker quick-start guide &rarr;
         </a>
       </div>
@@ -642,7 +642,7 @@
           <span class="section-label">Requirements</span>
           <h2 class="section-title">What you'll need</h2>
           <p class="section-subtitle">
-            Codex requires access to an Adobe Analytics report suite and API credentials.
+            Meridian requires access to an Adobe Analytics report suite and API credentials.
             The API 2.0 (OAuth2) path is recommended for new setups.
           </p>
         </div>
@@ -696,8 +696,8 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <a href="#" class="nav-logo">
-          <img src="{{ url_for('static', filename='codex-logo.svg') }}" width="22" height="22" alt="Codex" aria-hidden="true" />
-          <span>Codex</span>
+          <img src="{{ url_for('static', filename='meridian-logo.svg') }}" width="22" height="22" alt="Meridian" aria-hidden="true" />
+          <span>Meridian</span>
         </a>
         <p class="footer-tagline">The living data dictionary for Adobe Analytics.</p>
       </div>
@@ -714,7 +714,7 @@
         <div class="footer-col">
           <h5>Resources</h5>
           <ul>
-            <li><a href="https://github.com/maxisdigital/codex">GitHub</a></li>
+            <li><a href="https://github.com/aerobeehq/codex">GitHub</a></li>
             <li><a href="https://docs.astral.sh/uv/">uv docs</a></li>
             <li><a href="https://developer.adobe.com/analytics-apis/docs/2.0/">Adobe Analytics API</a></li>
           </ul>
@@ -723,11 +723,11 @@
     </div>
     <div class="footer-bottom">
       <div class="container">
-        <span>Codex v2 &middot; Built with <a href="https://flask.palletsprojects.com/">Flask</a> &amp; <a href="https://www.python.org/">Python</a></span>
+        <span>Meridian v2 &middot; Built with <a href="https://flask.palletsprojects.com/">Flask</a> &amp; <a href="https://www.python.org/">Python</a></span>
         <span class="footer-sep">&middot;</span>
         <span>Converted from <a href="https://github.com/Brontojoris/rshiny-sdr">RShiny SDR</a></span>
         <span class="footer-sep">&middot;</span>
-        <span>Part of the <a href="https://github.com/maxisdigital/mission-control">Mission Control suite</a></span>
+        <span>Part of the <a href="https://github.com/aerobeehq/mission-control">Mission Control suite</a></span>
       </div>
     </div>
   </footer>

@@ -14,7 +14,7 @@
             <div class="card-body">
                 <label class="form-label fw-semibold">Theme</label>
                 <p class="text-muted small mb-3">
-                    Choose how Codex looks. <em>System</em> follows your OS or browser preference.
+                    Choose how Meridian looks. <em>System</em> follows your OS or browser preference.
                 </p>
                 <div class="d-flex gap-3 flex-wrap" id="themeSelector" role="group" aria-label="Theme selection">
                     <button type="button" class="btn btn-outline-secondary theme-btn d-flex align-items-center gap-2"
@@ -63,7 +63,7 @@
                 <p class="text-muted small mb-0">
                     A future theme based on
                     <a href="https://opensource.adobe.com/spectrum-web-components/" target="_blank" rel="noopener">Adobe Spectrum</a>
-                    will align Codex's design with Adobe's own tools and design system.
+                    will align Meridian's design with Adobe's own tools and design system.
                     This theme will be selectable here once available.
                 </p>
             </div>
@@ -77,7 +77,7 @@
 <script>
     (function () {
         var descriptions = {
-            classic: 'The jQuery UI-era look: web-era blue nav, warm gray chrome, gradient buttons. The default Codex design.',
+            classic: 'The jQuery UI-era look: web-era blue nav, warm gray chrome, gradient buttons. The default Meridian design.',
             auto:    'Follows your OS or browser setting. Switches automatically if you change your system preference.',
             light:   'Blue-to-teal gradient nav, Bootstrap system fonts and spacing.',
             dark:    'Orange-to-amber gradient nav, Bootstrap system fonts and spacing.'
@@ -96,8 +96,8 @@
                 bsTheme = stored;
             }
             document.documentElement.setAttribute('data-bs-theme', bsTheme);
-            document.documentElement.setAttribute('data-codex-theme', stored);
-            localStorage.setItem('codex-theme', stored);
+            document.documentElement.setAttribute('data-meridian-theme', stored);
+            localStorage.setItem('meridian-theme', stored);
 
             // Highlight active button + update accessibility state
             document.querySelectorAll('.theme-btn').forEach(function (btn) {
@@ -113,7 +113,7 @@
         }
 
         // Init on load
-        var current = localStorage.getItem('codex-theme');
+        var current = localStorage.getItem('meridian-theme');
         if (VALID_THEMES.indexOf(current) === -1) current = 'classic';
         applyTheme(current);
 

@@ -1,5 +1,5 @@
 {
-    "_WARNING":                "NEVER commit a file containing real credentials to the repository. Copy this file to $CODEX_SECRETS_DIR/<client-name>.json (e.g. ~/secrets/codex/maxis.json) and fill in the values there.",
+    "_WARNING":                "NEVER commit a file containing real credentials to the repository. Copy this file to $MERIDIAN_SECRETS_DIR/<client-name>.json (e.g. ~/secrets/meridian/maxis.json) and fill in the values there.",
 
     "APP_TITLE":               "<COMPANY NAME>",
     "AW_REPORTSUITE_ID":       "<RSID>",
@@ -27,7 +27,7 @@
     "_comment_ec":             "Optional: your Adobe Experience Cloud company alias — the '@...' part in Experience Cloud URLs (e.g. 'originenergy' for https://experience.adobe.com/#/@originenergy/...). When set, Segment and Calculated Metric detail pages show a clickable deep-link to the Adobe Analytics UI. Leave blank or omit to hide the link.",
     "EXPERIENCE_CLOUD_ORG":    "Optional. Enables linking segments and calculated metrics back into Adobe Analytics. Input the part after @ in the URL bar when you're in Analytics",
 
-    "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. Requires API_VERSION 2.0 and the Reactor API scope added to your Adobe I/O project. LAUNCHPAD_URL enables deep-links from Codex to the Launchpad app (leave blank to show rule names without links). The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
+    "_comment_launch":         "Adobe Experience Platform Tags (Launch) integration (Roadmap v2-003). Set LAUNCH_ENABLED to true and provide the Tags Property ID to surface Launch rules on dimension detail pages. Requires API_VERSION 2.0 and the Reactor API scope added to your Adobe I/O project. LAUNCHPAD_URL enables deep-links from Meridian to the Launchpad app (leave blank to show rule names without links). The feature is silently disabled if LAUNCH_ENABLED is false or LAUNCH_PROPERTY_ID is absent.",
     "LAUNCH_ENABLED":          false,
     "LAUNCH_PROPERTY_ID":      "<YOUR_LAUNCH_PROPERTY_ID (e.g. PRxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)>",
     "LAUNCHPAD_URL":           "<YOUR_LAUNCHPAD_URL (e.g. http://localhost:5000, or blank to disable deep links)>",

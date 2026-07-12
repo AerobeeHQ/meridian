@@ -1,4 +1,4 @@
-# Codex — Release Summary
+# Meridian — Release Summary
 
 > A data dictionary and configuration intelligence tool for Adobe Analytics report suites.
 > Converted from R/Shiny to Python/Flask and progressively extended from v1 to v2.
@@ -31,7 +31,7 @@ Version 1 established the core data dictionary: a read-only, web-based reference
 
 ## Version 2 — Extended Intelligence
 
-Version 2 significantly expanded the scope of Codex — adding new data sources, new pages, deeper cross-referencing, and improved reliability. All work below has been completed and merged.
+Version 2 significantly expanded the scope of Meridian — adding new data sources, new pages, deeper cross-referencing, and improved reliability. All work below has been completed and merged.
 
 ### New Pages
 
@@ -77,7 +77,7 @@ These features appear on the **detail pages** for Props, eVars, Events, and List
 
 | Improvement | Details |
 |-------------|---------|
-| **Multisite routing** | Single Codex deployment serves multiple clients; all routes prefixed `/<client>/`; credentials stored as per-client JSON files in `CODEX_SECRETS_DIR` |
+| **Multisite routing** | Single Meridian deployment serves multiple clients; all routes prefixed `/<client>/`; credentials stored as per-client JSON files in `MERIDIAN_SECRETS_DIR` |
 | **Brochure site** | Product landing page served at `/` from within the Flask app; client dashboards continue at `/<client>/` |
 
 ---
@@ -93,9 +93,9 @@ These features appear on the **detail pages** for Props, eVars, Events, and List
 ## Architecture at a Glance
 
 ```
-Codex
+Meridian
 ├── Flask web application (Python 3.13, uv)
-├── Multi-client routing (/<client>/ URL prefix, CODEX_SECRETS_DIR)
+├── Multi-client routing (/<client>/ URL prefix, MERIDIAN_SECRETS_DIR)
 ├── Adobe Analytics API 1.4 client (WSSE — processing rules, marketing channels)
 ├── Adobe Analytics API 2.0 client (OAuth2 — eVars, Props, Events, Segments, Calculated Metrics)
 ├── Adobe Reactor API client (Launch rules, Tags integration)
@@ -104,7 +104,7 @@ Codex
 └── Docker-ready (docker-compose.yml included)
 ```
 
-**Live demo:** [https://codex.maxisdev.com](https://codex.maxisdev.com)
+**Live demo:** [https://meridian.aerobee.com.au](https://meridian.aerobee.com.au)
 
 ---
 

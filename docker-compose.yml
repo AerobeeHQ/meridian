@@ -1,6 +1,6 @@
 services:
-  codex:
-    container_name: codex
+  meridian:
+    container_name: meridian
     build:
       context: .
       args:
@@ -15,8 +15,8 @@ services:
       - ./notes:/app/notes:rw
     environment:
       - FLASK_DEBUG=false
-      - CODEX_SECRETS_DIR=/app/secrets
-      - CODEX_CACHE_DIR=/app/cache
-      - CODEX_NOTES_DIR=/app/notes
+      - MERIDIAN_SECRETS_DIR=/app/secrets
+      - MERIDIAN_CACHE_DIR=/app/cache
+      - MERIDIAN_NOTES_DIR=/app/notes
     restart: unless-stopped
 

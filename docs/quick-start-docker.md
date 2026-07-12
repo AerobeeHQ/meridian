@@ -1,6 +1,6 @@
 # Quick Start — Docker Deployment
 
-This guide walks a system administrator through running Codex using Docker Compose.
+This guide walks a system administrator through running Meridian using Docker Compose.
 
 ---
 
@@ -17,7 +17,7 @@ This guide walks a system administrator through running Codex using Docker Compo
 ## 1. Get the Code
 
 ```bash
-git clone https://github.com/maxisdigital/codex.git
+git clone https://github.com/aerobeehq/codex.git
 cd codex
 ```
 
@@ -27,7 +27,7 @@ Or download and extract a release archive — the `Dockerfile` and `docker-compo
 
 ## 2. Set Up Credentials
 
-Codex reads credentials from a **secrets directory** mounted into the container. Each client gets its own JSON file.
+Meridian reads credentials from a **secrets directory** mounted into the container. Each client gets its own JSON file.
 
 ### 2a. Create the secrets directory
 
@@ -83,7 +83,7 @@ Expected output:
 ```
 [+] Building ...
 [+] Running 1/1
- ✔ Container codex  Started
+ ✔ Container meridian  Started
 ```
 
 ---
@@ -94,7 +94,7 @@ Expected output:
 docker compose ps
 ```
 
-You should see the `codex` container with status `Up`. Then open:
+You should see the `meridian` container with status `Up`. Then open:
 
 - **Brochure site:** `http://localhost:5010/`
 - **Client dashboard:** `http://localhost:5010/acme/` (replace `acme` with your client slug)
@@ -164,19 +164,19 @@ The new client is available at `http://localhost:5010/betacorp/` immediately aft
 
 ---
 
-## Exposing Codex via a Reverse Proxy
+## Exposing Meridian via a Reverse Proxy
 
-For production deployments, run Codex behind Nginx or a similar reverse proxy so you can terminate TLS and use a custom domain.
+For production deployments, run Meridian behind Nginx or a similar reverse proxy so you can terminate TLS and use a custom domain.
 
 ### Minimal Nginx config
 
 ```nginx
 server {
     listen 443 ssl;
-    server_name codex.example.com;
+    server_name meridian.example.com;
 
-    ssl_certificate     /etc/ssl/codex.crt;
-    ssl_certificate_key /etc/ssl/codex.key;
+    ssl_certificate     /etc/ssl/meridian.crt;
+    ssl_certificate_key /etc/ssl/meridian.key;
 
     location / {
         proxy_pass         http://127.0.0.1:5010;
@@ -188,11 +188,11 @@ server {
 }
 ```
 
-No changes to `docker-compose.yml` or `Dockerfile` are needed — Codex listens on `0.0.0.0:5010` inside the container.
+No changes to `docker-compose.yml` or `Dockerfile` are needed — Meridian listens on `0.0.0.0:5010` inside the container.
 
 ---
 
-## Updating Codex
+## Updating Meridian
 
 ```bash
 git pull origin main
@@ -208,11 +208,11 @@ Docker's layer cache means only changed layers are rebuilt — usually just the 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | Container exits immediately | Bad credentials or missing `secrets/` directory | Check `docker compose logs` for the startup error |
-| `RuntimeError: CODEX_SECRETS_DIR is not set` | Volume mount missing | Verify `./secrets:/app/secrets:ro` is in `docker-compose.yml` |
+| `RuntimeError: MERIDIAN_SECRETS_DIR is not set` | Volume mount missing | Verify `./secrets:/app/secrets:ro` is in `docker-compose.yml` |
 | `No valid client configs found` | `secrets/` directory is empty or files have invalid JSON | Validate with `python -m json.tool secrets/acme.json` |
 | Port 5010 already in use | Another process on the host | Change the host port: `"5011:5010"` in `docker-compose.yml` |
 | Exports not saving | `exports/` not writable | Ensure `./exports:/app/exports:rw` in `docker-compose.yml` |
-| API 1.4 pages show an error | Adobe 1.4 API unreachable | Adobe's 1.4 infrastructure is being deprecated; Codex retries automatically |
+| API 1.4 pages show an error | Adobe 1.4 API unreachable | Adobe's 1.4 infrastructure is being deprecated; Meridian retries automatically |
 
 ---
 

@@ -1,6 +1,6 @@
 """Main application entry point."""
 """
-Run the Codex Flask application
+Run the Meridian Flask application
 Default: http://127.0.0.1:5010
 Override port with PORT environment variable
 """
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', 'true').lower() == 'true'
     host = os.environ.get('HOST', '127.0.0.1')
 
-    print(f"Starting Codex on http://{host}:{port}")
+    print(f"Starting Meridian on http://{host}:{port}")
     print(f"Debug mode: {debug}")
 
     app.run(

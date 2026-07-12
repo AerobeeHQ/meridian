@@ -1,5 +1,5 @@
 """
-Codex - Adobe Analytics Configuration Viewer
+Meridian - Adobe Analytics Configuration Viewer
 Flask application factory
 """
 import os
@@ -93,10 +93,10 @@ def _build_client_services(client_slug: str, config: dict) -> dict:
         )
 
     # Per-client cache directory.
-    # Prefer $CODEX_CACHE_DIR/<slug> (explicit writable cache mount in Docker).
+    # Prefer $MERIDIAN_CACHE_DIR/<slug> (explicit writable cache mount in Docker).
     # Fall back to {project_root}/cache/<slug> for local development.
     # Each client gets its own subdirectory so their caches never overlap.
-    _cache_root = os.environ.get('CODEX_CACHE_DIR') or os.path.join(
+    _cache_root = os.environ.get('MERIDIAN_CACHE_DIR') or os.path.join(
         os.path.dirname(os.path.dirname(__file__)), 'cache'
     )
     cache_dir = os.path.join(_cache_root, client_slug)
@@ -121,10 +121,10 @@ def create_app():
 
     Multi-client architecture
     -------------------------
-    Codex supports multiple Adobe Analytics clients from a single running
-    instance.  Each client maps to one JSON file in ``CODEX_SECRETS_DIR``.
+    Meridian supports multiple Adobe Analytics clients from a single running
+    instance.  Each client maps to one JSON file in ``MERIDIAN_SECRETS_DIR``.
     At startup, every client gets its own bundle of services (API clients,
-    cache) stored on ``app.codex_clients[slug]``.  Routes access the correct
+    cache) stored on ``app.meridian_clients[slug]``.  Routes access the correct
     bundle via ``g`` (populated per-request by ``_load_client_context``).
 
     Returns:
@@ -137,17 +137,17 @@ def create_app():
     clients_config = load_clients()
 
     # ── Build per-client service bundles ──────────────────────────────────────
-    app.codex_clients = {
+    app.meridian_clients = {
         slug: _build_client_services(slug, cfg)
         for slug, cfg in clients_config.items()
     }
 
     # ── App-level settings ────────────────────────────────────────────────────
     # SESSION_SECRET and AUTH_MODE are taken from the first loaded client config
-    # (alphabetical order). Override by setting CODEX_SESSION_SECRET env var.
+    # (alphabetical order). Override by setting MERIDIAN_SESSION_SECRET env var.
     first_config = next(iter(clients_config.values()))
 
-    session_secret = os.environ.get('CODEX_SESSION_SECRET') or first_config.get('SESSION_SECRET')
+    session_secret = os.environ.get('MERIDIAN_SESSION_SECRET') or first_config.get('SESSION_SECRET')
     if session_secret:
         app.secret_key = session_secret
 
@@ -157,7 +157,7 @@ def create_app():
     app.config['GIT_COMMIT'] = git_info.get('commit')
 
     # Expose the list of valid client slugs for routing validation
-    app.config['CODEX_CLIENT_SLUGS'] = set(app.codex_clients.keys())
+    app.config['MERIDIAN_CLIENT_SLUGS'] = set(app.meridian_clients.keys())
 
     # ── Blueprints ────────────────────────────────────────────────────────────
     from app.routes.main import main_bp
@@ -185,7 +185,7 @@ def create_app():
         uptime_seconds = round(time.monotonic() - app._start_time)
 
         clients_info = []
-        for slug, ctx in current_app.codex_clients.items():
+        for slug, ctx in current_app.meridian_clients.items():
             config = ctx['config']
             cache = ctx['cache']
             rsid = config.get('AW_REPORTSUITE_ID', '')

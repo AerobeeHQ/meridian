@@ -8,7 +8,7 @@
 
 ## Summary
 
-Adobe is retiring API 1.4 in August 2026. Codex currently uses API 1.4 for five feature areas: Processing Rules, Marketing Channels, Channel Rules, ListVars, and partial eVar configuration. This plan inventories the dependencies, evaluates mitigation options, and proposes a phased approach.
+Adobe is retiring API 1.4 in August 2026. Meridian currently uses API 1.4 for five feature areas: Processing Rules, Marketing Channels, Channel Rules, ListVars, and partial eVar configuration. This plan inventories the dependencies, evaluates mitigation options, and proposes a phased approach.
 
 ---
 
@@ -103,7 +103,7 @@ API 1.4 is still used as a **fallback** for:
 
 **Mitigation options:**
 1. **Manual JSON upload** — User pastes/uploads a JSON snapshot extracted from a prior API 1.4 cache or manually constructed.
-2. **Screenshot/manual entry** — User documents rules outside Codex. (Unacceptable UX.)
+2. **Screenshot/manual entry** — User documents rules outside Meridian. (Unacceptable UX.)
 3. **Browser automation** — Playwright script logs in and scrapes the Admin Console. (High complexity, fragile.)
 4. **Feature deprecation** — Remove Processing Rules feature post-August 2026.
 
@@ -194,7 +194,7 @@ This approach is strictly additive to Phase 5 and costs ~30 lines of code.
 
 ### Gap 4: API 1.4 End-of-Life Detection
 
-The plan assumes API 1.4 will be "unavailable" after August 2026, but doesn't specify how Codex will distinguish:
+The plan assumes API 1.4 will be "unavailable" after August 2026, but doesn't specify how Meridian will distinguish:
 
 | Scenario | Current behaviour | Desired behaviour |
 |----------|-------------------|-------------------|
@@ -241,7 +241,7 @@ Implementing Phase 0 (formerly Phase 5) first also generates the reference JSON 
 
 ### Gap 7: Multi-Suite Deployments
 
-The plan assumes a single report suite per Codex client. In practice, some deployments run with multiple report suites per client (e.g., dev/staging/prod rollup). The upload and freeze workflow must handle:
+The plan assumes a single report suite per Meridian client. In practice, some deployments run with multiple report suites per client (e.g., dev/staging/prod rollup). The upload and freeze workflow must handle:
 
 - Per-RSID snapshot storage (already implied by `secrets/<client>/` structure)
 - A bulk snapshot download that loops over all configured RSIDs
@@ -385,7 +385,7 @@ secrets/<client>/
 
 ### Phase 4: Graceful Degradation with EOF Detection (Low effort)
 
-**Goal:** After August 2026, routes that fail to fetch API 1.4 data should display an informative message instead of crashing. Importantly, Codex must distinguish a permanent deprecation from a temporary outage.
+**Goal:** After August 2026, routes that fail to fetch API 1.4 data should display an informative message instead of crashing. Importantly, Meridian must distinguish a permanent deprecation from a temporary outage.
 
 **Implementation:**
 1. Inspect HTTP status codes from API 1.4 responses:
@@ -427,7 +427,7 @@ secrets/<client>/
 | **May 2026** | **Phase 0** (snapshot download + cache freeze) + **Phase 1** (deprecation banner) |
 | **June 2026** | **Phase 2** (manual upload) + **Phase 3** (ListVars fallback) |
 | **July 2026** | **Phase 4** (graceful degradation + EOF detection) + user communication |
-| **August 2026** | API 1.4 retired — Codex continues with frozen cache or uploaded snapshots |
+| **August 2026** | API 1.4 retired — Meridian continues with frozen cache or uploaded snapshots |
 | **September 2026** | Review: check whether Adobe published a migration guide or extended 1.4 access |
 | **February 2027** | Evaluate removing API 1.4 code |
 
@@ -456,7 +456,7 @@ secrets/<client>/
 | Path traversal via upload filename | Low | High | Always use fixed server-side filenames; never use user-provided filenames |
 | Large JSON upload exhausts server memory | Low | Medium | Enforce `MAX_CONTENT_LENGTH` 1 MB limit on upload routes |
 | Adobe extends API 1.4 deadline | Low | Positive | No action needed; continue using API 1.4 |
-| Adobe adds 2.0 endpoints for rules/channels | Low | Positive | Update Codex to use new endpoints |
+| Adobe adds 2.0 endpoints for rules/channels | Low | Positive | Update Meridian to use new endpoints |
 | API 1.4 EOF detection misidentifies outage as deprecation | Low | Medium | Only set persistent deprecated flag on `410 Gone`; retry on `5xx` as today |
 | Uploaded snapshot is silently stale (rules changed post-upload) | Medium | Medium | Show `uploaded_at` timestamp in UI; add quarterly staleness prompt |
 | Adobe Admin Console API research yields nothing actionable | Medium | Low | Treat as best-effort; does not block other phases |

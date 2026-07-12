@@ -1,5 +1,5 @@
 """
-Shared pytest fixtures for Codex tests.
+Shared pytest fixtures for Meridian tests.
 """
 import os
 import sys

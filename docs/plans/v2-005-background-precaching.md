@@ -8,7 +8,7 @@
 
 ## Overview
 
-Currently, Codex fetches data on first request and caches it for 1 hour. If the cache is cold (e.g. after an hourly expiry), the user waits for API calls on page load. This feature moves that wait off the request path by:
+Currently, Meridian fetches data on first request and caches it for 1 hour. If the cache is cold (e.g. after an hourly expiry), the user waits for API calls on page load. This feature moves that wait off the request path by:
 
 1. Warming the cache in the background at startup and on a 24-hour schedule.
 2. Extending the TTL for configuration data (which rarely changes) to 24 hours.

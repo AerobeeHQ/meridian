@@ -8,7 +8,7 @@
 
 ## Overview
 
-Currently Codex uses Adobe's **Server-to-Server OAuth2** (client credentials grant) — a single set of API keys in `config.json` that authenticate as a service account. This works well for a single-user or internal deployment.
+Currently Meridian uses Adobe's **Server-to-Server OAuth2** (client credentials grant) — a single set of API keys in `config.json` that authenticate as a service account. This works well for a single-user or internal deployment.
 
 The original plan was to replace this entirely with **user-based OAuth** (Authorization Code flow), so individuals log in with their own Adobe IMS account and the app makes API calls on their behalf.
 
@@ -38,7 +38,7 @@ This must be completed before any code is written. The OAuth credential must exi
 
 In the [Adobe Developer Console](https://developer.adobe.com/console/):
 
-1. Open your existing Project (the one that has the Server-to-Server credential for Codex).
+1. Open your existing Project (the one that has the Server-to-Server credential for Meridian).
 2. Click **Add to Project → API**.
 3. Select **Adobe Analytics** (and optionally **Experience Platform Launch** if it appears — but note Reactor does not use this credential).
 4. Choose **User Authentication** → **OAuth Web App**.
@@ -54,8 +54,8 @@ The Developer Console enforces two redirect URI fields and they behave different
 | **Redirect URI pattern** | Regex (escaped) | Validates the `redirect_uri` query parameter in the auth request. Must match the redirect URI your app sends. |
 
 **For production:** set both to your production HTTPS callback URL, e.g.:
-- Default redirect URI: `https://codex.example.com/auth/callback`
-- Redirect URI pattern: `https://codex\\.example\\.com/auth/callback`
+- Default redirect URI: `https://meridian.example.com/auth/callback`
+- Redirect URI pattern: `https://meridian\\.example\\.com/auth/callback`
 
 ### 3. Local development — the `http://localhost` problem
 
@@ -86,7 +86,7 @@ The pattern field is a regex. Special characters (`.`) must be escaped with a do
 
 | Intended match | Pattern to enter in console |
 |---------------|-----------------------------|
-| `https://codex.example.com/auth/callback` | `https://codex\\.example\\.com/auth/callback` |
+| `https://meridian.example.com/auth/callback` | `https://meridian\\.example\\.com/auth/callback` |
 | Any subdomain of example.com | `https://.*\\.example\\.com/auth/callback` |
 | localhost (any port) | `https://localhost:\\d+/auth/callback` |
 
@@ -102,7 +102,7 @@ Confirm the following scopes are enabled on the credential:
 
 ### 6. Record the new config values
 
-After saving the credential, update `config.json` (in `CODEX_SECRETS_DIR`):
+After saving the credential, update `config.json` (in `MERIDIAN_SECRETS_DIR`):
 
 ```json
 {
@@ -193,7 +193,7 @@ The security concerns (see below) are real but manageable and should be document
 **Mitigating factors:**
 - In most internal deployments, all Analytics users have at least read access to the same Launch properties
 - Launch property names and rules are generally not sensitive — they describe tagging implementation, not business data
-- Codex only reads from Reactor; it does not write or modify any Launch configuration
+- Meridian only reads from Reactor; it does not write or modify any Launch configuration
 
 **Mitigation options:**
 1. **Document the limitation** — include a note in the UI (Settings page or footer) that Launch data is fetched via a shared service account and may not reflect the user's personal Launch permissions
@@ -212,7 +212,7 @@ With a real login session, CSRF protection on write routes (`/api/notes`, `/api/
 
 ### S2S Credential in Config
 
-No change from the current risk profile. The S2S credential was already required and remains so. Ensure it is stored in `CODEX_SECRETS_DIR` (already enforced in the current architecture).
+No change from the current risk profile. The S2S credential was already required and remains so. Ensure it is stored in `MERIDIAN_SECRETS_DIR` (already enforced in the current architecture).
 
 ---
 

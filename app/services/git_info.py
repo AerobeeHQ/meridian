@@ -1,5 +1,5 @@
 """
-Git information utilities for Codex.
+Git information utilities for Meridian.
 Retrieves branch name and commit hash for display in the UI footer.
 
 Works both locally (via subprocess git commands) and in Docker (via git_info.txt).

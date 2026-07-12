@@ -8,7 +8,7 @@ set -e
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-echo "Building Codex Docker image..."
+echo "Building Meridian Docker image..."
 echo "  Branch: $GIT_BRANCH"
 echo "  Commit: $GIT_COMMIT"
 

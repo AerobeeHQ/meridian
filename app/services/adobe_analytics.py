@@ -496,12 +496,12 @@ def get_api_service_v14() -> AdobeAnalyticsService:
     """
     app = current_app._get_current_object()
 
-    if not hasattr(app, 'codex_api_service_v14'):
+    if not hasattr(app, 'meridian_api_service_v14'):
         request_timeout = current_app.config.get('API_V14_TIMEOUT', 25.0)
         logger.info("Initializing API 1.4 service with timeout=%s", request_timeout)
-        app.codex_api_service_v14 = AdobeAnalyticsService(
+        app.meridian_api_service_v14 = AdobeAnalyticsService(
             username=current_app.config['AW_USERNAME'],
             secret=current_app.config['AW_SECRET'],
             request_timeout=request_timeout,
         )
-    return app.codex_api_service_v14
+    return app.meridian_api_service_v14

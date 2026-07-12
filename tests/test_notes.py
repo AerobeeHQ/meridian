@@ -43,31 +43,31 @@ def isolated_notes_dir(tmp_path, monkeypatch):
 class TestResolveNotesDir:
     def test_uses_notes_dir_env_var_first(self, monkeypatch, tmp_path):
         notes_dir = str(tmp_path / 'mynotes')
-        monkeypatch.setenv('CODEX_NOTES_DIR', notes_dir)
-        monkeypatch.setenv('CODEX_SECRETS_DIR', str(tmp_path))
+        monkeypatch.setenv('MERIDIAN_NOTES_DIR', notes_dir)
+        monkeypatch.setenv('MERIDIAN_SECRETS_DIR', str(tmp_path))
         result = _resolve_notes_dir()
         assert result == notes_dir
 
     def test_notes_dir_takes_priority_over_secrets_dir(self, monkeypatch, tmp_path):
         notes_dir = str(tmp_path / 'custom_notes')
-        monkeypatch.setenv('CODEX_NOTES_DIR', notes_dir)
-        monkeypatch.setenv('CODEX_SECRETS_DIR', str(tmp_path / 'secrets'))
+        monkeypatch.setenv('MERIDIAN_NOTES_DIR', notes_dir)
+        monkeypatch.setenv('MERIDIAN_SECRETS_DIR', str(tmp_path / 'secrets'))
         result = _resolve_notes_dir()
         assert result == notes_dir
 
     def test_uses_secrets_dir_when_notes_dir_not_set(self, monkeypatch, tmp_path):
-        monkeypatch.delenv('CODEX_NOTES_DIR', raising=False)
-        monkeypatch.setenv('CODEX_SECRETS_DIR', str(tmp_path))
+        monkeypatch.delenv('MERIDIAN_NOTES_DIR', raising=False)
+        monkeypatch.setenv('MERIDIAN_SECRETS_DIR', str(tmp_path))
         result = _resolve_notes_dir()
         assert result == os.path.join(str(tmp_path), 'notes')
 
     def test_falls_back_to_project_root_when_no_env_vars_set(self, monkeypatch):
-        monkeypatch.delenv('CODEX_NOTES_DIR', raising=False)
-        monkeypatch.delenv('CODEX_SECRETS_DIR', raising=False)
+        monkeypatch.delenv('MERIDIAN_NOTES_DIR', raising=False)
+        monkeypatch.delenv('MERIDIAN_SECRETS_DIR', raising=False)
         result = _resolve_notes_dir()
         assert result.endswith(os.sep + 'notes')
-        assert 'CODEX_SECRETS_DIR' not in result
-        assert 'CODEX_NOTES_DIR' not in result
+        assert 'MERIDIAN_SECRETS_DIR' not in result
+        assert 'MERIDIAN_NOTES_DIR' not in result
 
 
 # ---------------------------------------------------------------------------

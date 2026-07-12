@@ -1,4 +1,4 @@
-# Codex - Adobe Analytics Configuration Viewer
+# Meridian - Adobe Analytics Configuration Viewer
 FROM python:3.13-slim
 
 # Build arguments for git info (passed from docker-compose or CI)

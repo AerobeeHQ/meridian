@@ -1,5 +1,5 @@
 [project]
-name = "codex"
+name = "meridian"
 version = "1.0.0"
 description = "A data dictionary for Adobe Analytics report suites"
 requires-python = ">=3.13"

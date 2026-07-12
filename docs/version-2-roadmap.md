@@ -2,7 +2,7 @@
 
 **Status: Complete** — All v2 features have been implemented. Development has transitioned to [Version 3](version-3-roadmap.md).
 
-This document summarises the features built for Codex v2. Each item has a detailed implementation plan or autopsy in `docs/plans/` or `docs/autopsies/`.
+This document summarises the features built for Meridian v2. Each item has a detailed implementation plan or autopsy in `docs/plans/` or `docs/autopsies/`.
 
 ---
 
@@ -76,7 +76,7 @@ All v2 features were implemented in this order:
 
 **Complexity: High** — new API integration from scratch; requires a spike notebook to understand data shape; may require additional OAuth2 scopes.
 
-See also this Github repo: https://github.com/maxisdigital/launchpad 
+See also this Github repo: https://github.com/aerobeehq/launchpad 
 
 Let me know if you need access.
 
@@ -86,7 +86,7 @@ Let me know if you need access.
 
 **Goal:** Replace the server-to-server credential model with individual user login via Adobe IMS OAuth.
 
-**Why:** Enables per-user access control (users only see report suites they have access to), removes the need to share a service account credential, and is required if Codex is ever deployed for a wider audience.
+**Why:** Enables per-user access control (users only see report suites they have access to), removes the need to share a service account credential, and is required if Meridian is ever deployed for a wider audience.
 
 **How:** Add an OAuth Authorization Code flow (login/callback/logout routes), Flask session management, and a `before_request` login guard. Keep server-to-server as the default; user auth is opt-in via `AUTH_MODE` config.
 
@@ -162,7 +162,7 @@ Let me know if you need access.
 **Why:** Dark mode is a common accessibility and comfort preference. A Settings page gives users control over the app's appearance without requiring configuration changes. Adobe Spectrum will align the app's design language with Adobe's own tools.
 
 **How:**
-- Theme preference is persisted in `localStorage` as `codex-theme` (`auto`, `light`, `dark`; future: `spectrum`).
+- Theme preference is persisted in `localStorage` as `meridian-theme` (`auto`, `light`, `dark`; future: `spectrum`).
 - Bootstrap 5.3's `data-bs-theme` attribute is applied to `<html>` at load time via an inline script in `<head>` (prevents flash of unstyled content).
 - In `auto` mode, the resolved theme follows `prefers-color-scheme` and updates dynamically if the OS theme changes.
 - A new `/settings` route and `settings.html` template provides a theme selector UI.

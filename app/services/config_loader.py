@@ -1,19 +1,19 @@
 """
-Config loader for Codex multisite.
+Config loader for Meridian multisite.
 
-Scans CODEX_SECRETS_DIR for per-client JSON configuration files and returns
+Scans MERIDIAN_SECRETS_DIR for per-client JSON configuration files and returns
 them as a dict keyed by client slug (the filename stem).
 
 Convention:
-    $CODEX_SECRETS_DIR/maxis.json   → clients['maxis']
-    $CODEX_SECRETS_DIR/coles.json   → clients['coles']
+    $MERIDIAN_SECRETS_DIR/maxis.json   → clients['maxis']
+    $MERIDIAN_SECRETS_DIR/coles.json   → clients['coles']
 
 Files whose names start with '_' are reserved for future app-level settings
 and are silently skipped.
 
 Usage:
     from app.services.config_loader import load_clients
-    clients = load_clients()   # raises RuntimeError if CODEX_SECRETS_DIR unset
+    clients = load_clients()   # raises RuntimeError if MERIDIAN_SECRETS_DIR unset
 """
 import json
 import logging
@@ -28,34 +28,34 @@ REQUIRED_KEYS = {'AW_REPORTSUITE_ID', 'API_VERSION'}
 
 
 def get_secrets_dir() -> Path:
-    """Return the secrets directory from the CODEX_SECRETS_DIR env var.
+    """Return the secrets directory from the MERIDIAN_SECRETS_DIR env var.
 
     Raises:
         RuntimeError: If the env var is missing or the directory does not exist.
     """
-    raw = os.environ.get('CODEX_SECRETS_DIR')
+    raw = os.environ.get('MERIDIAN_SECRETS_DIR')
     if not raw:
         raise RuntimeError(
-            "CODEX_SECRETS_DIR is not set. "
+            "MERIDIAN_SECRETS_DIR is not set. "
             "Point it to a directory containing per-client JSON config files.\n"
-            "Example: export CODEX_SECRETS_DIR=/Users/joris/secrets/codex"
+            "Example: export MERIDIAN_SECRETS_DIR=/Users/joris/secrets/meridian"
         )
     path = Path(raw)
     if not path.is_dir():
         raise RuntimeError(
-            f"CODEX_SECRETS_DIR does not exist or is not a directory: {path}"
+            f"MERIDIAN_SECRETS_DIR does not exist or is not a directory: {path}"
         )
     return path
 
 
 def load_clients() -> dict[str, dict[str, Any]]:
-    """Load all client configurations from CODEX_SECRETS_DIR.
+    """Load all client configurations from MERIDIAN_SECRETS_DIR.
 
     Returns:
         Dict mapping client slug → config dict, sorted alphabetically.
 
     Raises:
-        RuntimeError: If CODEX_SECRETS_DIR is unset, the directory is missing,
+        RuntimeError: If MERIDIAN_SECRETS_DIR is unset, the directory is missing,
                       or no valid client configs are found.
     """
     secrets_dir = get_secrets_dir()
@@ -88,7 +88,7 @@ def load_clients() -> dict[str, dict[str, Any]]:
     if not clients:
         raise RuntimeError(
             f"No valid client configs found in {secrets_dir}. "
-            "Copy config.dist.json to $CODEX_SECRETS_DIR/<client-name>.json "
+            "Copy config.dist.json to $MERIDIAN_SECRETS_DIR/<client-name>.json "
             "and fill in the credentials."
         )
 

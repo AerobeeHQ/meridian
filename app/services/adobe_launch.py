@@ -27,7 +27,7 @@ class AdobeLaunchService:
     Client for the Adobe Experience Platform Reactor (Tags) API.
 
     Searches the property for Analytics dimension references using the
-    /search endpoint and returns display-ready dicts for Codex detail pages.
+    /search endpoint and returns display-ready dicts for Meridian detail pages.
     """
 
     def __init__(self, auth_service: OAuth2Auth, org_id: str):
@@ -89,7 +89,7 @@ class AdobeLaunchService:
     def get_raw(self, path: str, params: dict = None) -> dict:
         """Make an authenticated GET request to an arbitrary Reactor API path.
 
-        Used by the Reactor debug page to proxy calls through Codex's credentials.
+        Used by the Reactor debug page to proxy calls through Meridian's credentials.
 
         Args:
             path:   API path, e.g. '/companies' or '/properties/PRabc/rules'
