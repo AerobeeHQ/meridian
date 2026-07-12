@@ -229,7 +229,7 @@ All client routes are prefixed with `/<client>/` where `<client>` is the filenam
 
 [https://meridian.aerobee.com.au](https://meridian.aerobee.com.au)
 
-![Homepage screenshot](./assets/screenshots/meridian-live-demo.png)
+![Homepage screenshot](assets/screenshots/meridian-live-demo.png)
 
 ---
 
@@ -328,4 +328,4 @@ MIT
 
 ---
 
-*Last updated: 2026-04-19*
+*Last updated: 2026-07-12*
