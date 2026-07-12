@@ -27,8 +27,8 @@ irm https://astral.sh/uv/install.ps1 | iex
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/aerobeehq/codex.git
-cd codex
+git clone https://github.com/aerobeehq/meridian.git
+cd meridian
 ```
 
 ---
@@ -53,7 +53,7 @@ Meridian uses a **secrets directory** — a folder containing one JSON file per 
 mkdir -p ~/secrets/meridian
 ```
 
-You can use any path. The folder can be anywhere on your machine; it should **not** be inside the `codex/` repository directory (to avoid accidental commits).
+You can use any path. The folder can be anywhere on your machine; it should **not** be inside the `meridian/` repository directory (to avoid accidental commits).
 
 ### 3b. Create a client config file
 

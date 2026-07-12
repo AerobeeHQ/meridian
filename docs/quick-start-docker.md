@@ -17,8 +17,8 @@ This guide walks a system administrator through running Meridian using Docker Co
 ## 1. Get the Code
 
 ```bash
-git clone https://github.com/aerobeehq/codex.git
-cd codex
+git clone https://github.com/aerobeehq/meridian.git
+cd meridian
 ```
 
 Or download and extract a release archive — the `Dockerfile` and `docker-compose.yml` are included.
